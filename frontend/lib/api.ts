@@ -1,8 +1,10 @@
 import type {
   BacklogItem,
+  ChallengeReward,
   ChallengeTrack,
   Diagnostic,
   JobStatusResponse,
+  LeaderboardEntry,
   PublishedChallenge,
   RelaxationConfig,
   RelaxResponse,
@@ -35,16 +37,16 @@ export const api = {
   getItem: (id: string): Promise<BacklogItem> =>
     request(`/triage/backlog/${id}`),
 
-  relax: (itemId: string, config: RelaxationConfig): Promise<RelaxResponse> =>
+  relax: (itemId: string, config: RelaxationConfig, reward?: ChallengeReward, track?: ChallengeTrack): Promise<RelaxResponse> =>
     request(`/triage/relax/${itemId}`, {
       method: "POST",
-      body: JSON.stringify({ config }),
+      body: JSON.stringify({ config, reward, track }),
     }),
 
-  publish: (itemId: string, config: RelaxationConfig): Promise<PublishResponse> =>
+  publish: (itemId: string, config: RelaxationConfig, reward?: ChallengeReward, track?: ChallengeTrack): Promise<PublishResponse> =>
     request(`/triage/publish/${itemId}`, {
       method: "POST",
-      body: JSON.stringify({ config }),
+      body: JSON.stringify({ config, reward, track }),
     }),
 
   listChallenges: (track?: ChallengeTrack): Promise<PublishedChallenge[]> =>
@@ -121,6 +123,9 @@ export const api = {
 
   getScorecard: (submissionId: string): Promise<ScorecardResponse> =>
     request(`/sandbox/submissions/${submissionId}/scorecard`),
+
+  getLeaderboard: (): Promise<{ ok: boolean; entries: LeaderboardEntry[] }> =>
+    request("/sandbox/leaderboard"),
 
   submitZip: (challengeId: string, zipBytes: ArrayBuffer): Promise<SubmitResponse> =>
     fetch(`${BASE}/sandbox/challenges/${challengeId}/submit/zip`, {

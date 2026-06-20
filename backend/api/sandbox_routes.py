@@ -34,6 +34,7 @@ from ..sandbox.run_jobs import RunAlreadyActiveError, RunnerBusyError
 from ..sandbox.product_starter_scaffold import generate_product_starter_files
 from ..sandbox.starter_scaffold import generate_starter_files, platform_sandbox_instructions
 from ..sandbox.product_starter_scaffold import product_platform_instructions
+from ..sandbox.leaderboard import LeaderboardResponse, get_demo_leaderboard
 from ..sandbox.validate import validate_python
 from ..sandbox.workspace import get_or_create_workspace_id, read_workspace_id
 
@@ -61,7 +62,9 @@ def _starter_files_for(item) -> dict[str, str]:
     brand = item.brand_proxy or "Sandbox"
     track = item.track or ChallengeTrack.technical
     if track == ChallengeTrack.product_feature:
-        files = generate_product_starter_files(item.id, title, brand)
+        files = generate_product_starter_files(
+            item.id, title, brand, domain_proxy=getattr(item, "domain_proxy", None)
+        )
     else:
         files = generate_starter_files(item.id, title)
     item.starter_files = files
@@ -72,7 +75,8 @@ def _starter_files_for(item) -> dict[str, str]:
 def _platform_instructions_for(item) -> list[str]:
     track = item.track or ChallengeTrack.technical
     if track == ChallengeTrack.product_feature:
-        return product_platform_instructions()
+        equipment = item.domain_proxy == "hyperlocal_equipment"
+        return product_platform_instructions(equipment_mode=equipment)
     return platform_sandbox_instructions()
 
 
@@ -99,6 +103,8 @@ def _to_public(item) -> PublishedChallenge:
         dataset_ready=item.dataset_path is not None and Path(item.dataset_path).exists(),
         starter_ready=bool(item.starter_files) or item.status == BacklogStatus.published,
         dataset_anomalies=item.dataset_anomalies,
+        pool_label=item.pool_label,
+        reward=item.reward,
         published_at=item.published_at,
     )
 
@@ -130,7 +136,7 @@ def _submit_and_assess(
         status=SubmissionStatus.received,
         mode=mode,
     )
-    scorecard = assess_submission(pending, track)
+    scorecard = assess_submission(pending, track, reward=getattr(item, "reward", None))
     return submission_store.save_submission(
         challenge_id=item.id,
         code=body.code if body.mode == "legacy" else None,
@@ -472,3 +478,12 @@ def submission_count(challenge_id: str) -> dict[str, int | str]:
         "challenge_id": challenge_id,
         "count": submission_store.count_for_challenge(challenge_id),
     }
+
+
+@router.get(
+    "/leaderboard",
+    response_model=LeaderboardResponse,
+    summary="Demo execution points leaderboard (stub)",
+)
+def get_leaderboard() -> LeaderboardResponse:
+    return get_demo_leaderboard()

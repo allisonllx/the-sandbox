@@ -221,9 +221,9 @@ class TestRelaxation:
 # ===========================================================================
 
 class TestBacklogStore:
-    def test_four_demo_items_in_store(self):
+    def test_seven_demo_items_in_store(self):
         items = store.list_items()
-        assert len(items) == 4
+        assert len(items) == 7
 
     def test_items_sorted_by_severity_descending(self):
         items = store.list_items()

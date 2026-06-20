@@ -12,29 +12,39 @@ PRODUCT_STARTER_PATHS = (
 )
 
 
-def generate_product_starter_files(challenge_id: str, title: str, brand_proxy: str) -> dict[str, str]:
+def generate_product_starter_files(
+    challenge_id: str,
+    title: str,
+    brand_proxy: str,
+    domain_proxy: str | None = None,
+) -> dict[str, str]:
+    equipment = domain_proxy == "hyperlocal_equipment"
+    mock_path = "mock/inventory.json" if equipment else "mock/merchants.json"
     return {
-        "README.md": _readme(challenge_id, title, brand_proxy),
-        "DESIGN.md": _design_md(brand_proxy),
-        "mock/merchants.json": _merchants_json(brand_proxy),
-        "index.html": _index_html(brand_proxy),
+        "README.md": _readme(challenge_id, title, brand_proxy, equipment=equipment),
+        "DESIGN.md": _design_md(brand_proxy, equipment=equipment),
+        mock_path: _inventory_json(brand_proxy) if equipment else _merchants_json(brand_proxy),
+        "index.html": _index_html(brand_proxy, equipment=equipment),
         "src/styles.css": _styles_css(),
-        "src/app.js": _app_js(brand_proxy),
+        "src/app.js": _app_js(brand_proxy, equipment=equipment),
     }
 
 
-def product_platform_instructions() -> list[str]:
+def product_platform_instructions(*, equipment_mode: bool = False) -> list[str]:
+    noun = "inventory locker" if equipment_mode else "merchant"
+    mock_file = "mock/inventory.json" if equipment_mode else "mock/merchants.json"
     return [
         "Read the Product Feature brief in the left panel — note persona, design considerations, and deliverables.",
         "The starter prototype loads in the editor (index.html, src/app.js, src/styles.css).",
         "Complete **DESIGN.md** with your personas, layout trade-offs, and stack choices — this is required.",
-        "Use mock/merchants.json for local merchant data; extend the UI for discovery + cart checkout.",
+        f"Use {mock_file} for local {noun} data; extend the UI for discovery + cart checkout.",
         "Optional: add Figma or deployed preview links in the submit panel.",
         "Click **Submit Project** when ready (includes DESIGN.md + code).",
     ]
 
 
-def _readme(challenge_id: str, title: str, brand: str) -> str:
+def _readme(challenge_id: str, title: str, brand: str, *, equipment: bool = False) -> str:
+    deliverable = "equipment locker discovery + cart" if equipment else "merchant discovery + cart"
     return f"""# {title}
 
 Challenge: `{challenge_id}` · Brand: **{brand}**
@@ -42,7 +52,7 @@ Challenge: `{challenge_id}` · Brand: **{brand}**
 ## Deliverables
 
 1. **DESIGN.md** — personas, IA trade-offs, stack rationale (required)
-2. **Prototype** — responsive merchant discovery + cart (edit starter files)
+2. **Prototype** — responsive {deliverable} (edit starter files)
 3. Optional external links — Figma or deployed preview URL at submit time
 
 ## Local preview
@@ -51,7 +61,8 @@ Open `index.html` in a browser or use any static server.
 """
 
 
-def _design_md(brand: str) -> str:
+def _design_md(brand: str, *, equipment: bool = False) -> str:
+    entity = "locker / inventory item" if equipment else "merchant"
     return f"""# Design Rationale — {brand}
 
 ## Target persona
@@ -65,7 +76,7 @@ What problem does this feature solve? What does success look like?
 ## Information architecture
 
 - Map vs list view — which did you choose and why?
-- How does the user move from discovery → merchant detail → checkout?
+- How does the user move from discovery → {entity} detail → checkout?
 
 ## Stack & implementation choices
 
@@ -75,6 +86,19 @@ What problem does this feature solve? What does success look like?
 ## Open questions / future work
 
 What would you validate next with real users?
+"""
+
+
+def _inventory_json(brand: str) -> str:
+    return f"""{{
+  "brand": "{brand}",
+  "inventory": [
+    {{ "id": "l1", "name": "Cordless Drill Kit", "distance_km": 0.3, "available": true, "daily_rate": 18.0, "tags": ["tools", "diy"] }},
+    {{ "id": "l2", "name": "Pressure Washer", "distance_km": 0.6, "available": true, "daily_rate": 24.0, "tags": ["outdoor", "cleaning"] }},
+    {{ "id": "l3", "name": "Camping Tent (4p)", "distance_km": 1.1, "available": false, "daily_rate": 15.0, "tags": ["outdoor", "gear"] }},
+    {{ "id": "l4", "name": "Mountain Bike", "distance_km": 1.4, "available": true, "daily_rate": 22.0, "tags": ["sport", "bike"] }}
+  ]
+}}
 """
 
 
@@ -91,22 +115,24 @@ def _merchants_json(brand: str) -> str:
 """
 
 
-def _index_html(brand: str) -> str:
+def _index_html(brand: str, *, equipment: bool = False) -> str:
+    label = "Equipment Discovery" if equipment else "Merchant Discovery"
+    list_label = "Inventory nearby" if equipment else "Merchants nearby"
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{brand} — Merchant Discovery</title>
+  <title>{brand} — {label}</title>
   <link rel="stylesheet" href="src/styles.css" />
 </head>
 <body>
   <header class="app-header">
     <h1>{brand}</h1>
-    <p class="subtitle">Local merchant discovery — starter prototype</p>
+    <p class="subtitle">Local {label.lower()} — starter prototype</p>
   </header>
   <main class="layout">
-    <section id="merchant-list" class="panel" aria-label="Merchants nearby"></section>
+    <section id="merchant-list" class="panel" aria-label="{list_label}"></section>
     <aside id="cart-drawer" class="panel cart" aria-label="Cart">
       <h2>Cart</h2>
       <ul id="cart-items"></ul>
@@ -168,26 +194,31 @@ body {
 """
 
 
-def _app_js(brand: str) -> str:
-    return f"""// {brand} merchant discovery — extend this starter
+def _app_js(brand: str, *, equipment: bool = False) -> str:
+    mock_file = "mock/inventory.json" if equipment else "mock/merchants.json"
+    data_key = "inventory" if equipment else "merchants"
+    heading = "Nearby inventory" if equipment else "Nearby merchants"
+    return f"""// {brand} discovery — extend this starter
 let merchants = [];
 let cart = [];
 
 async function loadMerchants() {{
-  const res = await fetch('mock/merchants.json');
+  const res = await fetch('{mock_file}');
   const data = await res.json();
-  merchants = data.merchants || [];
+  merchants = data.{data_key} || [];
   renderMerchants();
 }}
 
 function renderMerchants() {{
   const root = document.getElementById('merchant-list');
-  root.innerHTML = '<h2>Nearby merchants</h2>';
+  root.innerHTML = '<h2>{heading}</h2>';
   merchants.forEach((m) => {{
     const el = document.createElement('div');
     el.className = 'merchant-card';
-    el.innerHTML = `<strong>${{m.name}}</strong><br/>
-      ${{m.distance_km}} km · ~${{m.wait_min}} min wait · ★ ${{m.rating}}`;
+    const meta = m.wait_min != null
+      ? `${{m.distance_km}} km · ~${{m.wait_min}} min wait · ★ ${{m.rating}}`
+      : `${{m.distance_km}} km · $${{m.daily_rate}}/day · ${{m.available ? 'Available' : 'Reserved'}}`;
+    el.innerHTML = `<strong>${{m.name}}</strong><br/>${{meta}}`;
     el.onclick = () => addToCart(m);
     root.appendChild(el);
   }});

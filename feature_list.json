@@ -218,6 +218,61 @@
       "notes": "ProductAssessor is deterministic MVP rubric (no LLM). Technical assessor remains stub pending assessor-001 Docker harness. Submit wired through assessor/registry.py on both inline and ZIP paths."
     },
     {
+      "id": "trust-001",
+      "priority": 6.5,
+      "area": "trust-governance",
+      "title": "Scope Cap + Domain Obfuscation",
+      "user_visible_behavior": "AI PM blocks publish when estimated student effort exceeds 8 hours (demo-007). High-sensitivity items can obfuscate industry domain so public challenges mask business intent (StealthCo demo-005 → equipment sharing).",
+      "status": "passing",
+      "verification": [
+        "demo-007 publish returns 422 SCOPE_EXCEEDED",
+        "demo-005 with obfuscate_domain produces public Micro-PRD without food/merchant tokens",
+        "CTO dashboard shows domain before/after preview"
+      ],
+      "evidence": [
+        "python -m pytest backend/tests/test_trust.py -v → 4 passed (2026-06-20)",
+        "TestScopeGuard::test_demo_007_publish_blocked PASSED",
+        "TestDomainObfuscation::test_demo_005_publish_obfuscated PASSED"
+      ],
+      "notes": "Heuristic domain_obfuscator.py — no LLM for reproducible demos."
+    },
+    {
+      "id": "rewards-001",
+      "priority": 6.6,
+      "area": "trust-governance",
+      "title": "Guaranteed Reward Lock (Stub)",
+      "user_visible_behavior": "Founders must lock cash bounty or interview pass before publish. Students see reward badges on challenge cards. Scorecard shows interview pass earned when benchmark met (demo).",
+      "status": "passing",
+      "verification": [
+        "Publish without locked reward returns 422 REWARD_NOT_LOCKED",
+        "Published NovaPay challenge shows $500 bounty badge",
+        "Interview pass banner on scorecard when score ≥ benchmark"
+      ],
+      "evidence": [
+        "TestScopeGuard::test_publish_without_locked_reward_blocked PASSED",
+        "RelaxationPanel reward lock UI + ChallengeCard bounty badge"
+      ],
+      "notes": "No Stripe/escrow — real gate, fake money."
+    },
+    {
+      "id": "rank-001",
+      "priority": 6.7,
+      "area": "trust-governance",
+      "title": "Execution Points + Enterprise Radar (Stub)",
+      "user_visible_behavior": "Students browse /student/leaderboard for platform Execution Points. Enterprise recruiters view /enterprise/radar for reverse-sourcing narrative (no auth, mock data).",
+      "status": "passing",
+      "verification": [
+        "GET /sandbox/leaderboard returns demo entries",
+        "Leaderboard and enterprise radar pages render",
+        "Submit scorecard includes execution_points"
+      ],
+      "evidence": [
+        "backend/sandbox/leaderboard.py seed data",
+        "frontend/app/student/leaderboard + frontend/app/enterprise/radar"
+      ],
+      "notes": "Decouples student signal from company logo for FAANG-bias mitigation narrative."
+    },
+    {
       "id": "assessor-001",
       "priority": 7,
       "area": "ai-assessor",

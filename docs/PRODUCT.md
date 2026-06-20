@@ -24,6 +24,20 @@ Technically capable but locked out of top roles by the absence of a pedigreed ne
 
 5. **Startup: Review matches** — Track-aware assessor plugins score submissions (Technical: tests + taste; Product: structure + DESIGN.md rubric). Scorecard dimensions differ by track.
 
+## Defensive Posture (Hackathon Narrative)
+
+The platform addresses three existential B2B talent risks with **hybrid demo mechanics** — some rules are real, others are credible UI stubs:
+
+| Risk | Mitigation | Demo depth |
+|---|---|---|
+| **Free labor / exploitation** | Guaranteed reward locked before publish; AI PM scope cap (~8h) | Real scope gate + stubbed bounty/interview lock |
+| **Stealth roadmap leak** | Dual-layer anonymization: brand proxy + **domain obfuscation** | Real transform (e.g. dine-in vouchers → equipment lockers) |
+| **FAANG prestige bias** | **Execution Points** rank decoupled from company logos; enterprise reverse-sourcing radar | Stub leaderboard + `/enterprise/radar` |
+
+> *"We aren't a job board; we are a zero-trust proof-of-work protocol."*
+
+Demo backlog profiles: **StealthCo** (`demo-005`), **NovaPay** (`demo-003` bounty), **Platform Pool** (`demo-006`), scope rejection (`demo-007`).
+
 ## Out of Scope
 
 - The platform does not transmit raw startup data (logs, database rows, customer records) to any external service — ever.

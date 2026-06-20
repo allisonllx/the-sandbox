@@ -8,7 +8,18 @@ export function ScorecardView({ scorecard }: { scorecard: Scorecard }) {
       <div>
         <p className="text-sm font-semibold text-accent">Assessor Scorecard</p>
         <p className="text-xs text-slate-400 mt-1">{scorecard.summary}</p>
+        {scorecard.execution_points != null && (
+          <p className="text-xs text-amber-400/90 mt-2 font-mono">
+            +{scorecard.execution_points} Execution Points (demo)
+          </p>
+        )}
       </div>
+
+      {scorecard.interview_pass_earned && (
+        <div className="rounded border border-green-500/40 bg-green-500/10 px-3 py-2 text-xs text-green-400 font-semibold">
+          Interview Pass earned (demo) — benchmark {scorecard.interview_benchmark ?? 75}
+        </div>
+      )}
 
       {dimensions.length > 0 && (
         <div className="space-y-3">

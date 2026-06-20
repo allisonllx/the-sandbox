@@ -17,7 +17,7 @@ from ..privacy_proxy.models import (
     PIIDetection,
     SanitizedMetadata,
 )
-from .models import BacklogItem, BacklogStatus, ChallengeTrack, DeliverableType, SensitivityTag, TechScores
+from .models import BacklogItem, BacklogStatus, ChallengeReward, ChallengeTrack, DeliverableType, RewardType, SensitivityTag, TechScores
 
 # ---------------------------------------------------------------------------
 # Demo seed data — three pre-scored backlog items
@@ -137,6 +137,13 @@ def _make_cache_miss_item() -> BacklogItem:
         scores=scores,
         tag=SensitivityTag.green,
         status=BacklogStatus.pending,
+        sponsor_profile="NovaPay (bounty sponsor)",
+        reward=ChallengeReward(
+            reward_type=RewardType.cash_bounty,
+            amount_usd=500,
+            interview_benchmark=75,
+            locked=False,
+        ),
     )
     return item
 
@@ -191,6 +198,135 @@ def _make_merchant_discovery_item() -> BacklogItem:
     )
 
 
+def _make_stealth_dine_in_item() -> BacklogItem:
+    """StealthCo — Grab dine-in analog; requires domain obfuscation on publish."""
+    metadata = SanitizedMetadata(
+        format_detected=InputFormat.csv,
+        fields=[
+            FieldMetadata(name="voucher_code", inferred_type="string", sample_count=1200),
+            FieldMetadata(name="restaurant_id", inferred_type="string", sample_count=1200),
+            FieldMetadata(name="dine_in_session", inferred_type="string", sample_count=1200),
+            FieldMetadata(name="map_pin_lat", inferred_type="float", sample_count=1200),
+            FieldMetadata(name="map_pin_lng", inferred_type="float", sample_count=1200),
+            FieldMetadata(name="checkout_step", inferred_type="string", sample_count=1200),
+            FieldMetadata(name="cart_abandon", inferred_type="boolean", sample_count=1200),
+        ],
+        approximate_row_scale=1200,
+        event_type_frequencies=[
+            EventFrequency(event_type="[product_feedback]", count=1200),
+            EventFrequency(event_type="[feature_request]", count=480),
+        ],
+        pii_detections=[PIIDetection(pii_type="email", count=2)],
+        processing_notes=["Stealth roadmap export — PII masked."],
+    )
+    scores = TechScores(
+        severity=55,
+        friction=68,
+        sensitivity=72,
+        sensitivity_reason="Reveals unreleased dine-in voucher discovery roadmap.",
+        suggested_title="Integrate restaurant dining vouchers into map discovery",
+    )
+    return BacklogItem(
+        id="demo-005",
+        source_label="StealthCo — dine-in voucher discovery Q3 roadmap (CONFIDENTIAL)",
+        metadata=metadata,
+        scores=scores,
+        tag=SensitivityTag.red,
+        status=BacklogStatus.pending,
+        suggested_track=ChallengeTrack.product_feature,
+        sponsor_profile="StealthCo (stealth / high sensitivity)",
+        brand_proxy="LockerShare",
+        deliverable_types=[
+            DeliverableType.frontend_prototype,
+            DeliverableType.external_link,
+            DeliverableType.mixed,
+        ],
+        evaluation_focus=[
+            "Discovery IA",
+            "Mobile map vs list trade-offs",
+            "Voucher redemption flow",
+        ],
+    )
+
+
+def _make_platform_pool_item() -> BacklogItem:
+    metadata = SanitizedMetadata(
+        format_detected=InputFormat.log,
+        fields=[
+            FieldMetadata(name="request_id", inferred_type="string", sample_count=890000),
+            FieldMetadata(name="latency_ms", inferred_type="float", sample_count=890000),
+            FieldMetadata(name="status_code", inferred_type="integer", sample_count=890000),
+            FieldMetadata(name="region", inferred_type="string", sample_count=890000),
+            FieldMetadata(name="cache_hit", inferred_type="boolean", sample_count=890000),
+        ],
+        approximate_row_scale=890000,
+        event_type_frequencies=[
+            EventFrequency(event_type="ERROR", count=42000),
+            EventFrequency(event_type="WARN", count=128000),
+            EventFrequency(event_type="INFO", count=720000),
+            EventFrequency(event_type="[traffic_spike]", count=890000),
+        ],
+        pii_detections=[],
+        processing_notes=["Anonymized legacy scenario — already solved internally."],
+    )
+    scores = TechScores(
+        severity=88,
+        friction=95,
+        sensitivity=12,
+        sensitivity_reason="Historical Black Friday spike — no current roadmap leakage.",
+        suggested_title="Replay 2024 Black Friday traffic spike diagnosis",
+    )
+    return BacklogItem(
+        id="demo-006",
+        source_label="Platform Pool — anonymized legacy infra scenario",
+        metadata=metadata,
+        scores=scores,
+        tag=SensitivityTag.green,
+        status=BacklogStatus.pending,
+        sponsor_profile="Platform Pool (open sandbox)",
+        pool_label="Anonymized legacy scenario — already solved internally",
+        reward=ChallengeReward(
+            reward_type=RewardType.interview_pass,
+            interview_benchmark=70,
+            locked=True,
+        ),
+    )
+
+
+def _make_oversized_scope_item() -> BacklogItem:
+    metadata = SanitizedMetadata(
+        format_detected=InputFormat.csv,
+        fields=[
+            FieldMetadata(name=f"module_{i}", inferred_type="string", sample_count=50000)
+            for i in range(18)
+        ],
+        approximate_row_scale=50000,
+        event_type_frequencies=[
+            EventFrequency(event_type="[feature_request]", count=50000),
+            EventFrequency(event_type="[ux_research]", count=12000),
+            EventFrequency(event_type="[platform]", count=8000),
+        ],
+        pii_detections=[],
+        processing_notes=["Full product rebuild request."],
+    )
+    scores = TechScores(
+        severity=60,
+        friction=80,
+        sensitivity=45,
+        sensitivity_reason="Broad product scope — not a single modular task.",
+        suggested_title="Build complete end-to-end full stack app for marketplace",
+    )
+    return BacklogItem(
+        id="demo-007",
+        source_label="Founder request — entire platform rebuild (full application)",
+        metadata=metadata,
+        scores=scores,
+        tag=SensitivityTag.yellow,
+        status=BacklogStatus.pending,
+        sponsor_profile="Demo — scope cap rejection",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Store implementation
 # ---------------------------------------------------------------------------
@@ -204,6 +340,9 @@ def _init_store() -> None:
         _make_payment_retry_item(),
         _make_cache_miss_item(),
         _make_merchant_discovery_item(),
+        _make_stealth_dine_in_item(),
+        _make_platform_pool_item(),
+        _make_oversized_scope_item(),
     ]:
         _store[item.id] = item
 

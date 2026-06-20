@@ -6,9 +6,10 @@ from __future__ import annotations
 
 import json
 import logging
-from .relaxation import abstract_brand_text
+from .domain_obfuscator import DomainTransform
 from .llm_client import LLMClientProtocol, LLMUnavailableError, get_default_client
 from .models import ChallengeTrack, MicroPRD, RelaxedPreview
+from .relaxation import abstract_brand_text
 
 logger = logging.getLogger(__name__)
 
@@ -104,10 +105,59 @@ def _fallback_technical(challenge_id: str, title: str, brand_proxy: str) -> Micr
     )
 
 
-def _fallback_product(challenge_id: str, title: str, brand_proxy: str) -> MicroPRD:
+def _fallback_product(
+    challenge_id: str,
+    title: str,
+    brand_proxy: str,
+    domain_transform: DomainTransform | None = None,
+) -> MicroPRD:
     from ..sandbox.product_starter_scaffold import product_platform_instructions
 
     brand = brand_proxy or "EatsHub"
+    if domain_transform and domain_transform.domain_proxy == "hyperlocal_equipment":
+        return MicroPRD(
+            challenge_id=challenge_id,
+            title=domain_transform.public_title,
+            track=ChallengeTrack.product_feature,
+            brand_proxy=domain_transform.brand_proxy,
+            context=domain_transform.public_narrative,
+            definition_of_success=[
+                "Responsive equipment locker discovery UI works from 375px to 1280px viewports.",
+                "User can browse nearby inventory and add rentals to a cart with clear feedback.",
+                "DESIGN.md explains persona, IA trade-offs, and stack choices without industry leak tokens.",
+                "Voucher redemption flow is stubbed with sensible empty/error states.",
+            ],
+            structural_constraints=[
+                "Use the provided starter HTML/CSS/JS scaffold only — no backend required.",
+                "Mock data from mock/inventory.json — do not call external APIs.",
+                "DESIGN.md is required at submit time.",
+            ],
+            user_persona=(
+                "Urban DIY enthusiast, 28–40, needs to rent power tools between meetings — "
+                "mobile-first discovery with minimal checkout friction."
+            ),
+            problem_framing=(
+                "How would you structure equipment locker discovery for mobile-first users? "
+                "What trade-offs between map vs list view, and how would you justify them in DESIGN.md?"
+            ),
+            design_considerations=[
+                "Mobile-first layout and touch targets",
+                "Clear hierarchy: discovery → locker detail → cart → voucher redeem",
+                "Loading and empty states for inventory list",
+                "Accessibility basics (labels, contrast, keyboard focus)",
+            ],
+            stack_guidance=[
+                "Vanilla HTML/CSS/JS starter — extend in place",
+                "Optional: explain in DESIGN.md if you would choose React/Next for production",
+            ],
+            deliverable_requirements=[
+                "Completed DESIGN.md with persona and trade-offs",
+                "Working prototype in starter files",
+                "Optional Figma or deployed preview link at submit",
+            ],
+            sandbox_instructions=product_platform_instructions(equipment_mode=True),
+        )
+
     return MicroPRD(
         challenge_id=challenge_id,
         title=f"{brand} Local Merchant Discovery Hub",
@@ -164,14 +214,20 @@ def generate(
     track: ChallengeTrack = ChallengeTrack.technical,
     brand_proxy: str = "DataStream",
     abstract_brand: bool = True,
+    domain_transform: "DomainTransform | None" = None,
     client: LLMClientProtocol | None = None,
 ) -> MicroPRD:
     if track == ChallengeTrack.product_feature:
-        fallback = lambda: _fallback_product(challenge_id, title, brand_proxy)
+        fallback = lambda: _fallback_product(challenge_id, title, brand_proxy, domain_transform)
         system = _PRODUCT_SYSTEM_PROMPT
     else:
         fallback = lambda: _fallback_technical(challenge_id, title, brand_proxy)
         system = _TECH_SYSTEM_PROMPT
+
+    if domain_transform and track == ChallengeTrack.product_feature:
+        return _finalize_platform_instructions(
+            _fallback_product(challenge_id, title, brand_proxy, domain_transform)
+        )
 
     if client is None:
         client = get_default_client()
@@ -215,7 +271,10 @@ def _finalize_platform_instructions(prd: MicroPRD) -> MicroPRD:
     if prd.track == ChallengeTrack.product_feature:
         from ..sandbox.product_starter_scaffold import product_platform_instructions
 
-        return prd.model_copy(update={"sandbox_instructions": product_platform_instructions()})
+        equipment = "equipment" in prd.context.lower() or "locker" in prd.title.lower()
+        return prd.model_copy(
+            update={"sandbox_instructions": product_platform_instructions(equipment_mode=equipment)}
+        )
     from ..sandbox.starter_scaffold import platform_sandbox_instructions
 
     return prd.model_copy(update={"sandbox_instructions": platform_sandbox_instructions()})

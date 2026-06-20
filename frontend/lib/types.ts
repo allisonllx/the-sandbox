@@ -63,6 +63,34 @@ export interface RelaxationConfig {
   synthesize_variables: boolean;
   noise_level: number;
   abstract_brand?: boolean;
+  obfuscate_domain?: boolean;
+}
+
+export interface DomainObfuscationPreview {
+  domain_proxy: string;
+  public_title: string;
+  public_narrative: string;
+  internal_intent: string;
+  transform_rationale: string;
+  brand_proxy: string;
+  field_map?: Record<string, string>;
+  public_fields?: string[];
+}
+
+export type RewardType = "cash_bounty" | "interview_pass";
+
+export interface ChallengeReward {
+  reward_type: RewardType;
+  amount_usd?: number | null;
+  interview_benchmark?: number;
+  locked: boolean;
+}
+
+export interface ScopeCheckResponse {
+  allowed: boolean;
+  estimated_hours: number;
+  reason: string;
+  suggested_breakdown: string[];
 }
 
 export interface RelaxedPreview {
@@ -106,12 +134,18 @@ export interface BacklogItem {
   brand_proxy?: string | null;
   deliverable_types?: DeliverableType[];
   evaluation_focus?: string[];
+  sponsor_profile?: string | null;
+  domain_preview?: DomainObfuscationPreview | null;
+  reward?: ChallengeReward | null;
+  pool_label?: string | null;
   created_at: string;
 }
 
 export interface RelaxResponse {
   item_id: string;
   preview: RelaxedPreview;
+  domain_preview?: DomainObfuscationPreview | null;
+  scope_check?: ScopeCheckResponse | null;
 }
 
 export interface PublishResponse {
@@ -134,6 +168,8 @@ export interface PublishedChallenge {
   dataset_ready: boolean;
   starter_ready?: boolean;
   dataset_anomalies: string[];
+  pool_label?: string | null;
+  reward?: ChallengeReward | null;
   published_at: string | null;
 }
 
@@ -177,6 +213,18 @@ export interface Scorecard {
   dimensions: Record<string, number>;
   summary: string;
   notes?: string[];
+  execution_points?: number;
+  interview_pass_earned?: boolean;
+  interview_benchmark?: number;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  display_name: string;
+  track: ChallengeTrack;
+  execution_points: number;
+  highlight: string;
+  challenge_id?: string | null;
 }
 
 export interface SubmitResponse {

@@ -54,6 +54,9 @@ export default function StudentBrowsePage() {
           <Link href="/startup" className="text-xs text-slate-500 hover:text-slate-300">
             CTO Dashboard →
           </Link>
+          <Link href="/student/leaderboard" className="text-xs text-slate-500 hover:text-accent">
+            Execution Rank
+          </Link>
         </div>
       </header>
 

@@ -5,7 +5,7 @@
 - Repository root: `/Users/allisonlawlixuan/Documents/repos/the_sandbox`
 - Standard startup path: `./init.sh`
 - Standard verification path: `python -m pytest backend/tests/ -v`
-- Current highest-priority unfinished feature: `assessor-001` — Docker harness + full technical grading (MVP assessor plugins for tracks-001/product-001 already ship stub/rubric scoring)
+- Current highest-priority unfinished feature: `assessor-001` — Docker harness + full technical grading
 - Current blocker: None
 
 ## Session Log
@@ -106,3 +106,17 @@
 - Docs: updated per documentation-sync.md
 - Known risk or unresolved issue: Technical assessor is structure stub only; Docker harness deferred to assessor-001
 - Next best step: assessor-001 — isolated Docker runner + LLM taste layer
+
+### Session 008
+
+- Date: 2026-06-20
+- Goal: Defensive Business Model hybrid hackathon demo (trust-001, rewards-001, rank-001)
+- Completed:
+  - scope_guard.py + demo-007 rejection; domain_obfuscator.py + demo-005 StealthCo; demo-006 Platform Pool
+  - ChallengeReward lock gate on publish; RelaxationPanel reward + domain preview; student bounty badges
+  - /student/leaderboard + /enterprise/radar stub pages; execution_points on scorecard
+  - test_trust.py; docs PRODUCT.md defensive posture + README judge script
+- Verification run: `python -m pytest backend/tests/ -v` → **81 passed**; `npm run typecheck` → OK
+- Docs: updated per documentation-sync.md
+- Commits: none
+- Next best step: assessor-001

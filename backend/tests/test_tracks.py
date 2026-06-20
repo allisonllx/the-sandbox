@@ -23,7 +23,15 @@ def _publish(item_id: str, *, track: ChallengeTrack | None = None) -> dict:
         noise_level=0.2,
         abstract_brand=True,
     )
-    body: dict = {"config": config.model_dump()}
+    body: dict = {
+        "config": config.model_dump(),
+        "reward": {
+            "reward_type": "cash_bounty",
+            "amount_usd": 500,
+            "interview_benchmark": 75,
+            "locked": True,
+        },
+    }
     if track is not None:
         body["track"] = track.value
     res = client.post(f"/api/v1/triage/publish/{item_id}", json=body)

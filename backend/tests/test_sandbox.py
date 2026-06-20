@@ -28,7 +28,11 @@ def _publish_demo_item(item_id: str = "demo-003") -> None:
         synthesize_variables=True,
         noise_level=0.3,
     )
-    res = client.post(f"/api/v1/triage/publish/{item_id}", json={"config": config.model_dump()})
+    reward = {"reward_type": "cash_bounty", "amount_usd": 500, "interview_benchmark": 75, "locked": True}
+    res = client.post(
+        f"/api/v1/triage/publish/{item_id}",
+        json={"config": config.model_dump(), "reward": reward},
+    )
     assert res.status_code == 200, res.text
 
 

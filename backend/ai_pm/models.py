@@ -78,6 +78,33 @@ class RelaxationConfig(BaseModel):
         default=True,
         description="Replace company-specific branding with the public brand_proxy name",
     )
+    obfuscate_domain: bool = Field(
+        default=False,
+        description="Mask industry domain (e.g. food delivery → equipment sharing) for stealth",
+    )
+
+
+class DomainObfuscationPreview(BaseModel):
+    domain_proxy: str
+    public_title: str
+    public_narrative: str
+    internal_intent: str
+    transform_rationale: str
+    brand_proxy: str
+    field_map: dict[str, str] = Field(default_factory=dict)
+    public_fields: list[str] = Field(default_factory=list)
+
+
+class RewardType(str, Enum):
+    cash_bounty = "cash_bounty"
+    interview_pass = "interview_pass"
+
+
+class ChallengeReward(BaseModel):
+    reward_type: RewardType = RewardType.cash_bounty
+    amount_usd: int | None = Field(default=500, description="Demo bounty amount")
+    interview_benchmark: int = Field(default=75, ge=0, le=100)
+    locked: bool = False
 
 
 class RelaxedPreview(BaseModel):
@@ -153,6 +180,20 @@ class BacklogItem(BaseModel):
     brand_proxy: str | None = Field(default=None, description="Public fictional brand name")
     deliverable_types: list[DeliverableType] = Field(default_factory=list)
     evaluation_focus: list[str] = Field(default_factory=list)
+    sponsor_profile: str | None = Field(
+        default=None,
+        description="Demo sponsor persona label (CTO dashboard only)",
+    )
+    domain_proxy: str | None = Field(default=None, description="Obfuscated industry domain key")
+    domain_preview: DomainObfuscationPreview | None = Field(
+        default=None,
+        description="CTO-only before/after domain transform preview",
+    )
+    reward: ChallengeReward | None = Field(default=None, description="Guaranteed student reward")
+    pool_label: str | None = Field(
+        default=None,
+        description="Open sandbox pool label for legacy anonymized scenarios",
+    )
     published_at: datetime | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -178,11 +219,24 @@ class RelaxRequest(BaseModel):
         default=None,
         description="Founder override for innovation track at publish time",
     )
+    reward: ChallengeReward | None = Field(
+        default=None,
+        description="Guaranteed bounty or interview pass — must be locked to publish",
+    )
+
+
+class ScopeCheckResponse(BaseModel):
+    allowed: bool
+    estimated_hours: float
+    reason: str
+    suggested_breakdown: list[str] = Field(default_factory=list)
 
 
 class RelaxResponse(BaseModel):
     item_id: str
     preview: RelaxedPreview
+    domain_preview: DomainObfuscationPreview | None = None
+    scope_check: ScopeCheckResponse | None = None
 
 
 class PublishRequest(BaseModel):
@@ -196,3 +250,5 @@ class PublishResponse(BaseModel):
     status: BacklogStatus
     track: ChallengeTrack
     brand_proxy: str | None = None
+    domain_proxy: str | None = None
+    reward: ChallengeReward | None = None

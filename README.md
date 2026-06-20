@@ -146,7 +146,18 @@ The dashboard will be live at **http://localhost:3000** → auto-redirects to **
 python -m pytest backend/tests/ -v
 ```
 
-Expected output: **54 passed**.
+Expected output: **81+ passed**.
+
+---
+
+## Judge Demo Script (Defensive Business Model)
+
+Hybrid demo: **real** scope cap + domain obfuscation; **stubbed** bounty lock + execution rank.
+
+1. **StealthCo domain mask** — `/startup` → select `demo-005` → enable *Obfuscate Industry Domain* → Preview → Publish (lock reward first) → `/student/challenges/demo-005` shows equipment-sharing narrative (no food/merchant tokens)
+2. **Scope cap rejection** — select `demo-007` → Publish → 422 with union-rep breakdown
+3. **Bounty guarantee** — select `demo-003` (NovaPay) → Lock $500 bounty → Publish → student card shows bounty badge
+4. **Execution rank** — `/student/leaderboard` and `/enterprise/radar` for reverse-sourcing narrative
 
 ---
 
@@ -184,7 +195,8 @@ The response contains **only structural metadata** — no email, no token, no IP
 | `GET` | `/api/v1/triage/backlog/{id}` | Get a single backlog item |
 | `POST` | `/api/v1/triage/score` | Score a `SanitizedMetadata` blob |
 | `POST` | `/api/v1/triage/relax/{id}` | Preview relaxation controls (no LLM) |
-| `POST` | `/api/v1/triage/publish/{id}` | Publish challenge, generate Micro-PRD + dataset |
+| `POST` | `/api/v1/triage/publish/{id}` | Publish challenge (requires locked reward; scope guard) |
+| `GET` | `/api/v1/triage/backlog/{id}/scope` | Scope estimate for backlog item |
 | `GET` | `/api/v1/sandbox/challenges` | List published public challenges |
 | `GET` | `/api/v1/sandbox/challenges/{id}` | Get challenge with Micro-PRD |
 | `GET` | `/api/v1/sandbox/challenges/{id}/dataset` | Download synthetic SQLite dataset |
@@ -219,5 +231,9 @@ Secrets must never be committed. Use `.env` locally (already in `.gitignore`).
 | `privacy-001` Local Privacy Proxy | ✅ Passing — 23 tests |
 | `triage-001` AI PM Triage Dashboard | ✅ Passing — 20 tests |
 | `sandbox-001` Student Terminal & Micro-PRD | ✅ Passing — 8 tests |
-| `workspace-002` Multi-File Workspace & Persistence | ✅ Passing — 13 new tests (67 total) |
+| `workspace-002` Multi-File Workspace & Persistence | ✅ Passing |
+| `tracks-001` / `product-001` Innovation Hub tracks | ✅ Passing |
+| `trust-001` Scope cap + domain obfuscation | ✅ Passing |
+| `rewards-001` Bounty / interview lock (stub) | ✅ Passing |
+| `rank-001` Execution rank + enterprise radar (stub) | ✅ Passing |
 | `assessor-001` AI Assessor & Scorecard | 🔲 Not started |
