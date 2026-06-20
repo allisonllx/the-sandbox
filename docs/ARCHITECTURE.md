@@ -32,9 +32,11 @@ the_sandbox/
 │   ├── components/
 │   └── package.json
 ├── docker/                   # Dockerfiles for ephemeral code-runner containers
+├── docs/                     # Project documentation
+│   ├── api-patterns.md       # API design patterns
+│   ├── ARCHITECTURE.md       # This file
+│   └── PRODUCT.md            # Non-technical product overview
 ├── AGENTS.md                 # Agent operating rules (read this first every session)
-├── ARCHITECTURE.md           # This file
-├── PRODUCT.md                # Non-technical product overview
 ├── feature_list.json         # Authoritative feature state tracker
 ├── claude-progress.md        # Session log and current verified state
 ├── init.sh                   # Standard startup and verification script

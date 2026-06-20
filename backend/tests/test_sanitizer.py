@@ -153,6 +153,8 @@ class TestSanitizerOutput:
     def test_empty_input_returns_gracefully(self):
         metadata = sanitize("")
         assert metadata.approximate_row_scale is None or metadata.approximate_row_scale == 0
+        assert metadata.ner.status.value == "not_run"
+        assert metadata.ner.entity_counts == []
 
     def test_entirely_blocked_input_returns_gracefully(self):
         text = "The password is hunter2\n\nAnother line with password=secret123"
@@ -236,6 +238,8 @@ class TestNERProcessingNotes:
 
         metadata = sanitize("Login failed for user John Smith at Acme Corp")
         notes = " ".join(metadata.processing_notes)
+        assert metadata.ner.status.value == "skipped"
+        assert metadata.ner.model_available is False
         assert "NER pass skipped" in notes
         assert "spaCy model not available" in notes
 
@@ -251,6 +255,9 @@ class TestNERProcessingNotes:
 
         metadata = sanitize("2024-03-12 ERROR status=503 duration_ms=1200")
         notes = " ".join(metadata.processing_notes)
+        assert metadata.ner.status.value == "completed_empty"
+        assert metadata.ner.model_available is True
+        assert metadata.ner.entity_counts == []
         assert "NER pass completed" in notes
         assert "no PERSON, ORG, GPE, or PRODUCT entities" in notes
         assert "not available" not in notes
@@ -267,6 +274,10 @@ class TestNERProcessingNotes:
 
         metadata = sanitize("Issue reported by John Smith at Acme Corp")
         notes = " ".join(metadata.processing_notes)
+        assert metadata.ner.status.value == "completed"
+        assert metadata.ner.model_available is True
+        assert len(metadata.ner.entity_counts) == 2
+        assert metadata.ner_entity_counts == metadata.ner.entity_counts
         assert "NER pass completed" in notes
         assert "2 entity token(s) detected" in notes
 

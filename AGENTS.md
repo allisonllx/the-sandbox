@@ -27,6 +27,12 @@ feature work on top of a broken starting state.
 - Do not silently change verification rules during implementation.
 - Prefer durable repo artifacts over chat summaries.
 
+## Topic Docs
+
+- API Design Patterns (`docs/api-patterns.md`) — Required reading when adding endpoints
+- Architecture (`docs/ARCHITECTURE.md`) — System design and data flows
+- Product (`docs/PRODUCT.md`) — User personas, flows, and scope
+
 ## Required Artifacts
 
 - `feature_list.json`: source of truth for feature state

@@ -24,6 +24,33 @@ class NEREntityCount(BaseModel):
     count: int
 
 
+class NERStatus(str, Enum):
+    not_run = "not_run"
+    skipped = "skipped"
+    completed_empty = "completed_empty"
+    completed = "completed"
+
+
+class NERSummary(BaseModel):
+    """Structured outcome of the local NER pass — check this before reading processing_notes."""
+
+    status: NERStatus = Field(
+        description=(
+            "not_run: NER stage not reached; "
+            "skipped: spaCy model unavailable; "
+            "completed_empty: model ran, no entities found; "
+            "completed: model ran, entities found"
+        )
+    )
+    model_available: bool = Field(
+        description="Whether the spaCy en_core_web_sm model loaded successfully"
+    )
+    entity_counts: list[NEREntityCount] = Field(
+        default_factory=list,
+        description="Named-entity types and counts detected in scrubbed text",
+    )
+
+
 class FieldMetadata(BaseModel):
     name: str
     inferred_type: str = Field(
@@ -61,9 +88,16 @@ class SanitizedMetadata(BaseModel):
         default_factory=list,
         description="Types and counts of PII stripped — never the values themselves",
     )
+    ner: NERSummary = Field(
+        default_factory=lambda: NERSummary(
+            status=NERStatus.not_run,
+            model_available=False,
+        ),
+        description="Structured NER outcome — prefer this over inferring from ner_entity_counts",
+    )
     ner_entity_counts: list[NEREntityCount] = Field(
         default_factory=list,
-        description="Named-entity types and counts detected by local NER",
+        description="Deprecated mirror of ner.entity_counts — use metadata.ner instead",
     )
     blocked_chunk_count: int = Field(
         default=0,

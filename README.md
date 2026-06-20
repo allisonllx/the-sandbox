@@ -39,7 +39,7 @@ The critical guarantee: **raw corporate data never leaves the local process.** T
 | Privacy Proxy | Regex PII masking · spaCy `en_core_web_sm` (local NER, offline) |
 | AI / LLM | OpenAI API (`gpt-4o-mini`) · heuristic fallback when key absent |
 | Frontend | Next.js 14 · TypeScript · Tailwind CSS |
-| Testing | pytest · 43 tests, 0 mocks for network calls in privacy layer |
+| Testing | pytest · 46 tests, 0 mocks for network calls in privacy layer |
 | Code Runner | Docker (ephemeral containers) — planned for `assessor-001` |
 
 ---
@@ -62,7 +62,7 @@ the_sandbox/
 │   ├── api/
 │   │   ├── routes.py        # POST /api/v1/proxy/sanitize
 │   │   └── triage_routes.py # GET/POST /api/v1/triage/*
-│   ├── tests/               # 43 pytest tests
+│   ├── tests/               # 46 pytest tests
 │   ├── main.py              # FastAPI app entry point
 │   └── requirements.txt
 ├── frontend/
@@ -70,13 +70,27 @@ the_sandbox/
 │   ├── components/          # BacklogCard, RelaxationPanel, SensitivityBadge, ScoreBar
 │   ├── lib/                 # API client, TypeScript types
 │   └── package.json
+├── docs/
+│   ├── api-patterns.md      # API design patterns — required when adding endpoints
+│   ├── ARCHITECTURE.md      # System architecture + data-flow diagrams
+│   └── PRODUCT.md           # Non-technical product overview
 ├── AGENTS.md                # Agent operating rules (read first every session)
-├── ARCHITECTURE.md          # System architecture + data-flow diagrams
-├── PRODUCT.md               # Non-technical product overview
 ├── feature_list.json        # Feature state tracker
 ├── claude-progress.md       # Session log
 └── init.sh                  # Standard startup script
 ```
+
+---
+
+## Documentation
+
+| Doc | Purpose |
+|---|---|
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System design, directory layout, data flows |
+| [`docs/PRODUCT.md`](docs/PRODUCT.md) | User personas, core flows, scope, roadmap |
+| [`docs/api-patterns.md`](docs/api-patterns.md) | API response shapes and endpoint conventions |
+
+Agent sessions should read `AGENTS.md` first, then the relevant topic doc above.
 
 ---
 
@@ -139,7 +153,7 @@ The dashboard will be live at **http://localhost:3000** → auto-redirects to **
 python -m pytest backend/tests/ -v
 ```
 
-Expected output: **43 passed**.
+Expected output: **46 passed**.
 
 ---
 

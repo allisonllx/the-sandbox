@@ -26,6 +26,12 @@ export interface SanitizedMetadata {
   approximate_row_scale: number | null;
   event_type_frequencies: EventFrequency[];
   pii_detections: PIIDetection[];
+  ner: {
+    status: "not_run" | "skipped" | "completed_empty" | "completed";
+    model_available: boolean;
+    entity_counts: { entity_label: string; count: number }[];
+  };
+  /** @deprecated Prefer metadata.ner.entity_counts */
   ner_entity_counts: { entity_label: string; count: number }[];
   blocked_chunk_count: number;
   processing_notes: string[];

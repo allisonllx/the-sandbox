@@ -21,10 +21,12 @@ from typing import Sequence
 
 from .models import (
     NEREntityCount,
+    NERSummary,
+    NERStatus,
     PIIDetection,
     SanitizedMetadata,
 )
-from .ner_engine import analyze_entities
+from .ner_engine import NERResult, analyze_entities, is_available
 from .pii_patterns import scrub
 from .structural_extractor import InputFormat, extract
 
@@ -48,6 +50,53 @@ _CHUNK_SEPARATOR = re.compile(r"\n{2,}")
 
 def _compile_extra_keywords(keywords: Sequence[str]) -> list[re.Pattern[str]]:
     return [re.compile(re.escape(kw), re.IGNORECASE) for kw in keywords]
+
+
+def _build_ner_summary(ner_result: NERResult) -> NERSummary:
+    entity_counts = [
+        NEREntityCount(entity_label=label, count=count)
+        for label, count in sorted(ner_result.counts.items())
+    ]
+    if not ner_result.model_available:
+        status = NERStatus.skipped
+    elif not ner_result.counts:
+        status = NERStatus.completed_empty
+    else:
+        status = NERStatus.completed
+    return NERSummary(
+        status=status,
+        model_available=ner_result.model_available,
+        entity_counts=entity_counts,
+    )
+
+
+def _ner_not_run_summary() -> NERSummary:
+    return NERSummary(
+        status=NERStatus.not_run,
+        model_available=is_available(),
+        entity_counts=[],
+    )
+
+
+def _append_ner_note(notes: list[str], ner: NERSummary) -> None:
+    if ner.status == NERStatus.skipped:
+        notes.append(
+            "NER pass skipped — spaCy model not available. "
+            "Install with: pip install spacy && "
+            "pip install https://github.com/explosion/spacy-models/releases/download/"
+            "en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl"
+        )
+    elif ner.status == NERStatus.completed_empty:
+        notes.append(
+            "NER pass completed — no PERSON, ORG, GPE, or PRODUCT entities "
+            "detected in scrubbed text."
+        )
+    elif ner.status == NERStatus.completed:
+        total = sum(e.count for e in ner.entity_counts)
+        labels = ", ".join(e.entity_label for e in ner.entity_counts)
+        notes.append(
+            f"NER pass completed — {total} entity token(s) detected ({labels})."
+        )
 
 
 def _apply_guardrail(
@@ -99,6 +148,7 @@ def sanitize(
     if not raw_text or not raw_text.strip():
         return SanitizedMetadata(
             format_detected=InputFormat.text,
+            ner=_ner_not_run_summary(),
             processing_notes=["Input was empty."],
         )
 
@@ -113,6 +163,7 @@ def sanitize(
         return SanitizedMetadata(
             format_detected=InputFormat.text,
             blocked_chunk_count=blocked_count,
+            ner=_ner_not_run_summary(),
             processing_notes=notes + ["All content was blocked by the guardrail."],
         )
 
@@ -129,30 +180,8 @@ def sanitize(
         notes.append(f"{total} PII token(s) masked across {len(pii_detections)} type(s).")
 
     # --- Stage 3: NER Pass ---
-    ner_result = analyze_entities(scrubbed_text)
-    ner_entity_counts = [
-        NEREntityCount(entity_label=label, count=count)
-        for label, count in sorted(ner_result.counts.items())
-    ]
-
-    if not ner_result.model_available:
-        notes.append(
-            "NER pass skipped — spaCy model not available. "
-            "Install with: pip install spacy && "
-            "pip install https://github.com/explosion/spacy-models/releases/download/"
-            "en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl"
-        )
-    elif not ner_result.counts:
-        notes.append(
-            "NER pass completed — no PERSON, ORG, GPE, or PRODUCT entities "
-            "detected in scrubbed text."
-        )
-    else:
-        total_entities = sum(ner_result.counts.values())
-        labels = ", ".join(sorted(ner_result.counts))
-        notes.append(
-            f"NER pass completed — {total_entities} entity token(s) detected ({labels})."
-        )
+    ner = _build_ner_summary(analyze_entities(scrubbed_text))
+    _append_ner_note(notes, ner)
 
     # --- Stage 4: Structural Extraction ---
     struct = extract(scrubbed_text, fmt)
@@ -167,7 +196,8 @@ def sanitize(
         approximate_row_scale=struct.get("row_scale"),
         event_type_frequencies=struct.get("event_frequencies", []),
         pii_detections=pii_detections,
-        ner_entity_counts=ner_entity_counts,
+        ner=ner,
+        ner_entity_counts=ner.entity_counts,
         blocked_chunk_count=blocked_count,
         processing_notes=notes,
     )

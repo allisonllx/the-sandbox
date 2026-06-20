@@ -14,7 +14,7 @@
 
 - Date: 2026-06-20
 - Goal: Scaffold repo context files from PRD
-- Completed: Created AGENTS.md, feature_list.json, claude-progress.md, init.sh, session-handoff.md, clean-state-checklist.md, evaluator-rubric.md, ARCHITECTURE.md, PRODUCT.md
+- Completed: Created AGENTS.md, feature_list.json, claude-progress.md, init.sh, session-handoff.md, clean-state-checklist.md, evaluator-rubric.md, docs/ARCHITECTURE.md, docs/PRODUCT.md
 - Verification run: n/a (no code yet)
 - Evidence captured: n/a
 - Commits: none
