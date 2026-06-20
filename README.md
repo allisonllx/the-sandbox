@@ -188,7 +188,15 @@ The response contains **only structural metadata** — no email, no token, no IP
 | `GET` | `/api/v1/sandbox/challenges` | List published public challenges |
 | `GET` | `/api/v1/sandbox/challenges/{id}` | Get challenge with Micro-PRD |
 | `GET` | `/api/v1/sandbox/challenges/{id}/dataset` | Download synthetic SQLite dataset |
-| `POST` | `/api/v1/sandbox/challenges/{id}/submit` | Submit student solution |
+| `GET` | `/api/v1/sandbox/challenges/{id}/starter` | Multi-file starter scaffold (JSON) |
+| `GET` | `/api/v1/sandbox/challenges/{id}/starter/download` | Starter scaffold as ZIP |
+| `GET` | `/api/v1/sandbox/challenges/{id}/workspace` | Bootstrap workspace session + load draft |
+| `PUT` | `/api/v1/sandbox/challenges/{id}/draft` | Save workspace draft |
+| `POST` | `/api/v1/sandbox/validate` | Python syntax diagnostics for Monaco |
+| `POST` | `/api/v1/sandbox/challenges/{id}/run` | Enqueue public test run (async) |
+| `GET` | `/api/v1/sandbox/jobs/{id}` | Poll run job output |
+| `POST` | `/api/v1/sandbox/challenges/{id}/submit` | Submit inline multi-file solution |
+| `POST` | `/api/v1/sandbox/challenges/{id}/submit/zip` | Submit ZIP archive (raw body) |
 
 Full interactive docs: **http://localhost:8000/docs**
 
@@ -211,4 +219,5 @@ Secrets must never be committed. Use `.env` locally (already in `.gitignore`).
 | `privacy-001` Local Privacy Proxy | ✅ Passing — 23 tests |
 | `triage-001` AI PM Triage Dashboard | ✅ Passing — 20 tests |
 | `sandbox-001` Student Terminal & Micro-PRD | ✅ Passing — 8 tests |
+| `workspace-002` Multi-File Workspace & Persistence | ✅ Passing — 13 new tests (67 total) |
 | `assessor-001` AI Assessor & Scorecard | 🔲 Not started |

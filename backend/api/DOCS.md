@@ -10,7 +10,7 @@ HTTP layer for the backend. Thin route handlers that delegate to domain modules 
 |---|---|---|
 | `routes.py` | `/api/v1/proxy` | `POST /sanitize`, `GET /health` |
 | `triage_routes.py` | `/api/v1/triage` | `GET /backlog`, `POST /score`, `POST /relax/{id}`, `POST /publish/{id}` |
-| `sandbox_routes.py` | `/api/v1/sandbox` | `GET /challenges`, `GET /challenges/{id}`, `GET /challenges/{id}/dataset`, `POST /challenges/{id}/submit` |
+| `sandbox_routes.py` | `/api/v1/sandbox` | Challenges, starter, workspace/draft, validate, run jobs, submit (inline + ZIP) |
 
 Routers are mounted in `main.py`. OpenAPI docs at `/docs`.
 

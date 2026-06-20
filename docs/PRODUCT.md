@@ -2,7 +2,7 @@
 
 ## What It Does
 
-The Sandbox is a talent platform that turns a startup's messy internal backlog into structured, safe-to-share coding challenges that student developers can solve to prove their skills. A local privacy filter automatically strips sensitive data before anything leaves the company, so founders can outsource real engineering problems without risking IP leaks. Students get graded by an AI that evaluates not just whether their code works, but whether it reflects professional engineering judgement — bypassing the résumé filters and social networks that usually gate entry-level roles.
+The Sandbox is an **Innovation Hub** — a talent platform that turns a startup's messy internal backlog into structured, safe-to-share challenges across multiple innovation tracks. **Technical** challenges focus on debugging and optimization; **Product Feature** challenges focus on UX reasoning, prototype delivery, and design trade-offs documented in `DESIGN.md`. A local privacy filter automatically strips sensitive data before anything leaves the company, so founders can outsource real problems without risking IP leaks.
 
 ## Target Users
 
@@ -16,13 +16,13 @@ Technically capable but locked out of top roles by the absence of a pedigreed ne
 
 1. **Startup: Ingest & sanitize** — Paste or upload raw logs/feedback into the local client. The privacy proxy scrubs PII and extracts structural metadata without sending any content externally.
 
-2. **Startup: Triage & de-risk** — The AI PM ranks the backlog by Severity, Friction, and Sensitivity. The founder reviews the Red/Yellow/Green tags, applies Relaxation Controls (abstract logic, synthesize variable names, inject statistical noise), and approves a challenge for publication.
+2. **Startup: Triage & de-risk** — The AI PM ranks the backlog by Severity, Friction, and Sensitivity, suggests an **innovation track** (Technical or Product Feature for MVP), and applies Relaxation Controls including brand abstraction (`brand_proxy`). The founder reviews tags and publishes by track.
 
-3. **Student: Discover & set up** — Browse published challenges, read the Micro-PRD, and download a custom-generated synthetic dataset that mirrors the structural complexity of the real problem.
+3. **Student: Discover & set up** — Browse the Innovation Hub with track filter tabs. Technical challenges include a synthetic SQLite dataset; Product Feature challenges include a frontend starter scaffold and required `DESIGN.md` template.
 
-4. **Student: Solve & submit** — Write and run code in the interactive browser terminal, then submit a solution.
+4. **Student: Solve & submit** — Technical track: Monaco workspace + public tests + multi-file submit. Product track: prototype editor + optional Figma/deploy links + `DESIGN.md` in submit manifest.
 
-5. **Startup: Review matches** — The AI Assessor scores each submission automatically. Top-performing candidates are surfaced in the CTO's matching dashboard with a full taste-and-judgment scorecard.
+5. **Startup: Review matches** — Track-aware assessor plugins score submissions (Technical: tests + taste; Product: structure + DESIGN.md rubric). Scorecard dimensions differ by track.
 
 ## Out of Scope
 
@@ -33,7 +33,7 @@ Technically capable but locked out of top roles by the absence of a pedigreed ne
 
 ## Roadmap / Known Gaps
 
-- **Hackathon MVP scope:** End-to-end demo loop — ingest 5 lines of log text → privacy proxy → relaxation toggle → published challenge → mock submission → AI Assessor scorecard.
+- **Hackathon MVP scope:** Two active tracks — **Technical** + **Product Feature**; Automation / AI Governance / Strategy registered as taxonomy with "Coming soon" UI.
 - **Not yet built:** User authentication, billing, persistent user profiles, multi-tenant startup isolation, production-grade code runner scaling.
 - **Open decision:** Cloud deployment target (AWS, GCP, Fly.io) and whether the privacy proxy ships as a standalone CLI binary or an Electron app.
 - **Open decision:** LLM provider selection (OpenAI vs Anthropic) and whether taste evaluation uses a fine-tuned model or a prompt-engineered general model.

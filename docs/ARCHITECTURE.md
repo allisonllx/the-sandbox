@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Sandbox is a two-sided, zero-trust R&D and proof-of-work talent platform. Growth-stage startups connect their internal feedback/log channels to a local privacy proxy that scrubs PII and extracts structural metadata without ever sending raw data externally. That sanitized metadata is processed by an AI Product Manager layer that triages the backlog and lets founders publish de-risked coding challenges. Students solve those challenges inside an interactive browser terminal using synthetically generated datasets, and their submissions are graded automatically by an AI Assessor that evaluates both correctness and code taste.
+The Sandbox is a two-sided, zero-trust R&D and proof-of-work talent platform organized as an **Innovation Hub** with pluggable **innovation tracks**. Growth-stage startups connect internal feedback/log channels to a local privacy proxy that scrubs PII and extracts structural metadata without ever sending raw data externally. The AI PM layer triages the backlog, routes items to a track (Technical or Product Feature for MVP), applies brand abstraction, and lets founders publish de-risked challenges. Students solve track-specific workspaces; submissions are graded by **track-aware assessor plugins**.
 
 ## Tech Stack
 
@@ -20,8 +20,8 @@ The Sandbox is a two-sided, zero-trust R&D and proof-of-work talent platform. Gr
 the_sandbox/
 ├── backend/                  # FastAPI application
 │   ├── privacy_proxy/        # Local sanitization engine (runs offline)
-│   ├── ai_pm/                # Triage matrix, Micro-PRD generator, noise synthesizer
-│   ├── assessor/             # Code runner orchestration, LLM taste evaluator
+│   ├── ai_pm/                # Triage matrix, track router, Micro-PRD generator, relaxation
+│   ├── assessor/             # Pluggable per-track assessor plugins (technical, product)
 │   ├── api/                  # REST route definitions
 │   ├── tests/                # pytest test suite
 │   └── requirements.txt
@@ -66,36 +66,47 @@ ai_pm/triage.py  ──► LLM API (structural metadata only)
   └─ Red / Yellow / Green sensitivity tag
   │
   ▼
+ai_pm/track_router.py  (heuristic track suggestion + brand_proxy)
+  │
+  ▼
 ai_pm/relaxation.py  (founder applies controls in the UI)
   ├─ Abstract proprietary logic toggle
   ├─ Variable-name synthesizer
-  └─ Statistical noise slider (0–100%)
+  ├─ Statistical noise slider (0–100%)
+  └─ Brand abstraction (company tokens → brand_proxy)
   │
   ▼
-ai_pm/microprd.py  ──► Micro-PRD (Context, Success, Constraints, Instructions)
-ai_pm/synthesizer.py  ──► Synthetic SQLite dataset with injected anomalies
+ai_pm/microprd.py  ──► Track-aware Micro-PRD
+  ├─ Technical: Context, Success, Constraints, Instructions
+  └─ Product Feature: + persona, problem framing, design considerations, deliverables
   │
   ▼
-[Challenge published to public sandbox]
+Publish branch by track:
+  ├─ technical → synthesizer.py (SQLite + anomalies) + starter_scaffold.py
+  └─ product_feature → product_starter_scaffold.py (HTML/CSS/JS + DESIGN.md)
+  │
+  ▼
+[Challenge published to public Innovation Hub]
 ```
 
-### 2. Student Submission → Scorecard
+### 2. Student Submission → Scorecard (track-aware)
 
 ```
 [Student browser]
-Interactive terminal → code submission
+Innovation Hub browse (track filter tabs)
+  │
+  ├─ technical → ChallengeWorkspace (Monaco Python) → Run public tests → Submit
+  └─ product_feature → ProductWorkspace (Monaco prototype + link fields) → Submit
   │
   ▼
-assessor/runner.py
-  └─ Spins up ephemeral Docker container (no network, memory + CPU caps)
-     Runs solution against secret edge-case tests
+assessor/registry.py
+  ├─ TechnicalAssessor — preflight + structure stub (Docker harness in assessor-001)
+  └─ ProductAssessor — DESIGN.md rubric + prototype structure checks
   │
   ▼
-assessor/taste_evaluator.py  ──► LLM API
-  └─ Evaluates: error handling, architectural simplicity, optimization efficiency
-  │
-  ▼
-Scorecard rendered in browser (Performance · Security Resilience · Architectural Elegance)
+Scorecard rendered in browser
+  ├─ Technical: Performance · Security Resilience · Architectural Elegance
+  └─ Product: Product Thinking · UX & IA · Implementation · Communication
   │
   ▼
 [Top profiles surfaced to sponsoring company CTO dashboard]

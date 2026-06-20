@@ -10,7 +10,9 @@ pytest suite verifying the privacy proxy, AI PM triage layer, and public sandbox
 |---|---|
 | `test_sanitizer.py` | PII masking, NER status fields, structural extraction, zero-network guard |
 | `test_triage.py` | Scoring, sensitivity tags, relaxation controls, demo store |
-| `test_sandbox.py` | Publish flow, dataset anomalies, sandbox API, submissions |
+| `test_sandbox.py` | Publish flow, starter scaffold, workspace/draft, validate, submit, ZIP guard |
+| `test_draft_store.py` | Draft persistence and size limits |
+| `test_run_jobs.py` | Async run job lifecycle and concurrency |
 | `fixtures/sample_log.txt` | Realistic log lines with synthetic PII for integration tests |
 
 ## How It Fits In

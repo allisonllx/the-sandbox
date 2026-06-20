@@ -65,6 +65,7 @@ docker/sandbox-runner/rootfs/
 ### Sandbox / Generated data
 # Synthetic datasets are generated at runtime — don't commit them
 backend/generated_datasets/
+data/
 *.sqlite
 *.sqlite3
 !backend/tests/fixtures/*.sqlite   # fixture DBs used in tests are fine to commit

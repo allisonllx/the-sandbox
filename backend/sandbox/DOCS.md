@@ -2,23 +2,29 @@
 
 ## Purpose
 
-Public challenge layer for students. Serves published challenges (Micro-PRD + synthetic SQLite datasets) and accepts code submissions queued for the AI Assessor.
+Public challenge layer for students (Innovation Hub). Serves track-aware published challenges, workspace drafts, public test runs (technical track), and disk-backed submissions with optional external links (product track).
 
 ## Contents
 
 | File | Role |
 |---|---|
-| `models.py` | `PublishedChallenge`, `SubmitRequest`, `SubmitResponse`, `SubmissionRecord` |
-| `synthesizer.py` | Procedural SQLite generator with injected anomalies |
-| `submission_store.py` | In-memory submission queue (assessor-001 consumer) |
+| `models.py` | Public API models incl. track fields, `SubmitRequest.links`, scorecard response |
+| `synthesizer.py` | Procedural SQLite generator with injected anomalies (technical track) |
+| `starter_scaffold.py` | 5-file Python starter (technical track) |
+| `product_starter_scaffold.py` | HTML/CSS/JS + DESIGN.md + mock JSON (product track) |
+| `workspace.py` | Anonymous `sandbox_workspace_id` cookie helpers |
+| `draft_store.py` | File-backed drafts under `data/drafts/` |
+| `validate.py` | `ast.parse` / `py_compile` diagnostics for Monaco |
+| `archive.py` | Safe ZIP pack/unpack (path traversal guard, size caps) |
+| `run_jobs.py` | In-process async public test runs under `data/jobs/` |
+| `submission_store.py` | Disk snapshots under `data/submissions/` (files + links + scorecard) |
 
 ## How It Fits In
 
-Publishing from `POST /api/v1/triage/publish/{id}` generates a dataset via `synthesizer.py` and sets backlog status to `published`. Routes in `api/sandbox_routes.py` expose the public student API. Frontend: `/student` and `/student/challenges/[id]`.
+Publishing from `POST /api/v1/triage/publish/{id}` branches by track. Routes in `api/sandbox_routes.py` expose list/filter by track, starter, workspace, submit (with assessor), and scorecard GET. Frontend: `/student` track tabs; `/student/challenges/[id]` routes to `ChallengeWorkspace` or `ProductWorkspace`.
 
 ## Notes for the Next Session
 
-- Datasets written to `backend/generated_datasets/{challenge_id}.sqlite` (gitignored)
-- Injected anomalies: NULL `query_hash`, missing index on `execution_time_ms`, unindexed `sessions.event_id` join
-- Submissions stored in memory only — assessor-001 should read from `submission_store`
+- Product track: no dataset download; submit requires DESIGN.md for strong assessor scores
+- `GET /sandbox/challenges?track=product_feature` filters published challenges
 - After code changes, check `docs/documentation-sync.md`

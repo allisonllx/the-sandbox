@@ -11,6 +11,25 @@ from ..privacy_proxy.models import SanitizedMetadata
 
 
 # ---------------------------------------------------------------------------
+# Innovation tracks
+# ---------------------------------------------------------------------------
+
+class ChallengeTrack(str, Enum):
+    technical = "technical"
+    product_feature = "product_feature"
+    automation = "automation"
+    ai_governance = "ai_governance"
+    strategy = "strategy"
+
+
+class DeliverableType(str, Enum):
+    code_repo = "code_repo"
+    frontend_prototype = "frontend_prototype"
+    external_link = "external_link"
+    mixed = "mixed"
+
+
+# ---------------------------------------------------------------------------
 # Scoring
 # ---------------------------------------------------------------------------
 
@@ -55,6 +74,10 @@ class RelaxationConfig(BaseModel):
         le=1.0,
         description="0.0 = no noise; 1.0 = maximum statistical perturbation of numeric metadata",
     )
+    abstract_brand: bool = Field(
+        default=True,
+        description="Replace company-specific branding with the public brand_proxy name",
+    )
 
 
 class RelaxedPreview(BaseModel):
@@ -76,10 +99,17 @@ class RelaxedPreview(BaseModel):
 class MicroPRD(BaseModel):
     challenge_id: str
     title: str
+    track: ChallengeTrack = ChallengeTrack.technical
+    brand_proxy: str | None = None
     context: str = Field(description="2-3 sentences explaining the type of problem")
     definition_of_success: list[str] = Field(description="3-5 measurable outcome bullets")
     structural_constraints: list[str] = Field(description="Tech stack, memory limits, complexity requirements")
-    sandbox_instructions: list[str] = Field(description="Numbered setup steps for the student")
+    sandbox_instructions: list[str] = Field(default_factory=list, description="Setup steps for the student")
+    user_persona: str | None = Field(default=None, description="Product track: target user persona")
+    problem_framing: str | None = Field(default=None, description="Product track: interview-style problem framing")
+    design_considerations: list[str] = Field(default_factory=list)
+    stack_guidance: list[str] = Field(default_factory=list)
+    deliverable_requirements: list[str] = Field(default_factory=list)
     generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -112,6 +142,17 @@ class BacklogItem(BaseModel):
         default_factory=list,
         description="Human-readable list of injected dataset anomalies",
     )
+    starter_files: dict[str, str] | None = Field(
+        default=None,
+        description="Multi-file starter scaffold generated on publish",
+    )
+    track: ChallengeTrack | None = Field(default=None, description="Innovation track for this challenge")
+    suggested_track: ChallengeTrack | None = Field(
+        default=None, description="AI PM track router suggestion",
+    )
+    brand_proxy: str | None = Field(default=None, description="Public fictional brand name")
+    deliverable_types: list[DeliverableType] = Field(default_factory=list)
+    evaluation_focus: list[str] = Field(default_factory=list)
     published_at: datetime | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -133,6 +174,10 @@ class ScoreResponse(BaseModel):
 
 class RelaxRequest(BaseModel):
     config: RelaxationConfig
+    track: ChallengeTrack | None = Field(
+        default=None,
+        description="Founder override for innovation track at publish time",
+    )
 
 
 class RelaxResponse(BaseModel):
@@ -149,3 +194,5 @@ class PublishResponse(BaseModel):
     item_id: str
     microprd: MicroPRD
     status: BacklogStatus
+    track: ChallengeTrack
+    brand_proxy: str | None = None

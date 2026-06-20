@@ -23,6 +23,7 @@ from __future__ import annotations
 import hashlib
 import math
 import random
+import re
 
 from ..privacy_proxy.models import FieldMetadata, SanitizedMetadata
 from .models import RelaxationConfig, RelaxedPreview
@@ -100,6 +101,29 @@ def _abstract_field_name(name: str) -> str:
         if term in lower:
             return replacement
     return name
+
+
+_BRAND_TERMS = (
+    "Grab",
+    "Gojek",
+    "Stripe",
+    "Datadog",
+    "CloudFront",
+    "Intercom",
+    "Shopify",
+    "Uber",
+    "Airbnb",
+)
+
+
+def abstract_brand_text(text: str, brand_proxy: str, *, enabled: bool = True) -> str:
+    """Replace known company/product tokens with the public brand_proxy name."""
+    if not enabled or not brand_proxy or not text:
+        return text
+    result = text
+    for term in _BRAND_TERMS:
+        result = re.sub(rf"\b{re.escape(term)}\b", brand_proxy, result, flags=re.IGNORECASE)
+    return result
 
 
 def _noise_factor(noise_level: float, seed: str, field: str) -> float:

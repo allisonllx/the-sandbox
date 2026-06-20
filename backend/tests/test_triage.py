@@ -23,6 +23,7 @@ from backend.ai_pm import store
 from backend.ai_pm.llm_client import set_default_client
 from backend.ai_pm.models import (
     BacklogStatus,
+    ChallengeTrack,
     RelaxationConfig,
     SensitivityTag,
     TechScores,
@@ -220,9 +221,9 @@ class TestRelaxation:
 # ===========================================================================
 
 class TestBacklogStore:
-    def test_three_demo_items_in_store(self):
+    def test_four_demo_items_in_store(self):
         items = store.list_items()
-        assert len(items) == 3
+        assert len(items) == 4
 
     def test_items_sorted_by_severity_descending(self):
         items = store.list_items()
@@ -233,6 +234,13 @@ class TestBacklogStore:
         for item in store.list_items():
             assert item.scores is not None
             assert item.tag is not None
+
+    def test_demo_004_in_backlog(self):
+        ids = {i.id for i in store.list_items()}
+        assert "demo-004" in ids
+        demo4 = store.get_item("demo-004")
+        assert demo4 is not None
+        assert demo4.suggested_track == ChallengeTrack.product_feature
 
     def test_sensitivity_tags_cover_all_three_tiers(self):
         tags = {item.tag for item in store.list_items()}

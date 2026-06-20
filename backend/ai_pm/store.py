@@ -17,7 +17,7 @@ from ..privacy_proxy.models import (
     PIIDetection,
     SanitizedMetadata,
 )
-from .models import BacklogItem, BacklogStatus, SensitivityTag, TechScores
+from .models import BacklogItem, BacklogStatus, ChallengeTrack, DeliverableType, SensitivityTag, TechScores
 
 # ---------------------------------------------------------------------------
 # Demo seed data — three pre-scored backlog items
@@ -141,6 +141,56 @@ def _make_cache_miss_item() -> BacklogItem:
     return item
 
 
+def _make_merchant_discovery_item() -> BacklogItem:
+    metadata = SanitizedMetadata(
+        format_detected=InputFormat.csv,
+        fields=[
+            FieldMetadata(name="feature_request", inferred_type="string", sample_count=842),
+            FieldMetadata(name="screen_name", inferred_type="string", sample_count=842),
+            FieldMetadata(name="ux_friction", inferred_type="string", sample_count=842),
+            FieldMetadata(name="merchant_id", inferred_type="string", sample_count=842),
+            FieldMetadata(name="discovery_query", inferred_type="string", sample_count=842),
+            FieldMetadata(name="cart_abandon", inferred_type="boolean", sample_count=842),
+        ],
+        approximate_row_scale=842,
+        event_type_frequencies=[
+            EventFrequency(event_type="[product_feedback]", count=842),
+            EventFrequency(event_type="[feature_request]", count=312),
+            EventFrequency(event_type="[ux_research]", count=180),
+        ],
+        pii_detections=[PIIDetection(pii_type="email", count=3)],
+        processing_notes=["Product feedback export — PII masked."],
+    )
+    scores = TechScores(
+        severity=48,
+        friction=72,
+        sensitivity=38,
+        sensitivity_reason="Feature roadmap hints but no proprietary algorithms exposed.",
+        suggested_title="Local merchant discovery hub for mobile users",
+    )
+    return BacklogItem(
+        id="demo-004",
+        source_label="Product feedback export — merchant discovery Q2 2024",
+        metadata=metadata,
+        scores=scores,
+        tag=SensitivityTag.yellow,
+        status=BacklogStatus.pending,
+        suggested_track=ChallengeTrack.product_feature,
+        brand_proxy="EatsHub",
+        deliverable_types=[
+            DeliverableType.frontend_prototype,
+            DeliverableType.external_link,
+            DeliverableType.mixed,
+        ],
+        evaluation_focus=[
+            "Information architecture",
+            "Mobile-first responsive layout",
+            "Checkout flow completeness",
+            "Design trade-off reasoning",
+        ],
+    )
+
+
 # ---------------------------------------------------------------------------
 # Store implementation
 # ---------------------------------------------------------------------------
@@ -153,6 +203,7 @@ def _init_store() -> None:
         _make_db_timeout_item(),
         _make_payment_retry_item(),
         _make_cache_miss_item(),
+        _make_merchant_discovery_item(),
     ]:
         _store[item.id] = item
 

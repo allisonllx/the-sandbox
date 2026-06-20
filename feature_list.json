@@ -1,6 +1,6 @@
 {
   "project": "the-sandbox",
-  "last_updated": "2026-06-20T15:45+08:00",
+  "last_updated": "2026-06-20T22:00+08:00",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -85,8 +85,141 @@
       "notes": "Publish sets status to published and generates SQLite via sandbox/synthesizer.py. Submissions queued in submission_store for assessor-001. Terminal Run is mock-only; Submit hits API."
     },
     {
-      "id": "assessor-001",
+      "id": "workspace-002",
       "priority": 4,
+      "area": "student-workspace",
+      "title": "Multi-File Workspace, Persistence & Public Test Runner",
+      "user_visible_behavior": "A student opens a published challenge in a Monaco multi-file editor loaded from a starter scaffold (5 files). Edits autosave locally (IndexedDB) and to the server (anonymous workspace cookie). Syntax errors show red squiggles. Run executes public tests asynchronously without blocking the editor. Submit creates an immutable disk-backed snapshot (inline files or ZIP). Work survives browser refresh, tab close, and server restart.",
+      "status": "passing",
+      "implementation_order": [
+        {
+          "order": 1,
+          "id": "workspace-starter-zip",
+          "title": "Starter scaffold on publish + GET /starter + download ZIP",
+          "status": "completed"
+        },
+        {
+          "order": 2,
+          "id": "workspace-monaco",
+          "title": "Replace SandboxTerminal with ChallengeWorkspace (Monaco + file tree)",
+          "status": "completed"
+        },
+        {
+          "order": 3,
+          "id": "workspace-session",
+          "title": "Anonymous workspace_id cookie + GET /challenges/{id}/workspace",
+          "status": "completed"
+        },
+        {
+          "order": 4,
+          "id": "workspace-draft-idb",
+          "title": "IndexedDB draft cache + restore-on-mount (frontend/lib/draftStorage.ts)",
+          "status": "completed"
+        },
+        {
+          "order": 5,
+          "id": "workspace-draft-server",
+          "title": "draft_store.py + PUT /draft API + save status badge UX",
+          "status": "completed"
+        },
+        {
+          "order": 6,
+          "id": "workspace-validate",
+          "title": "Debounced POST /validate + Monaco error markers",
+          "status": "completed"
+        },
+        {
+          "order": 7,
+          "id": "submission-contract",
+          "title": "Extend SubmitRequest to inline files + archive mode",
+          "status": "completed"
+        },
+        {
+          "order": 8,
+          "id": "workspace-submissions-disk",
+          "title": "Disk-backed immutable submission snapshots (data/submissions/)",
+          "status": "completed"
+        },
+        {
+          "order": 9,
+          "id": "workspace-run-jobs",
+          "title": "Async public-test Run jobs + polling UI (run_jobs.py)",
+          "status": "completed"
+        }
+      ],
+      "verification": [
+        "Publish a challenge — verify starter scaffold (README, src/db.py, src/queries.py, src/main.py, tests/test_public.py) is generated and downloadable as ZIP.",
+        "Open challenge workspace — Monaco file tree loads starter; Python syntax highlighting works.",
+        "Introduce a syntax error — debounced validate API returns diagnostics; Monaco shows red squiggles; squiggle clears after fix.",
+        "Edit two files — refresh browser — both files restored from IndexedDB.",
+        "Edit file — clear IndexedDB — reopen workspace — server draft restored via workspace cookie.",
+        "Restart backend — draft still loadable from data/drafts/; save badge shows Saved after server ACK.",
+        "Submit inline multi-file project — submission snapshot written to data/submissions/; legacy single-file code still accepted.",
+        "Submit ZIP — path traversal and oversize archive rejected; valid ZIP stored.",
+        "Restart backend after submit — submission record and files still on disk; prior submission not mutated by later edits.",
+        "Click Run — editor stays editable — public test output appears via job polling.",
+        "Start second Run while first active — API returns 409 RUN_ALREADY_ACTIVE.",
+        "Run pytest backend/tests/test_draft_store.py backend/tests/test_run_jobs.py backend/tests/test_sandbox.py — all pass."
+      ],
+      "evidence": [
+        "python -m pytest backend/tests/ -v → 67 passed (2026-06-20)",
+        "test_publish_generates_starter_scaffold PASSED — 5 starter files on publish",
+        "test_get_starter_after_publish, test_download_starter_zip PASSED",
+        "test_validate_syntax_error PASSED",
+        "test_workspace_bootstrap_sets_cookie, test_save_and_restore_draft PASSED",
+        "test_submit_multifile_inline PASSED — disk snapshot under data/submissions/",
+        "test_submit_zip_rejects_path_traversal PASSED",
+        "test_draft_store.py (3 tests) + test_run_jobs.py (2 tests) PASSED",
+        "Frontend: ChallengeWorkspace with Monaco, IndexedDB autosave, run polling"
+      ],
+      "notes": "Merged Phase A (Student Workspace Design) + Workspace Persistence MVP into one feature. Build in implementation_order sequence — persistence slots in after Monaco/starter, not as a separate phase. Storage: data/drafts/, data/submissions/, data/jobs/ on local disk (no PostgreSQL/Redis for hackathon). Run uses subprocess + 30s timeout; Docker isolation deferred to assessor-001. Optional Phase A.5 (AI suggest panel) and Phase C (BYOK Cursor SDK agent) are out of scope for workspace-002. Deferrals: auth, cross-device sync, revision history, WebSocket streaming, Pyright/LSP in browser."
+    },
+    {
+      "id": "tracks-001",
+      "priority": 5.5,
+      "area": "innovation-hub",
+      "title": "Multi-Track Innovation Hub — Domain, Router & Browse",
+      "user_visible_behavior": "Challenges are classified into innovation tracks (Technical + Product Feature active; Automation/AI Governance/Strategy as coming-soon taxonomy). Founders see track suggestions and brand_proxy at publish. Students browse the Innovation Hub with track filter tabs and track badges on challenge cards.",
+      "status": "passing",
+      "verification": [
+        "Publish demo-004 as product_feature with brand proxy EatsHub.",
+        "Student browse filters by track; technical challenges unchanged.",
+        "No real company name appears in public Micro-PRD.",
+        "python -m pytest backend/tests/test_tracks.py -v passes."
+      ],
+      "evidence": [
+        "python -m pytest backend/tests/test_tracks.py -v → 8 passed (2026-06-20)",
+        "TestProductPublish::test_publish_demo_004_product_feature PASSED — EatsHub brand, no dataset",
+        "TestTrackFilter::test_list_challenges_by_track PASSED",
+        "TestAbstractBrand::test_replaces_known_company_tokens PASSED",
+        "Frontend: Innovation Hub track tabs on /student, track badges on ChallengeCard"
+      ],
+      "notes": "ChallengeTrack enum + track_router heuristics + abstract_brand in relaxation + demo-004 seed. Automation/AI Governance/Strategy registered in enum with Coming Soon UI only."
+    },
+    {
+      "id": "product-001",
+      "priority": 6,
+      "area": "innovation-hub",
+      "title": "Product Feature Track — Starter, Workspace, Submit & Assessor",
+      "user_visible_behavior": "Product Feature challenges ship a frontend starter (HTML/CSS/JS + DESIGN.md + mock JSON). Students edit in ProductWorkspace with optional Figma/deploy links at submit. Product Micro-PRD shows persona and design sections. ProductAssessor scores DESIGN.md reasoning and prototype structure; scorecard shows Product dimensions.",
+      "status": "passing",
+      "verification": [
+        "Student opens product challenge → frontend starter + DESIGN.md template.",
+        "Submit includes code + optional Figma/deploy links stored in manifest.",
+        "Assessor scorecard shows Product dimensions; DESIGN.md scores higher than code-only.",
+        "Existing technical challenges (demo-003) still publish, run, and submit unchanged."
+      ],
+      "evidence": [
+        "python -m pytest backend/tests/ -v → 77 passed (2026-06-20)",
+        "TestProductSubmit::test_submit_with_design_md_and_links PASSED — assessed + scorecard",
+        "TestProductPublish::test_product_microprd_sections PASSED",
+        "Frontend: ProductWorkspace link fields, MicroPRDView product sections, ScorecardView"
+      ],
+      "notes": "ProductAssessor is deterministic MVP rubric (no LLM). Technical assessor remains stub pending assessor-001 Docker harness. Submit wired through assessor/registry.py on both inline and ZIP paths."
+    },
+    {
+      "id": "assessor-001",
+      "priority": 7,
       "area": "ai-assessor",
       "title": "AI Assessor & Taste-and-Judgment Scorecard",
       "user_visible_behavior": "After a student submits a solution, the AI Assessor runs it against secret edge-case tests in an ephemeral sandbox, evaluates code taste (error handling, architectural simplicity, optimization), and renders a dynamic scorecard. Top profiles are surfaced to the sponsoring company dashboard.",
@@ -99,7 +232,7 @@
         "Confirm the top-performing candidate profile appears in the sponsoring company's matching radar."
       ],
       "evidence": [],
-      "notes": "Code runner uses Docker ephemeral containers. LLM evaluates taste after test execution. See PRD Feature 4."
+      "notes": "Code runner uses Docker ephemeral containers. LLM evaluates taste after test execution. Consumes disk-backed multi-file submissions from workspace-002. See PRD Feature 4."
     }
   ]
 }
