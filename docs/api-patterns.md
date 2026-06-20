@@ -203,3 +203,31 @@ Before merging a new or changed endpoint:
 ```
 
 HTTP `422` for validation, `404` for missing resources, `500` only for unexpected server faults.
+
+---
+
+## 8. Reference: Publish Draft Flow
+
+Founders edit student-facing copy before publish via `PublishDraft`:
+
+- `POST /api/v1/triage/relax/{id}` returns `challenge_draft` in the response (preview baseline)
+- Founder edits in `PublishDraftEditor`; publish sends optional `draft` in the same `RelaxRequest` body as `config`
+- `POST /api/v1/triage/publish/{id}` applies draft overrides before Micro-PRD generation and public sanitization
+
+Key fields: `title`, `context`, `definition_of_success`, `evaluation_focus`, `company_profile` (blind audition).
+
+Public student responses never echo CTO-only fields (`brand_proxy`, `source_label`).
+
+---
+
+## 9. Reference: Rank Endpoints (demo stubs)
+
+Three intentionally separate rank surfaces:
+
+| Endpoint | Audience | Scope |
+|---|---|---|
+| `GET /api/v1/sandbox/leaderboard` | Students | Global platform rank |
+| `GET /api/v1/triage/backlog/{id}/matches` | Startup sponsors | Single challenge only |
+| `GET /api/v1/sandbox/enterprise/radar` | Enterprise recruiters | Platform-wide top tier |
+
+Responses use anonymized display names (e.g. `Candidate A7F2`) — no sponsor or company names.

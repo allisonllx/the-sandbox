@@ -6,7 +6,7 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `python -m pytest backend/tests/ -v`
 - Current highest-priority unfinished feature: `assessor-001` — Docker harness + full technical grading
-- Latest passing: `blind-002` — Company Tech Profile blind audition (90 tests)
+- Latest passing: doc sync Session 010 — publish draft + three rank surfaces documented (96 tests)
 - Current blocker: None
 
 ## Session Log
@@ -137,3 +137,17 @@
 - Docs: backend/ai_pm/DOCS.md, docs/PRODUCT.md, README.md
 - Commits: none
 - Next best step: assessor-001
+
+### Session 010
+
+- Date: 2026-06-20
+- Goal: Documentation sync — publish draft, three rank surfaces, blind audition architecture
+- Completed:
+  - PublishDraft flow: `publish_draft.py`, `PublishDraftEditor`, relax/publish `draft` wiring (prior session code; docs now synced)
+  - Three rank surfaces: student leaderboard, sponsor matches, enterprise radar (prior session code; docs now synced)
+  - Updated: docs/ARCHITECTURE.md, docs/PRODUCT.md, docs/api-patterns.md, README.md API table + feature status
+  - Updated: backend/api/DOCS.md, backend/sandbox/DOCS.md, frontend/DOCS.md
+- Verification run: `python -m pytest backend/tests/ -q` → **96 passed**
+- Docs: updated per documentation-sync.md (all rows for touched modules)
+- Commits: none
+- Next best step: assessor-001 — Docker harness + full technical grading

@@ -2,49 +2,60 @@
 
 ## Overview
 
-The Sandbox is a two-sided, zero-trust R&D and proof-of-work talent platform organized as an **Innovation Hub** with pluggable **innovation tracks**. Growth-stage startups connect internal feedback/log channels to a local privacy proxy that scrubs PII and extracts structural metadata without ever sending raw data externally. The AI PM layer triages the backlog, routes items to a track (Technical or Product Feature for MVP), applies brand abstraction, and lets founders publish de-risked challenges. Students solve track-specific workspaces; submissions are graded by **track-aware assessor plugins**.
+The Sandbox is a two-sided, zero-trust R&D and proof-of-work talent platform organized as an **Innovation Hub** with pluggable **innovation tracks**. Growth-stage startups connect internal feedback/log channels to a local privacy proxy that scrubs PII and extracts structural metadata without ever sending raw data externally. The AI PM layer triages the backlog, routes items to a track (Technical or Product Feature for MVP), applies relaxation and blind-audition controls, and lets founders **edit the student release preview** before publish. Students solve track-specific workspaces; submissions are graded by **track-aware assessor plugins**.
 
 ## Tech Stack
 
-- **Backend:** Python 3.11+ · FastAPI · Pydantic
+- **Backend:** Python 3.11+ · FastAPI · Pydantic v2
 - **Privacy Proxy:** Python · spaCy (local NER) · regex · runs fully offline
-- **Frontend:** Next.js 14 · TypeScript · Tailwind CSS
-- **Database:** PostgreSQL (platform data) · SQLite (per-challenge synthetic datasets)
-- **AI / LLM:** OpenAI API or Anthropic API — receives anonymized structural metadata only
-- **Code Runner:** Docker (ephemeral containers, no network, resource-limited)
-- **Infra / Build:** Docker Compose (local dev) · to be confirmed for cloud deployment
+- **Frontend:** Next.js 14 · TypeScript · Tailwind CSS · Monaco editor
+- **Persistence (MVP):** In-memory backlog · file-backed drafts/submissions/jobs under `data/`
+- **Datasets:** SQLite per challenge (technical track only)
+- **AI / LLM:** OpenAI API — receives anonymized structural metadata only for triage/Micro-PRD
+- **Code Runner:** In-process public tests (MVP); Docker ephemeral containers planned for `assessor-001`
 
 ## Directory Structure
 
 ```
 the_sandbox/
-├── backend/                  # FastAPI application
-│   ├── privacy_proxy/        # Local sanitization engine (runs offline)
-│   ├── ai_pm/                # Triage matrix, track router, Micro-PRD generator, relaxation
-│   ├── assessor/             # Pluggable per-track assessor plugins (technical, product)
+├── backend/
+│   ├── privacy_proxy/        # Local sanitization engine (offline)
+│   ├── ai_pm/                # Triage, track router, relaxation, blind audition, Micro-PRD
+│   │   ├── company_profile.py
+│   │   ├── domain_obfuscator.py
+│   │   ├── public_sanitize.py
+│   │   └── publish_draft.py
+│   ├── assessor/             # Pluggable per-track assessor plugins
+│   ├── sandbox/              # Datasets, submissions, rank stubs
+│   │   ├── leaderboard.py          # Student global rank (demo)
+│   │   ├── sponsor_matches.py      # Per-challenge match radar (startup)
+│   │   └── enterprise_radar.py     # Platform-wide top tier (enterprise)
 │   ├── api/                  # REST route definitions
-│   ├── tests/                # pytest test suite
-│   └── requirements.txt
-├── frontend/                 # Next.js application
-│   ├── app/                  # App Router pages
-│   │   ├── startup/          # CTO dashboard: triage matrix + relaxation controls
-│   │   └── student/          # Challenge browser + sandbox terminal + scorecard
-│   ├── components/
-│   └── package.json
-├── docker/                   # Dockerfiles for ephemeral code-runner containers
-├── docs/                     # Project documentation
-│   ├── api-patterns.md       # API design patterns
-│   ├── ARCHITECTURE.md       # This file
-│   ├── PRODUCT.md            # Non-technical product overview
-│   └── documentation-sync.md # Code path → doc update map
-├── AGENTS.md                 # Agent operating rules (read this first every session)
-├── feature_list.json         # Authoritative feature state tracker
-├── claude-progress.md        # Session log and current verified state
-├── init.sh                   # Standard startup and verification script
-├── session-handoff.md        # Compact handoff template for cross-session continuity
-├── clean-state-checklist.md  # End-of-session checklist
-└── evaluator-rubric.md       # Acceptance rubric for implemented features
+│   └── tests/
+├── frontend/
+│   ├── app/startup/          # CTO dashboard + /startup/matches/[id]
+│   ├── app/student/          # Innovation Hub, workspace, leaderboard, trust
+│   └── app/enterprise/radar/ # Enterprise subscription view (demo)
+├── docs/
+├── feature_list.json
+├── claude-progress.md
+└── init.sh
 ```
+
+## Trust Boundaries
+
+### Internal (CTO dashboard only)
+
+- `source_label`, `sponsor_profile`, `brand_proxy`
+- Raw `evaluation_focus` before public sanitization
+- Domain obfuscation before/after preview (`domain_preview`)
+
+### Public student API (`sandbox_routes._to_public`)
+
+- **Never** returns `brand_proxy` or `sponsor_profile`
+- Returns `CompanyTechProfile` (blind audition)
+- Micro-PRD and evaluation focus passed through `public_sanitize.py`
+- Red-sensitivity items omit `industry_broad` on company profile
 
 ## Key Data Flows
 
@@ -52,77 +63,65 @@ the_sandbox/
 
 ```
 [Startup local process]
-Raw log / feedback text (Slack export, Intercom CSV, error logs)
+Raw log / feedback text
   │
   ▼
-privacy_proxy/sanitizer.py
-  ├─ Regex PII masking (email, phone, API key, JWT)
-  ├─ Local NER pass (names, org identifiers)
-  └─ Structural metadata extraction (field names, types, frequencies)
+privacy_proxy/sanitizer.py  →  SanitizedMetadata (PII stripped locally)
   │
-  ▼  [only anonymized metadata crosses this boundary]
-ai_pm/triage.py  ──► LLM API (structural metadata only)
-  ├─ Severity / Friction / Sensitivity scoring
-  └─ Red / Yellow / Green sensitivity tag
+  ▼  [only metadata crosses boundary]
+ai_pm/scorer.py + track_router.py  →  Severity / Friction / Sensitivity + track suggestion
   │
   ▼
-ai_pm/track_router.py  (heuristic track suggestion + brand_proxy)
+ai_pm/relaxation.py + domain_obfuscator.py (optional)
+  ├─ Field relaxation, noise, domain column renames
+  └─ Domain narrative transform (CTO preview)
   │
   ▼
-ai_pm/relaxation.py  (founder applies controls in the UI)
-  ├─ Abstract proprietary logic toggle
-  ├─ Variable-name synthesizer
-  ├─ Statistical noise slider (0–100%)
-  └─ Brand abstraction (company tokens → brand_proxy)
+POST /triage/relax/{id}
+  ├─ Returns relaxed field preview + challenge_draft (PublishDraft)
+  └─ Founder edits title, context, success criteria, company profile in UI
   │
   ▼
-ai_pm/microprd.py  ──► Track-aware Micro-PRD
-  ├─ Technical: Context, Success, Constraints, Instructions
-  └─ Product Feature: + persona, problem framing, design considerations, deliverables
+POST /triage/publish/{id}  (requires locked reward + scope guard pass)
+  ├─ Applies founder PublishDraft overrides
+  ├─ Generates track-aware Micro-PRD
+  ├─ company_profile.py → CompanyTechProfile on BacklogItem
+  └─ Branch: technical → SQLite + Python starter | product → frontend starter
   │
   ▼
-Publish branch by track:
-  ├─ technical → synthesizer.py (SQLite + anomalies) + starter_scaffold.py
-  └─ product_feature → product_starter_scaffold.py (HTML/CSS/JS + DESIGN.md)
-  │
-  ▼
-[Challenge published to public Innovation Hub]
+GET /sandbox/challenges/{id}  →  public_sanitize.build_public_challenge()
 ```
 
-### 2. Student Submission → Scorecard (track-aware)
+### 2. Student Submission → Scorecard
 
 ```
-[Student browser]
-Innovation Hub browse (track filter tabs)
-  │
-  ├─ technical → ChallengeWorkspace (Monaco Python) → Run public tests → Submit
-  └─ product_feature → ProductWorkspace (Monaco prototype + link fields) → Submit
+Student workspace → submit → assessor/registry.py
+  ├─ TechnicalAssessor / ProductAssessor (deterministic MVP rubric)
+  └─ execution_points on scorecard (per submission, not yet aggregated globally)
   │
   ▼
-assessor/registry.py
-  ├─ TechnicalAssessor — preflight + structure stub (Docker harness in assessor-001)
-  └─ ProductAssessor — DESIGN.md rubric + prototype structure checks
-  │
-  ▼
-Scorecard rendered in browser
-  ├─ Technical: Performance · Security Resilience · Architectural Elegance
-  └─ Product: Product Thinking · UX & IA · Implementation · Communication
-  │
-  ▼
-[Top profiles surfaced to sponsoring company CTO dashboard]
+Scorecard in browser (+ interview pass banner when benchmark met)
 ```
+
+### 3. Three Rank Surfaces (demo stubs)
+
+| Audience | Route | API | Scope |
+|---|---|---|---|
+| **Students** | `/student/leaderboard` | `GET /sandbox/leaderboard` | Global platform rank (motivation) |
+| **Startup sponsors** | `/startup/matches/{id}` | `GET /triage/backlog/{id}/matches` | **This challenge only** — live submissions or demo stubs |
+| **Enterprises** | `/enterprise/radar` | `GET /sandbox/enterprise/radar` | Platform-wide top tier (subscription narrative) |
+
+Startups do **not** see the student global leaderboard or other sponsors' challenge performers.
 
 ## External Dependencies
 
 | Service | Purpose | Data sent |
 |---|---|---|
-| OpenAI / Anthropic API | Triage scoring, Micro-PRD generation, taste evaluation | Anonymized structural metadata and code submissions only |
-| Docker (local/cloud) | Ephemeral code execution sandbox | Student code only, no corporate data |
-| PostgreSQL | Platform state (users, challenges, scores) | No raw startup data |
+| OpenAI API | Triage scoring, Micro-PRD generation | Anonymized structural metadata only |
+| Docker (planned) | Ephemeral code execution | Student code only |
 
 ## Known Constraints
 
-- The privacy proxy is the system's critical security boundary. No code path may bypass it to send raw startup data externally. Any refactor touching `privacy_proxy/` must be reviewed against the zero-trust constraint in `AGENTS.md`.
-- Student code execution containers must have `--network none` and hard resource limits (`--memory 256m --cpus 0.5` or equivalent). Never relax these without explicit approval.
-- The LLM taste evaluator receives the student's code submission. Confirm this does not transitively contain any startup metadata before wiring up the assessor.
-- Tech stack choices above are proposed based on the PRD. Confirm before writing `backend/requirements.txt` or `frontend/package.json`.
+- Privacy proxy is the critical security boundary — see `AGENTS.md`
+- Student code runs in-process for public tests (MVP); Docker isolation deferred to `assessor-001`
+- Backlog and rank data are in-memory / demo seed — no PostgreSQL or auth yet

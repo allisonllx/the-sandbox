@@ -16,13 +16,15 @@ Technically capable but locked out of top roles by the absence of a pedigreed ne
 
 1. **Startup: Ingest & sanitize** — Paste or upload raw logs/feedback into the local client. The privacy proxy scrubs PII and extracts structural metadata without sending any content externally.
 
-2. **Startup: Triage & de-risk** — The AI PM ranks the backlog by Severity, Friction, and Sensitivity, suggests an **innovation track** (Technical or Product Feature for MVP), and applies Relaxation Controls. Founders see internal `brand_proxy`; students receive a **Company Tech Profile** only (blind audition).
+2. **Startup: Triage & de-risk** — The AI PM ranks the backlog by Severity, Friction, and Sensitivity, suggests an **innovation track** (Technical or Product Feature for MVP), and applies Relaxation Controls. Founders see internal `brand_proxy`; students receive a **Company Tech Profile** only (blind audition). **Preview Changes** returns a `PublishDraft` — founders edit title, context, success criteria, evaluation focus, and company profile in the release preview before **Approve & Publish**.
 
 3. **Student: Discover & set up** — Browse the Innovation Hub with track filter tabs. Each challenge shows stage, team size range, and tech stack — never the sponsor name. Technical challenges include a synthetic SQLite dataset; Product Feature challenges include a frontend starter scaffold and required `DESIGN.md` template.
 
 4. **Student: Solve & submit** — Technical track: Monaco workspace + public tests + multi-file submit. Product track: prototype editor + optional Figma/deploy links + `DESIGN.md` in submit manifest.
 
-5. **Startup: Review matches** — Track-aware assessor plugins score submissions (Technical: tests + taste; Product: structure + DESIGN.md rubric). Scorecard dimensions differ by track.
+5. **Startup: Review matches** — Track-aware assessor plugins score submissions (Technical: tests + taste; Product: structure + DESIGN.md rubric). Scorecard dimensions differ by track. After publish, sponsors open **Sponsor Match Radar** at `/startup/matches/{challengeId}` — ranked performers for **that challenge only** (live submissions or demo stubs). They do not see other companies' challenges or the student global leaderboard.
+
+6. **Rank surfaces (demo stubs)** — **Students** use `/student/leaderboard` for global Execution Points motivation. **Enterprises** use `/enterprise/radar` for platform-wide top-tier candidates (subscription narrative). These views are intentionally separate from the sponsor-scoped Match Radar.
 
 ## Defensive Posture (Hackathon Narrative)
 
@@ -32,7 +34,7 @@ The platform addresses three existential B2B talent risks with **hybrid demo mec
 |---|---|---|
 | **Free labor / exploitation** | Guaranteed reward locked before publish; AI PM scope cap (~8h) | Real scope gate + stubbed bounty/interview lock |
 | **Stealth roadmap leak** | **Blind Audition**: Company Tech Profile replaces sponsor identity; domain obfuscation + column renames for high-sensitivity items | Real public API boundary + domain transform |
-| **FAANG prestige bias** | **Execution Points** rank decoupled from company logos; enterprise reverse-sourcing radar | Stub: student global leaderboard + sponsor Match Radar + Enterprise Radar |
+| **FAANG prestige bias** | **Execution Points** rank decoupled from company logos; three rank surfaces (student global / sponsor per-challenge / enterprise platform-wide) | Stub: demo seed data + anonymized display names (e.g. Candidate A7F2) |
 | **Scam bounties** | Platform-verified sponsor badge + escrow label (stub) | Per-challenge verification metadata; `/student/trust` narrative |
 
 > *"We aren't a job board; we are a zero-trust proof-of-work protocol."*

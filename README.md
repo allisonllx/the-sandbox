@@ -39,7 +39,7 @@ The critical guarantee: **raw corporate data never leaves the local process.** T
 | Privacy Proxy | Regex PII masking · spaCy `en_core_web_sm` (local NER, offline) |
 | AI / LLM | OpenAI API (`gpt-4o-mini`) · heuristic fallback when key absent |
 | Frontend | Next.js 14 · TypeScript · Tailwind CSS |
-| Testing | pytest · 54 tests |
+| Testing | pytest · 96 tests |
 | Code Runner | Docker (ephemeral containers) — planned for `assessor-001` |
 
 ---
@@ -53,14 +53,15 @@ the_sandbox/
 ├── backend/                    # FastAPI app → backend/DOCS.md
 │   ├── privacy_proxy/          # PII scrubbing, NER, structural extraction
 │   ├── ai_pm/                  # Triage scoring, relaxation, Micro-PRD
-│   ├── sandbox/                # Synthetic datasets, submission queue
+│   ├── sandbox/                # Synthetic datasets, submissions, rank stubs
 │   ├── api/                    # HTTP routes (proxy, triage, sandbox)
 │   ├── tests/                  # pytest suite
 │   ├── main.py
 │   └── requirements.txt
 ├── frontend/                   # Next.js app → frontend/DOCS.md
-│   ├── app/startup/            # CTO triage dashboard
-│   ├── app/student/            # Challenge browser + workspace
+│   ├── app/startup/            # CTO triage dashboard + sponsor Match Radar
+│   ├── app/student/            # Innovation Hub, workspace, leaderboard, trust
+│   ├── app/enterprise/radar/   # Enterprise subscription view (demo)
 │   ├── components/
 │   └── lib/                    # API client, TypeScript types
 ├── docs/                       # Architecture, product, API conventions
@@ -146,7 +147,7 @@ The dashboard will be live at **http://localhost:3000** → auto-redirects to **
 python -m pytest backend/tests/ -v
 ```
 
-Expected output: **81+ passed**.
+Expected output: **96 passed**.
 
 ---
 
@@ -168,7 +169,7 @@ The backend ships with three pre-scored backlog items so the full demo loop work
 
 1. **Open the CTO dashboard** at `http://localhost:3000/startup`
 2. **Click any backlog card** — the right panel shows Severity / Friction / Sensitivity scores and the Red / Yellow / Green sensitivity shield
-3. **Toggle Relaxation Controls** — enable *Synthesize Variable Names* and drag the noise slider to ~50%, then click **Preview Changes** to see the before/after field name diff
+3. **Toggle Relaxation Controls** — enable *Synthesize Variable Names* and drag the noise slider to ~50%, then click **Preview Changes** to see the before/after field name diff and edit the **Release Preview** (title, success criteria, company profile)
 4. **Click Approve & Publish** — the backend generates a Micro-PRD (LLM if key is set, template fallback otherwise) and renders it inline
 
 To exercise the privacy proxy directly:
@@ -195,9 +196,10 @@ The response contains **only structural metadata** — no email, no token, no IP
 | `GET` | `/api/v1/triage/backlog` | List all backlog items (sorted by severity) |
 | `GET` | `/api/v1/triage/backlog/{id}` | Get a single backlog item |
 | `POST` | `/api/v1/triage/score` | Score a `SanitizedMetadata` blob |
-| `POST` | `/api/v1/triage/relax/{id}` | Preview relaxation controls (no LLM) |
-| `POST` | `/api/v1/triage/publish/{id}` | Publish challenge (requires locked reward; scope guard) |
+| `POST` | `/api/v1/triage/relax/{id}` | Preview relaxation controls + `challenge_draft` (no LLM) |
+| `POST` | `/api/v1/triage/publish/{id}` | Publish challenge (optional `draft`; requires locked reward; scope guard) |
 | `GET` | `/api/v1/triage/backlog/{id}/scope` | Scope estimate for backlog item |
+| `GET` | `/api/v1/triage/backlog/{id}/matches` | Sponsor Match Radar — performers for this challenge only |
 | `GET` | `/api/v1/sandbox/challenges` | List published public challenges |
 | `GET` | `/api/v1/sandbox/challenges/{id}` | Get challenge with Micro-PRD |
 | `GET` | `/api/v1/sandbox/challenges/{id}/dataset` | Download synthetic SQLite dataset |
@@ -210,6 +212,9 @@ The response contains **only structural metadata** — no email, no token, no IP
 | `GET` | `/api/v1/sandbox/jobs/{id}` | Poll run job output |
 | `POST` | `/api/v1/sandbox/challenges/{id}/submit` | Submit inline multi-file solution |
 | `POST` | `/api/v1/sandbox/challenges/{id}/submit/zip` | Submit ZIP archive (raw body) |
+| `GET` | `/api/v1/sandbox/submissions/{id}/scorecard` | Assessor scorecard for a submission |
+| `GET` | `/api/v1/sandbox/leaderboard` | Student global Execution Points rank (demo) |
+| `GET` | `/api/v1/sandbox/enterprise/radar` | Enterprise platform-wide top tier (demo) |
 
 Full interactive docs: **http://localhost:8000/docs**
 
@@ -236,5 +241,6 @@ Secrets must never be committed. Use `.env` locally (already in `.gitignore`).
 | `tracks-001` / `product-001` Innovation Hub tracks | ✅ Passing |
 | `trust-001` Scope cap + domain obfuscation | ✅ Passing |
 | `rewards-001` Bounty / interview lock (stub) | ✅ Passing |
-| `rank-001` Execution rank + enterprise radar (stub) | ✅ Passing |
+| `blind-002` Blind Audition — Company Tech Profile | ✅ Passing |
+| `rank-001` Three rank surfaces (student / sponsor / enterprise) | ✅ Passing |
 | `assessor-001` AI Assessor & Scorecard | 🔲 Not started |
