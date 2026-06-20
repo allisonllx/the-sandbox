@@ -27,9 +27,6 @@ export default function LeaderboardPage() {
             <span className="text-surface-border">|</span>
             <span className="text-accent font-semibold text-sm tracking-wider">EXECUTION RANK</span>
           </div>
-          <Link href="/enterprise/radar" className="text-xs text-slate-500 hover:text-accent">
-            Enterprise radar →
-          </Link>
         </div>
       </header>
 
@@ -37,9 +34,12 @@ export default function LeaderboardPage() {
         <div>
           <h1 className="text-xl font-semibold text-slate-100">Global Proof-of-Work Rank</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Platform-level Execution Points — earned on anonymous blind-audition challenges,
-            decoupled from sponsor identity. Top performers surface to enterprise recruiters
-            via reverse sourcing (demo).
+            For students: platform-level Execution Points earned across blind-audition challenges.
+            Climb the rank by completing any verified sponsor sprint — sponsor names stay hidden.
+          </p>
+          <p className="text-xs text-slate-600 mt-2">
+            Startup sponsors review candidates on their own Match Radar (CTO dashboard). Enterprise
+            recruiters use a separate subscription view — not this page.
           </p>
           <Link href="/student/trust" className="text-xs text-accent hover:underline mt-2 inline-block">
             How sponsor verification works →

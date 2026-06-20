@@ -26,6 +26,7 @@ from ..ai_pm.models import (
     ScoreResponse,
     SensitivityTag,
 )
+from ..sandbox.sponsor_matches import SponsorMatchesResponse, get_sponsor_matches
 from ..sandbox.product_starter_scaffold import generate_product_starter_files
 from ..sandbox.starter_scaffold import generate_starter_files
 from ..sandbox.synthesizer import generate_dataset
@@ -74,6 +75,27 @@ def get_scope_check(item_id: str) -> ScopeCheckResponse:
         reason=result.reason,
         suggested_breakdown=result.suggested_breakdown,
     )
+
+
+@router.get(
+    "/backlog/{item_id}/matches",
+    response_model=SponsorMatchesResponse,
+    summary="Sponsor match radar — candidates for this challenge only (CTO)",
+)
+def get_sponsor_matches_for_item(item_id: str) -> SponsorMatchesResponse:
+    item = store.get_item(item_id)
+    if not item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
+    if item.status != BacklogStatus.published:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "code": "CHALLENGE_NOT_PUBLISHED",
+                "message": "Match radar is available after this challenge is published.",
+            },
+        )
+    title = item.microprd.title if item.microprd else None
+    return get_sponsor_matches(item_id, challenge_title=title)
 
 
 def _ensure_track_suggestion(item: BacklogItem) -> None:

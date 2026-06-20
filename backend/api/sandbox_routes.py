@@ -37,6 +37,7 @@ from ..sandbox.product_starter_scaffold import generate_product_starter_files
 from ..sandbox.starter_scaffold import generate_starter_files, platform_sandbox_instructions
 from ..sandbox.product_starter_scaffold import product_platform_instructions
 from ..sandbox.leaderboard import LeaderboardResponse, get_demo_leaderboard
+from ..sandbox.enterprise_radar import EnterpriseRadarResponse, get_enterprise_radar
 from ..sandbox.validate import validate_python
 from ..sandbox.workspace import get_or_create_workspace_id, read_workspace_id
 
@@ -487,7 +488,16 @@ def submission_count(challenge_id: str) -> dict[str, int | str]:
 @router.get(
     "/leaderboard",
     response_model=LeaderboardResponse,
-    summary="Demo execution points leaderboard (stub)",
+    summary="Student platform Execution Points rank (global, anonymized)",
 )
 def get_leaderboard() -> LeaderboardResponse:
     return get_demo_leaderboard()
+
+
+@router.get(
+    "/enterprise/radar",
+    response_model=EnterpriseRadarResponse,
+    summary="Enterprise reverse-sourcing radar (platform-wide top tier, demo)",
+)
+def get_enterprise_radar_api() -> EnterpriseRadarResponse:
+    return get_enterprise_radar()

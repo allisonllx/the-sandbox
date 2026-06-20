@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import type { BacklogItem } from "@/lib/types";
 import { api } from "@/lib/api";
 import { BacklogCard } from "@/components/BacklogCard";
@@ -50,6 +51,14 @@ export default function StartupDashboard() {
           </div>
           <div className="flex items-center gap-4 text-[11px] text-slate-500">
             <span>{items.length} items in backlog</span>
+            {selectedItem?.status === "published" && (
+              <Link
+                href={`/startup/matches/${selectedItem.id}`}
+                className="text-amber-400/90 hover:text-amber-400"
+              >
+                Match Radar
+              </Link>
+            )}
             <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
             <span>Privacy Proxy Active</span>
           </div>

@@ -5,6 +5,8 @@ import type {
   Diagnostic,
   JobStatusResponse,
   LeaderboardEntry,
+  EnterpriseRadarResponse,
+  SponsorMatchesResponse,
   PublishedChallenge,
   PublishDraft,
   RelaxationConfig,
@@ -139,6 +141,12 @@ export const api = {
 
   getLeaderboard: (): Promise<{ ok: boolean; entries: LeaderboardEntry[] }> =>
     request("/sandbox/leaderboard"),
+
+  getEnterpriseRadar: (): Promise<EnterpriseRadarResponse> =>
+    request("/sandbox/enterprise/radar"),
+
+  getSponsorMatches: (itemId: string): Promise<SponsorMatchesResponse> =>
+    request(`/triage/backlog/${itemId}/matches`),
 
   submitZip: (challengeId: string, zipBytes: ArrayBuffer): Promise<SubmitResponse> =>
     fetch(`${BASE}/sandbox/challenges/${challengeId}/submit/zip`, {

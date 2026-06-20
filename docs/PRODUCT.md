@@ -32,7 +32,7 @@ The platform addresses three existential B2B talent risks with **hybrid demo mec
 |---|---|---|
 | **Free labor / exploitation** | Guaranteed reward locked before publish; AI PM scope cap (~8h) | Real scope gate + stubbed bounty/interview lock |
 | **Stealth roadmap leak** | **Blind Audition**: Company Tech Profile replaces sponsor identity; domain obfuscation + column renames for high-sensitivity items | Real public API boundary + domain transform |
-| **FAANG prestige bias** | **Execution Points** rank decoupled from company logos; enterprise reverse-sourcing radar | Stub leaderboard + `/enterprise/radar` |
+| **FAANG prestige bias** | **Execution Points** rank decoupled from company logos; enterprise reverse-sourcing radar | Stub: student global leaderboard + sponsor Match Radar + Enterprise Radar |
 | **Scam bounties** | Platform-verified sponsor badge + escrow label (stub) | Per-challenge verification metadata; `/student/trust` narrative |
 
 > *"We aren't a job board; we are a zero-trust proof-of-work protocol."*

@@ -254,6 +254,37 @@ export interface LeaderboardEntry {
   challenge_id?: string | null;
 }
 
+export interface SponsorMatchEntry {
+  rank: number;
+  candidate_id: string;
+  track: ChallengeTrack;
+  execution_points: number;
+  summary: string;
+  submitted_at?: string | null;
+}
+
+export interface SponsorMatchesResponse {
+  ok: boolean;
+  challenge_id: string;
+  challenge_title?: string | null;
+  source: "live" | "demo" | "empty";
+  entries: SponsorMatchEntry[];
+}
+
+export interface EnterpriseRadarEntry {
+  rank_label: string;
+  candidate_id: string;
+  track: ChallengeTrack;
+  execution_points: number;
+  platform_signal: string;
+}
+
+export interface EnterpriseRadarResponse {
+  ok: boolean;
+  tier: string;
+  entries: EnterpriseRadarEntry[];
+}
+
 export interface SubmitResponse {
   ok: boolean;
   submission_id: string;

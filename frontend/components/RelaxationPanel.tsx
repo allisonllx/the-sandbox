@@ -445,6 +445,12 @@ export function RelaxationPanel({ item, onPublished }: RelaxationPanelProps) {
           <Link href={`/student/challenges/${item.id}`} className="text-xs text-accent hover:underline">
             Open student view →
           </Link>
+          <Link
+            href={`/startup/matches/${item.id}`}
+            className="text-xs text-amber-400/90 hover:underline block"
+          >
+            Sponsor Match Radar (your challenge only) →
+          </Link>
           {microprd && (
             <p className="text-xs text-slate-400">{microprd.title}</p>
           )}

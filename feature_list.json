@@ -259,7 +259,7 @@
       "priority": 6.7,
       "area": "trust-governance",
       "title": "Execution Points + Enterprise Radar (Stub)",
-      "user_visible_behavior": "Students browse /student/leaderboard for platform Execution Points. Enterprise recruiters view /enterprise/radar for reverse-sourcing narrative (no auth, mock data).",
+      "user_visible_behavior": "Students browse /student/leaderboard for global Execution Points. Startup sponsors use /startup/matches/{id} for their challenge only. Enterprise recruiters use /enterprise/radar for platform-wide top tier (separate subscription narrative).",
       "status": "passing",
       "verification": [
         "GET /sandbox/leaderboard returns demo entries",
