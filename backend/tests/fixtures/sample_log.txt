@@ -1,0 +1,5 @@
+2024-03-12 09:14:22 ERROR [auth_service] Login failed for user john.doe@acmecorp.com from IP 192.168.1.45 — invalid credentials
+2024-03-12 09:14:23 WARN  [auth_service] Rate limit approaching for user_id=8821 request_count=47 threshold=50
+2024-03-12 09:14:25 INFO  [api_gateway] Upstream timeout: service=payment_processor duration_ms=5023 status=503
+2024-03-12 09:14:26 ERROR [payment_processor] Stripe webhook verification failed token=sk_live_AbCdEfGhIjKlMnOpQrStUvWx reason=signature_mismatch
+2024-03-12 09:14:27 DEBUG [db_pool] Connection acquired pool_size=10 active=8 idle=2 user=jane.smith@acmecorp.com

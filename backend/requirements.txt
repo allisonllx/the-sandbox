@@ -1,0 +1,15 @@
+# Runtime
+fastapi==0.138.0
+uvicorn[standard]==0.49.0
+pydantic==2.10.3
+
+# NLP / NER (local, fully offline)
+spacy==3.7.0
+# After installing spaCy, download the NER model once:
+#   python -m spacy download en_core_web_sm
+# The proxy degrades gracefully (regex-only mode) if the model is absent.
+
+# Dev / Test
+pytest==9.1.1
+httpx==0.28.1          # async test client for FastAPI endpoints
+pytest-asyncio==1.4.0
