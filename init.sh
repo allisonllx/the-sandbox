@@ -14,7 +14,7 @@ BACKEND_VERIFY_CMD=(python -m pytest backend/tests -q)
 FRONTEND_INSTALL_CMD=(npm --prefix frontend install)
 FRONTEND_VERIFY_CMD=(npm --prefix frontend run typecheck)
 
-START_CMD=(npm --prefix frontend run dev)
+START_CMD=(python -m uvicorn backend.main:app --reload --port 8000)
 
 echo "==> Working directory: $PWD"
 

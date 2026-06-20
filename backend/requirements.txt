@@ -6,8 +6,8 @@ openai>=1.30.0          # LLM scoring + Micro-PRD generation (requires OPENAI_AP
 
 # NLP / NER (local, fully offline)
 spacy==3.7.0
-# After installing spaCy, download the NER model once:
-#   python -m spacy download en_core_web_sm
+# After installing spaCy, download the NER model via pip (more reliable than the CLI):
+#   pip install "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl"
 # The proxy degrades gracefully (regex-only mode) if the model is absent.
 
 # Dev / Test

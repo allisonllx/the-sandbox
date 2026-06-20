@@ -19,6 +19,7 @@ rather than raising.
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
@@ -29,6 +30,14 @@ logger = logging.getLogger(__name__)
 
 _LABELS_OF_INTEREST = {"PERSON", "ORG", "GPE", "PRODUCT"}
 _MODEL_NAME = "en_core_web_sm"
+
+
+@dataclass(frozen=True)
+class NERResult:
+    """Outcome of a local NER pass."""
+
+    counts: dict[str, int]
+    model_available: bool
 
 
 @lru_cache(maxsize=1)
@@ -51,23 +60,27 @@ def _load_model() -> "spacy_type.Language | None":
         return None
 
 
-def count_entities(text: str) -> dict[str, int]:
+def analyze_entities(text: str) -> NERResult:
     """
-    Run NER on *text* and return a count of entity types found.
+    Run NER on *text* and return entity type counts plus model availability.
 
-    Returns an empty dict if spaCy or the model is unavailable.
     Does NOT return any entity text — only type counts.
     """
     nlp = _load_model()
     if nlp is None:
-        return {}
+        return NERResult(counts={}, model_available=False)
 
     doc = nlp(text)
     counts: dict[str, int] = {}
     for ent in doc.ents:
         if ent.label_ in _LABELS_OF_INTEREST:
             counts[ent.label_] = counts.get(ent.label_, 0) + 1
-    return counts
+    return NERResult(counts=counts, model_available=True)
+
+
+def count_entities(text: str) -> dict[str, int]:
+    """Backward-compatible wrapper — returns counts only."""
+    return analyze_entities(text).counts
 
 
 def is_available() -> bool:

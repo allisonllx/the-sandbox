@@ -220,7 +220,59 @@ class TestCSVExtraction:
 
 
 # ===========================================================================
-# 5. No outbound HTTP during processing
+# 5. NER processing notes
+# ===========================================================================
+
+class TestNERProcessingNotes:
+    def test_note_when_model_unavailable(self, monkeypatch):
+        from backend.privacy_proxy import sanitizer as sanitizer_module
+        from backend.privacy_proxy.ner_engine import NERResult
+
+        monkeypatch.setattr(
+            sanitizer_module,
+            "analyze_entities",
+            lambda text: NERResult(counts={}, model_available=False),
+        )
+
+        metadata = sanitize("Login failed for user John Smith at Acme Corp")
+        notes = " ".join(metadata.processing_notes)
+        assert "NER pass skipped" in notes
+        assert "spaCy model not available" in notes
+
+    def test_note_when_model_runs_but_finds_nothing(self, monkeypatch):
+        from backend.privacy_proxy import sanitizer as sanitizer_module
+        from backend.privacy_proxy.ner_engine import NERResult
+
+        monkeypatch.setattr(
+            sanitizer_module,
+            "analyze_entities",
+            lambda text: NERResult(counts={}, model_available=True),
+        )
+
+        metadata = sanitize("2024-03-12 ERROR status=503 duration_ms=1200")
+        notes = " ".join(metadata.processing_notes)
+        assert "NER pass completed" in notes
+        assert "no PERSON, ORG, GPE, or PRODUCT entities" in notes
+        assert "not available" not in notes
+
+    def test_note_when_entities_detected(self, monkeypatch):
+        from backend.privacy_proxy import sanitizer as sanitizer_module
+        from backend.privacy_proxy.ner_engine import NERResult
+
+        monkeypatch.setattr(
+            sanitizer_module,
+            "analyze_entities",
+            lambda text: NERResult(counts={"PERSON": 1, "ORG": 1}, model_available=True),
+        )
+
+        metadata = sanitize("Issue reported by John Smith at Acme Corp")
+        notes = " ".join(metadata.processing_notes)
+        assert "NER pass completed" in notes
+        assert "2 entity token(s) detected" in notes
+
+
+# ===========================================================================
+# 6. No outbound HTTP during processing
 # ===========================================================================
 
 class TestNoNetworkCalls:

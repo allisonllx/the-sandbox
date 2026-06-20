@@ -24,7 +24,7 @@ from .models import (
     PIIDetection,
     SanitizedMetadata,
 )
-from .ner_engine import count_entities
+from .ner_engine import analyze_entities
 from .pii_patterns import scrub
 from .structural_extractor import InputFormat, extract
 
@@ -129,14 +129,30 @@ def sanitize(
         notes.append(f"{total} PII token(s) masked across {len(pii_detections)} type(s).")
 
     # --- Stage 3: NER Pass ---
-    entity_counts = count_entities(scrubbed_text)
+    ner_result = analyze_entities(scrubbed_text)
     ner_entity_counts = [
         NEREntityCount(entity_label=label, count=count)
-        for label, count in sorted(entity_counts.items())
+        for label, count in sorted(ner_result.counts.items())
     ]
 
-    if not entity_counts:
-        notes.append("NER pass skipped or returned no entities (model may not be installed).")
+    if not ner_result.model_available:
+        notes.append(
+            "NER pass skipped — spaCy model not available. "
+            "Install with: pip install spacy && "
+            "pip install https://github.com/explosion/spacy-models/releases/download/"
+            "en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl"
+        )
+    elif not ner_result.counts:
+        notes.append(
+            "NER pass completed — no PERSON, ORG, GPE, or PRODUCT entities "
+            "detected in scrubbed text."
+        )
+    else:
+        total_entities = sum(ner_result.counts.values())
+        labels = ", ".join(sorted(ner_result.counts))
+        notes.append(
+            f"NER pass completed — {total_entities} entity token(s) detected ({labels})."
+        )
 
     # --- Stage 4: Structural Extraction ---
     struct = extract(scrubbed_text, fmt)
