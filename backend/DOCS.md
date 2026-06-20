@@ -25,3 +25,4 @@ The frontend proxies `/api/*` to this server on port 8000. The privacy proxy is 
 - Run tests from repo root: `python -m pytest backend/tests/ -v`
 - `OPENAI_API_KEY` is optional — scorer and Micro-PRD generator fall back to heuristics/templates
 - Read `docs/api-patterns.md` before adding endpoints
+- After code changes, check `docs/documentation-sync.md` for which docs to update

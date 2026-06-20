@@ -4,5 +4,6 @@
 - [ ] The standard verification path still runs.
 - [ ] Current progress is recorded in the progress log.
 - [ ] Feature state reflects what is actually passing versus unverified.
+- [ ] Module `DOCS.md` and relevant `docs/` files checked and updated if code behavior changed (see `docs/documentation-sync.md`).
 - [ ] No half-finished step is left undocumented.
 - [ ] The next session can continue without manual repair.

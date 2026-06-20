@@ -35,7 +35,8 @@ the_sandbox/
 ├── docs/                     # Project documentation
 │   ├── api-patterns.md       # API design patterns
 │   ├── ARCHITECTURE.md       # This file
-│   └── PRODUCT.md            # Non-technical product overview
+│   ├── PRODUCT.md            # Non-technical product overview
+│   └── documentation-sync.md # Code path → doc update map
 ├── AGENTS.md                 # Agent operating rules (read this first every session)
 ├── feature_list.json         # Authoritative feature state tracker
 ├── claude-progress.md        # Session log and current verified state

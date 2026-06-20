@@ -32,6 +32,22 @@ feature work on top of a broken starting state.
 - API Design Patterns (`docs/api-patterns.md`) — Required reading when adding endpoints
 - Architecture (`docs/ARCHITECTURE.md`) — System design and data flows
 - Product (`docs/PRODUCT.md`) — User personas, flows, and scope
+- Documentation Sync (`docs/documentation-sync.md`) — Which docs to update when code changes
+
+## Documentation Sync
+
+When you change code, update related documentation in the same session — do not
+leave docs stale for the next session.
+
+1. **Module doc** — check `<folder>/DOCS.md` for every code folder you edited
+   (e.g. `backend/api/` → `backend/api/DOCS.md`)
+2. **Topic docs** — if behavior, API contracts, architecture, or user flows
+   changed, check the relevant files in `docs/` (see `docs/documentation-sync.md`)
+3. **README.md** — update when Quickstart, project structure, or the API reference
+   table changes
+
+If no doc updates were needed, record `"Docs: no update required — <reason>"` in
+`claude-progress.md`. Do not skip the check silently.
 
 ## Required Artifacts
 
@@ -47,6 +63,8 @@ A feature is done only when all of the following are true:
 - the target behavior is implemented
 - the required verification actually ran
 - evidence is recorded in `feature_list.json` or `claude-progress.md`
+- related `DOCS.md` and `docs/` files are updated when behavior or contracts changed
+  (see `docs/documentation-sync.md`)
 - the repository remains restartable from the standard startup path
 
 ## End Of Session

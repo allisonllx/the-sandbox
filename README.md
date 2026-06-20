@@ -73,7 +73,8 @@ the_sandbox/
 ├── docs/
 │   ├── api-patterns.md      # API design patterns — required when adding endpoints
 │   ├── ARCHITECTURE.md      # System architecture + data-flow diagrams
-│   └── PRODUCT.md           # Non-technical product overview
+│   ├── PRODUCT.md           # Non-technical product overview
+│   └── documentation-sync.md  # Which docs to update when code changes
 ├── AGENTS.md                # Agent operating rules (read first every session)
 ├── feature_list.json        # Feature state tracker
 ├── claude-progress.md       # Session log
@@ -89,6 +90,7 @@ the_sandbox/
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System design, directory layout, data flows |
 | [`docs/PRODUCT.md`](docs/PRODUCT.md) | User personas, core flows, scope, roadmap |
 | [`docs/api-patterns.md`](docs/api-patterns.md) | API response shapes and endpoint conventions |
+| [`docs/documentation-sync.md`](docs/documentation-sync.md) | Code path → doc mapping; keep docs in sync with changes |
 
 Agent sessions should read `AGENTS.md` first, then the relevant topic doc above.
 
