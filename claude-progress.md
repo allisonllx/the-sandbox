@@ -6,7 +6,7 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `python -m pytest backend/tests/ -v`
 - Current highest-priority unfinished feature: see `feature_list.json` — assessor-001 complete
-- Latest passing: assessor-001 Phase B — LLM sponsor fit (113 tests)
+- Latest passing: README stakeholder flow refresh; all MVP features passing (113 tests)
 - Current blocker: None
 
 ## Session Log
@@ -194,3 +194,12 @@
 - Docs: assessor/DOCS.md, README.md feature status
 - Commits: none
 - Next best step: pick next feature from feature_list.json (all MVP features passing)
+
+### Session 014
+
+- Date: 2026-06-20
+- Goal: README refresh — stakeholders, dual-layer flow, blind audition, rank surfaces
+- Completed: Rewrote README.md (stakeholder table, end-to-end flow, ingest API, deferred items)
+- Docs: README.md — real vs demo disclaimer, shortened API ref
+- Verification run: n/a (docs only)
+- Commits: none

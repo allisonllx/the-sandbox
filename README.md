@@ -1,33 +1,167 @@
 # The Sandbox
 
-A zero-trust, two-sided R&D and proof-of-work talent platform. Startups turn their messy internal backlogs into safe, publishable coding challenges. Students solve those challenges to prove real-world engineering capability without résumés, referrals, or recruiting filters.
+A zero-trust **Innovation Hub** and proof-of-work talent platform. Growth-stage startups turn internal backlogs into safe, blind-audition challenges. Students prove capability on real engineering problems without résumés, referrals, or company logos on the line.
+
+> *"We aren't a job board; we are a zero-trust proof-of-work protocol."*
 
 ---
 
-## How It Works
+## Stakeholders
+
+| Stakeholder | Role | Primary surfaces |
+|---|---|---|
+| **Startup sponsor** (CTO / founder) | Ingests problems, de-risks IP, publishes challenges, reviews **Sponsor Match Radar** for their challenge only | `/startup` · `/startup/matches/{id}` |
+| **Student** | Discovers blind-audition challenges, solves in track workspace, earns **Execution Points** from platform-verified signal | `/student` · `/student/challenges/{id}` · `/student/leaderboard` · `/student/trust` |
+| **Enterprise recruiter** | Browses platform-wide top-tier talent (demo seed UI) | `/enterprise/radar` |
+
+Startups never see other companies' performers. Students never see sponsor names. Global rank and sponsor fit are **intentionally different scores**.
+
+---
+
+## What's Real vs Demo
+
+This repo is a **hackathon MVP**: core trust and grading mechanics are implemented; billing, auth, and some recruiter UX are narrative stubs. Use this table when demoing to judges.
+
+| Area | Status | Notes |
+|---|---|---|
+| Privacy proxy (PII strip) | **Real** | Local-only; no raw content in API responses |
+| Ingest (`sanitize` → `score`) | **Real API**, no UI | Backlog pre-seeded with `demo-*` items for judges |
+| Triage, relaxation, domain obfuscation | **Real** | Deterministic transforms + optional LLM |
+| Blind audition boundary | **Real** | Students never get `brand_proxy`; public API sanitized |
+| Editable release preview | **Real** | `PublishDraft` before publish |
+| Scope cap (~8h) | **Real gate** | `demo-007` → 422 |
+| Reward lock before publish | **Real gate** | No Stripe / escrow — money is fake |
+| Publish → dataset + starter | **Real** | SQLite synthesizer + scaffold on disk |
+| Student workspace + submit | **Real** | Monaco, drafts, disk-backed submissions |
+| Public **Run** (pre-submit tests) | **Real** | In-process pytest on host |
+| Assessor platform signal | **Real** (needs Docker) | Secret tests in isolated container; degrades without Docker |
+| Assessor sponsor fit | **Real** (needs `OPENAI_API_KEY`) | Heuristic fallback offline |
+| Dual-layer scorecard | **Real** | EP from platform only; Match Radar from sponsor fit |
+| Sponsor Match Radar | **Hybrid** | **Live** rankings when submissions exist; **demo seed** when empty |
+| Student leaderboard | **Demo seed** | Not aggregated from live submissions yet |
+| Enterprise radar | **Demo seed** | Subscription narrative only |
+| `/student/trust`, verified badges | **Narrative stub** | UI copy; no KYC backend |
+| Auth, multi-tenant, persistent DB | **Not built** | In-memory backlog; anonymous workspace cookies |
+
+**Rule of thumb:** if a student or sponsor *does something in the app* (publish, submit, score), it usually hits real backend logic. If a page shows **platform-wide talent rankings** without a submit flow behind it, treat it as demo seed unless Match Radar shows `source: live`.
+
+---
+
+## End-to-End Flow
 
 ```
-[Startup local process]
-Raw logs / feedback text (Slack, Intercom, CSV, error logs)
-        │
-        ▼
-  Privacy Proxy          ← strips all PII locally; nothing raw leaves this boundary
-        │ anonymized structural metadata only
-        ▼
-  AI PM Triage           ← LLM scores Severity / Friction / Sensitivity
-        │
-        ▼
-  Relaxation Controls    ← founder abstracts logic, synthesizes variable names,
-        │                   injects statistical noise
-        ▼
-  Micro-PRD + Synthetic Dataset  ← published to public sandbox
-        │
-        ▼
-[Student terminal]
-  Student solves challenge ──► AI Assessor grades taste + correctness ──► CTO dashboard
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STARTUP SPONSOR                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Raw logs / feedback  →  Privacy Proxy (local PII strip)                    │
+│       →  POST /triage/score  →  AI PM triage (Severity / Friction / Sens.)  │
+│       →  Relaxation + domain obfuscation  →  editable Release Preview       │
+│       →  Lock reward + scope check  →  Publish                              │
+│       →  Match Radar (/startup/matches/{id}) sorted by Sponsor Fit          │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                    public challenge (blind audition — no brand_proxy)
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STUDENT                                                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Innovation Hub  →  Company Tech Profile + Micro-PRD (no sponsor name)      │
+│       →  Technical: Monaco workspace + dataset + public Run                 │
+│       →  Product: prototype + DESIGN.md                                     │
+│       →  Submit  →  Dual-layer scorecard                                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ASSESSOR (dual-layer)                                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Platform Signal  — Docker secret tests + security scan (track-standard)    │
+│       →  Execution Points  →  student leaderboard (demo) + enterprise radar │
+|       (demo)                                                                │
+│  Sponsor Fit      — LLM vs challenge success criteria (heuristic offline)   │
+│       →  Match Radar rank for that challenge only                           │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-The critical guarantee: **raw corporate data never leaves the local process.** The LLM only ever sees anonymized structural metadata (field names, inferred types, event frequencies, row scale).
+**Trust guarantee:** raw corporate data never leaves the sanitization boundary. External LLMs see anonymized structural metadata (triage) or sanitized public challenge context + student submission (sponsor fit) — never `brand_proxy`, source labels, or raw log lines.
+
+---
+
+## How the Pieces Fit Together
+
+### 1. Ingest & triage (startup)
+
+Founders add problems by piping text through the privacy proxy, then scoring metadata into the backlog:
+
+```bash
+# Step 1 — sanitize locally (metadata only in response)
+curl -s -X POST http://localhost:8000/api/v1/proxy/sanitize \
+  -H "Content-Type: application/json" \
+  -d '{"content": "2024-03-12 ERROR Login failed for user@example.com ...", "format": "log"}'
+
+# Step 2 — score and add to backlog
+curl -s -X POST http://localhost:8000/api/v1/triage/score \
+  -H "Content-Type: application/json" \
+  -d '{"metadata": { ... }, "source_label": "Slack #bugs"}'
+```
+
+The hackathon dashboard ships with **pre-seeded demo backlog items** (`demo-003` … `demo-007`) so judges can run the full loop without ingest UI. Adding new problems via API is supported; a startup paste/upload UI is optional polish.
+
+### 2. De-risk & publish (startup)
+
+On `/startup`, founders:
+
+1. Review Severity / Friction / Sensitivity and sensitivity shield (Red / Yellow / Green)
+2. Apply **Relaxation Controls** — abstract logic, synthesize column names, noise injection, domain obfuscation
+3. **Preview Changes** — edit the **Release Preview** (title, success criteria, company profile, evaluation focus)
+4. **Lock reward** (required gate — escrow is stubbed, see table above)
+5. **Approve & Publish** — scope cap (~8h) blocks oversized items (`demo-007` → 422)
+
+Published challenges expose a **Company Tech Profile** to students (stage, team size, stack) — never the internal `brand_proxy`.
+
+### 3. Blind audition (student-facing boundary)
+
+| Internal (CTO only) | Public (students) |
+|---|---|
+| `brand_proxy`, `source_label`, `sponsor_profile` | `CompanyTechProfile` |
+| Domain before/after preview | Sanitized Micro-PRD + obfuscated column names |
+| Real industry tokens | Abstract titles, red-sensitivity omits `industry_broad` |
+
+Students verify sponsor legitimacy at `/student/trust` (narrative stub — see disclaimer).
+
+### 4. Solve & submit (student)
+
+| Track | Workspace | Deliverables |
+|---|---|---|
+| **Technical** | Monaco multi-file editor, public Run, autosave | `src/queries.py` + starter scaffold; synthetic SQLite dataset |
+| **Product Feature** | Prototype editor | HTML/CSS/JS + **DESIGN.md**; optional Figma/deploy links |
+
+### 5. Dual-layer assessment
+
+Every submission produces two independent scores:
+
+| Layer | What it measures | Used for |
+|---|---|---|
+| **Platform Signal** | Track-standard objective rubric (Docker secret tests, security scan, deliverable structure) | **Execution Points** — global student motivation + enterprise radar |
+| **Sponsor Fit** | Alignment with *this* challenge's success criteria and evaluation focus (LLM or heuristic) | **Match Radar** — `/startup/matches/{id}` only |
+
+A student can rank highly on Execution Points globally while not topping a specific sponsor's Match Radar — and vice versa.
+
+### 6. Three rank surfaces (by design)
+
+See **What's Real vs Demo** — only Match Radar uses live submission data today.
+
+| Audience | Route | Sort key |
+|---|---|---|
+| Students | `/student/leaderboard` | Execution Points (demo seed) |
+| Startup sponsors | `/startup/matches/{id}` | Sponsor Fit (live when submissions exist) |
+| Enterprises | `/enterprise/radar` | Platform signal (demo seed) |
+
+---
+
+## Defensive Posture
+
+See **What's Real vs Demo** for which mitigations are enforced vs narrated. Demo CTO-only labels: **StealthCo** (`demo-005`), **NovaPay** (`demo-003`), **Platform Pool** (`demo-006`). Students never see these names.
 
 ---
 
@@ -38,195 +172,145 @@ The critical guarantee: **raw corporate data never leaves the local process.** T
 | Backend | Python 3.11+ · FastAPI · Pydantic v2 |
 | Privacy Proxy | Regex PII masking · spaCy `en_core_web_sm` (local NER, offline) |
 | AI / LLM | OpenAI API (`gpt-4o-mini`) · heuristic fallback when key absent |
-| Frontend | Next.js 14 · TypeScript · Tailwind CSS |
+| Assessor | Dual-layer: Docker secret tests (platform) + LLM sponsor fit |
+| Frontend | Next.js 14 · TypeScript · Tailwind CSS · Monaco editor |
 | Testing | pytest · 113 tests |
-| Code Runner | Docker assessor (`the-sandbox-runner`) for secret tests; in-process for public Run |
+| Code Runner | Docker assessor (`the-sandbox-runner`) for secret tests; in-process for student **Run** |
 
 ---
 
 ## Project Structure
 
-Subfolder layout with one-line roles. File-level detail lives in each folder's `DOCS.md`.
-
 ```
 the_sandbox/
-├── backend/                    # FastAPI app → backend/DOCS.md
-│   ├── privacy_proxy/          # PII scrubbing, NER, structural extraction
-│   ├── ai_pm/                  # Triage scoring, relaxation, Micro-PRD
-│   ├── sandbox/                # Synthetic datasets, submissions, rank stubs
-│   ├── api/                    # HTTP routes (proxy, triage, sandbox)
-│   ├── tests/                  # pytest suite
-│   ├── main.py
-│   └── requirements.txt
-├── frontend/                   # Next.js app → frontend/DOCS.md
-│   ├── app/startup/            # CTO triage dashboard + sponsor Match Radar
+├── backend/
+│   ├── privacy_proxy/          # Local PII scrubbing, NER, structural extraction
+│   ├── ai_pm/                  # Triage, relaxation, blind audition, Micro-PRD, publish draft
+│   ├── assessor/               # Dual-layer platform signal + sponsor fit
+│   ├── sandbox/                # Datasets, submissions, leaderboard, match radar
+│   ├── api/                    # HTTP routes
+│   └── tests/
+├── frontend/
+│   ├── app/startup/            # Triage dashboard + sponsor Match Radar
 │   ├── app/student/            # Innovation Hub, workspace, leaderboard, trust
-│   ├── app/enterprise/radar/   # Enterprise subscription view (demo)
-│   ├── components/
-│   └── lib/                    # API client, TypeScript types
-├── docs/                       # Architecture, product, API conventions
-├── AGENTS.md
-├── feature_list.json
-├── claude-progress.md
+│   └── app/enterprise/radar/   # Enterprise subscription view (demo)
+├── docker/sandbox-runner/      # Assessor container image
+├── docs/                       # ARCHITECTURE, PRODUCT, api-patterns
+├── feature_list.json           # Feature state + verification evidence
 └── init.sh
 ```
 
-Module docs: [`backend/privacy_proxy/DOCS.md`](backend/privacy_proxy/DOCS.md), [`backend/ai_pm/DOCS.md`](backend/ai_pm/DOCS.md), [`backend/sandbox/DOCS.md`](backend/sandbox/DOCS.md), [`backend/api/DOCS.md`](backend/api/DOCS.md), [`backend/tests/DOCS.md`](backend/tests/DOCS.md), [`frontend/DOCS.md`](frontend/DOCS.md)
+Module docs: [`backend/privacy_proxy/DOCS.md`](backend/privacy_proxy/DOCS.md) · [`backend/ai_pm/DOCS.md`](backend/ai_pm/DOCS.md) · [`backend/assessor/DOCS.md`](backend/assessor/DOCS.md) · [`backend/sandbox/DOCS.md`](backend/sandbox/DOCS.md) · [`backend/api/DOCS.md`](backend/api/DOCS.md) · [`frontend/DOCS.md`](frontend/DOCS.md)
 
----
-
-## Documentation
-
-| Doc | Purpose |
-|---|---|
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System design, directory layout, data flows |
-| [`docs/PRODUCT.md`](docs/PRODUCT.md) | User personas, core flows, scope, roadmap |
-| [`docs/api-patterns.md`](docs/api-patterns.md) | API response shapes and endpoint conventions |
-| [`docs/documentation-sync.md`](docs/documentation-sync.md) | Code path → doc mapping; keep docs in sync with changes |
-
-Agent sessions should read `AGENTS.md` first, then the relevant topic doc above.
-
----
-
-## Prerequisites
-
-- Python 3.11+
-- Node.js 20+
-- An `OPENAI_API_KEY` environment variable *(optional — all features work without it using heuristic fallback)*
+Topic docs: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/PRODUCT.md`](docs/PRODUCT.md) · [`docs/api-patterns.md`](docs/api-patterns.md)
 
 ---
 
 ## Quickstart
 
-### 1. Clone and enter the repo
+### Prerequisites
+
+- Python 3.11+
+- Node.js 20+
+- Docker *(optional — required for full platform secret-test grading on submit)*
+- `OPENAI_API_KEY` *(optional — heuristic + offline fallbacks work without it)*
+
+### Backend
 
 ```bash
-git clone <repo-url> the_sandbox
-cd the_sandbox
-```
-
-### 2. Backend
-
-```bash
-# Create and activate a virtual environment (recommended)
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-
-# Install dependencies
+python -m venv .venv && source .venv/bin/activate
 pip install -r backend/requirements.txt
 
-# (Optional but recommended) Download the local NER model — ~12 MB
-# Install spaCy first, then download the model via pip (more reliable than the spaCy CLI)
+# Optional: local NER model (~12 MB)
 pip install "spacy==3.7.0"
 pip install "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl"
 
-# Set your OpenAI key (optional — heuristic fallback works without it)
-export OPENAI_API_KEY=sk-...
+export OPENAI_API_KEY=sk-...   # optional
 
-# Start the API server
-# Use `python -m uvicorn` to guarantee the active venv's interpreter is used
 python -m uvicorn backend.main:app --reload --port 8000
 ```
 
-The API will be live at **http://localhost:8000**. OpenAPI docs at **http://localhost:8000/docs**.
+API: **http://localhost:8000** · OpenAPI: **http://localhost:8000/docs**
 
-### 3. Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The dashboard will be live at **http://localhost:3000** → auto-redirects to **/startup**.
-
-### 4. Run the test suite
+### Frontend
 
 ```bash
-# From the repo root
-python -m pytest backend/tests/ -v
+cd frontend && npm install && npm run dev
 ```
 
-Expected output: **113 passed**.
+App: **http://localhost:3000** → redirects to **/startup**
 
-### 5. (Optional) Build the assessor Docker runner
+### Tests
 
-Required for full platform secret-test grading on submit:
+```bash
+python -m pytest backend/tests/ -v    # expect 113 passed
+```
+
+### Assessor Docker image (optional)
 
 ```bash
 docker build -t the-sandbox-runner docker/sandbox-runner
 ```
 
-Without Docker, platform technical scores degrade to static security scan only (student code is never executed on the host).
+Without Docker, platform technical grading degrades to static security scan only — student code is **never** executed on the host.
+
+Or run everything via `./init.sh`.
 
 ---
 
-## Judge Demo Script (Defensive Business Model)
+## Judge Demo Script
 
-Hybrid demo: **real** blind audition + scope cap + domain obfuscation; **stubbed** bounty lock + execution rank.
-
-1. **Blind audition** — `/startup` → `demo-005` → enable *Obfuscate Industry Domain* → Preview (see Company Tech Profile panel) → Lock reward → Publish → `/student/challenges/demo-005` shows **Series A · Team 11-50 · Go/React/AWS** — no LockerShare, StealthCo, or food/merchant tokens
-2. **Scope cap rejection** — select `demo-007` → Publish → 422 with union-rep breakdown
-3. **Verified sponsor + bounty** — `demo-003` → Lock $500 bounty → Publish → student card shows Verified Sponsor + escrow label (no NovaPay name)
-4. **Reverse sourcing** — students: `/student/leaderboard` · startups: `/startup/matches/{id}` (own challenge only) · enterprises: `/enterprise/radar` (platform-wide)
-5. **Trust narrative** — `/student/trust` explains sponsor verification protocol (stub)
+1. **Blind audition** — `/startup` → `demo-005` → *Obfuscate Industry Domain* → Preview (Company Tech Profile) → Lock reward → Publish → `/student/challenges/demo-005` shows stage/team/stack only — no StealthCo or food/merchant tokens
+2. **Editable release preview** — Preview Changes → edit title, success criteria, company profile → Publish with draft
+3. **Scope cap** — `demo-007` → Publish → 422 `SCOPE_EXCEEDED` with breakdown
+4. **Verified sponsor + bounty** — `demo-003` → Lock $500 → Publish → student card shows Verified Sponsor + escrow label
+5. **Dual-layer scorecard** — submit as student → Platform Signal + Sponsor Fit sections; EP from platform only
+6. **Three rank surfaces** — `/student/leaderboard` · `/startup/matches/demo-003` (Sponsor Fit) · `/enterprise/radar`
+7. **Trust narrative** — `/student/trust`
 
 ---
 
-## Demo Walkthrough
+## Demo Walkthrough (5 min)
 
-The backend ships with three pre-scored backlog items so the full demo loop works out of the box — no pipeline setup required.
+**Startup path**
 
-1. **Open the CTO dashboard** at `http://localhost:3000/startup`
-2. **Click any backlog card** — the right panel shows Severity / Friction / Sensitivity scores and the Red / Yellow / Green sensitivity shield
-3. **Toggle Relaxation Controls** — enable *Synthesize Variable Names* and drag the noise slider to ~50%, then click **Preview Changes** to see the before/after field name diff and edit the **Release Preview** (title, success criteria, company profile)
-4. **Click Approve & Publish** — the backend generates a Micro-PRD (LLM if key is set, template fallback otherwise) and renders it inline
+1. Open `/startup` — pick `demo-003` or `demo-005`
+2. Toggle relaxation controls → **Preview Changes** → edit Release Preview
+3. Lock reward → **Approve & Publish**
+4. Open **Match Radar** link → `/startup/matches/{id}`
 
-To exercise the privacy proxy directly:
+**Student path**
+
+1. Open `/student` — filter by track
+2. Open a challenge — note Company Tech Profile (no sponsor name)
+3. Technical: run public tests, submit → dual-layer scorecard
+4. Product (`demo-004`): submit with DESIGN.md
+
+**Ingest (API)**
 
 ```bash
 curl -s -X POST http://localhost:8000/api/v1/proxy/sanitize \
   -H "Content-Type: application/json" \
-  -d '{
-    "content": "2024-03-12 ERROR [auth] Login failed for john.doe@acme.com token=sk_live_AbCdEf12345678 ip=10.0.0.5",
-    "format": "log"
-  }' | python -m json.tool
+  -d '{"content": "ERROR Login failed for john.doe@acme.com token=sk_live_x ip=10.0.0.5", "format": "log"}' \
+  | python -m json.tool
 ```
 
-The response contains **only structural metadata** — no email, no token, no IP address.
+Response contains structural metadata only — no email, token, or IP.
 
 ---
 
 ## API Reference
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/v1/proxy/sanitize` | Run the privacy proxy on raw text |
-| `GET` | `/api/v1/proxy/health` | Check proxy status + NER model availability |
-| `GET` | `/api/v1/triage/backlog` | List all backlog items (sorted by severity) |
-| `GET` | `/api/v1/triage/backlog/{id}` | Get a single backlog item |
-| `POST` | `/api/v1/triage/score` | Score a `SanitizedMetadata` blob |
-| `POST` | `/api/v1/triage/relax/{id}` | Preview relaxation controls + `challenge_draft` (no LLM) |
-| `POST` | `/api/v1/triage/publish/{id}` | Publish challenge (optional `draft`; requires locked reward; scope guard) |
-| `GET` | `/api/v1/triage/backlog/{id}/scope` | Scope estimate for backlog item |
-| `GET` | `/api/v1/triage/backlog/{id}/matches` | Sponsor Match Radar — performers for this challenge only |
-| `GET` | `/api/v1/sandbox/challenges` | List published public challenges |
-| `GET` | `/api/v1/sandbox/challenges/{id}` | Get challenge with Micro-PRD |
-| `GET` | `/api/v1/sandbox/challenges/{id}/dataset` | Download synthetic SQLite dataset |
-| `GET` | `/api/v1/sandbox/challenges/{id}/starter` | Multi-file starter scaffold (JSON) |
-| `GET` | `/api/v1/sandbox/challenges/{id}/starter/download` | Starter scaffold as ZIP |
-| `GET` | `/api/v1/sandbox/challenges/{id}/workspace` | Bootstrap workspace session + load draft |
-| `PUT` | `/api/v1/sandbox/challenges/{id}/draft` | Save workspace draft |
-| `POST` | `/api/v1/sandbox/validate` | Python syntax diagnostics for Monaco |
-| `POST` | `/api/v1/sandbox/challenges/{id}/run` | Enqueue public test run (async) |
-| `GET` | `/api/v1/sandbox/jobs/{id}` | Poll run job output |
-| `POST` | `/api/v1/sandbox/challenges/{id}/submit` | Submit inline multi-file solution |
-| `POST` | `/api/v1/sandbox/challenges/{id}/submit/zip` | Submit ZIP archive (raw body) |
-| `GET` | `/api/v1/sandbox/submissions/{id}/scorecard` | Assessor scorecard for a submission |
-| `GET` | `/api/v1/sandbox/leaderboard` | Student global Execution Points rank (demo) |
-| `GET` | `/api/v1/sandbox/enterprise/radar` | Enterprise platform-wide top tier (demo) |
+Key entry points only. Full contract: **http://localhost:8000/docs** · module detail: [`backend/api/DOCS.md`](backend/api/DOCS.md)
 
-Full interactive docs: **http://localhost:8000/docs**
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/api/v1/proxy/sanitize` | Ingest: raw text → metadata |
+| `POST` | `/api/v1/triage/score` | Ingest: metadata → backlog item |
+| `POST` | `/api/v1/triage/publish/{id}` | Publish challenge |
+| `GET` | `/api/v1/sandbox/challenges` | Student: list public challenges |
+| `POST` | `/api/v1/sandbox/challenges/{id}/submit` | Student: submit → scorecard |
+| `GET` | `/api/v1/triage/backlog/{id}/matches` | Sponsor: Match Radar |
 
 ---
 
@@ -234,23 +318,33 @@ Full interactive docs: **http://localhost:8000/docs**
 
 | Variable | Required | Description |
 |---|---|---|
-| `OPENAI_API_KEY` | No | OpenAI key for live LLM scoring and Micro-PRD generation. Falls back to heuristic mode if absent. |
+| `OPENAI_API_KEY` | No | Triage scoring, Micro-PRD generation, sponsor fit LLM. Heuristic fallback if absent. |
 
-Secrets must never be committed. Use `.env` locally (already in `.gitignore`).
+Secrets must never be committed. Use `.env` locally (in `.gitignore`).
 
 ---
 
 ## Feature Status
 
-| Feature | Status |
+All hackathon MVP features passing (`feature_list.json`):
+
+| Feature | Summary |
 |---|---|
-| `privacy-001` Local Privacy Proxy | ✅ Passing — 23 tests |
-| `triage-001` AI PM Triage Dashboard | ✅ Passing — 20 tests |
-| `sandbox-001` Student Terminal & Micro-PRD | ✅ Passing — 8 tests |
-| `workspace-002` Multi-File Workspace & Persistence | ✅ Passing |
-| `tracks-001` / `product-001` Innovation Hub tracks | ✅ Passing |
-| `trust-001` Scope cap + domain obfuscation | ✅ Passing |
-| `rewards-001` Bounty / interview lock (stub) | ✅ Passing |
-| `blind-002` Blind Audition — Company Tech Profile | ✅ Passing |
-| `rank-001` Three rank surfaces (student / sponsor / enterprise) | ✅ Passing |
-| `assessor-001` Dual-Layer Assessor (Platform Docker + LLM Sponsor Fit) | ✅ Passing |
+| `privacy-001` | Local privacy proxy + PII strip |
+| `triage-001` | AI PM triage dashboard + relaxation controls |
+| `sandbox-001` | Student terminal + Micro-PRD |
+| `workspace-002` | Monaco workspace, persistence, public Run |
+| `tracks-001` / `product-001` | Technical + Product Feature innovation tracks |
+| `trust-001` | Scope cap + domain obfuscation |
+| `rewards-001` | Reward lock gate (stub escrow) |
+| `blind-002` | Blind audition Company Tech Profile |
+| `rank-001` | Three rank surfaces (student / sponsor / enterprise) |
+| `assessor-001` | Dual-layer assessor (Docker platform + LLM sponsor fit) |
+
+**Deferred post-MVP:** auth, multi-tenant isolation, real Stripe escrow, sponsor KYC, startup ingest UI, live global leaderboard aggregation.
+
+---
+
+## Agent / Contributor Notes
+
+Sessions should read [`AGENTS.md`](AGENTS.md) first, then [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`claude-progress.md`](claude-progress.md) for verified state.
