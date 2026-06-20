@@ -1,8 +1,10 @@
 import type {
   BacklogItem,
+  PublishedChallenge,
   RelaxationConfig,
   RelaxResponse,
   PublishResponse,
+  SubmitResponse,
 } from "./types";
 
 const BASE = "/api/v1";
@@ -36,5 +38,27 @@ export const api = {
     request(`/triage/publish/${itemId}`, {
       method: "POST",
       body: JSON.stringify({ config }),
+    }),
+
+  listChallenges: (): Promise<PublishedChallenge[]> =>
+    request("/sandbox/challenges"),
+
+  getChallenge: (id: string): Promise<PublishedChallenge> =>
+    request(`/sandbox/challenges/${id}`),
+
+  downloadDataset: (id: string): Promise<Blob> =>
+    fetch(`${BASE}/sandbox/challenges/${id}/dataset`).then((res) => {
+      if (!res.ok) throw new Error(`Download failed: ${res.status}`);
+      return res.blob();
+    }),
+
+  submitSolution: (
+    challengeId: string,
+    code: string,
+    language = "python"
+  ): Promise<SubmitResponse> =>
+    request(`/sandbox/challenges/${challengeId}/submit`, {
+      method: "POST",
+      body: JSON.stringify({ code, language }),
     }),
 };

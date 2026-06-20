@@ -12,8 +12,9 @@ FastAPI application for The Sandbox. Hosts the zero-trust privacy proxy, AI PM t
 | `requirements.txt` | Pinned Python dependencies |
 | `privacy_proxy/` | Local sanitization pipeline (PII scrubbing, NER, structural extraction) |
 | `ai_pm/` | Backlog scoring, relaxation controls, Micro-PRD generation |
+| `sandbox/` | Synthetic dataset generator, public challenges, submission queue |
 | `api/` | HTTP route handlers |
-| `tests/` | pytest suite (46 tests) |
+| `tests/` | pytest suite (54 tests) |
 
 ## How It Fits In
 

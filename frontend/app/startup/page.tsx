@@ -34,7 +34,7 @@ export default function StartupDashboard() {
 
   function handlePublished(itemId: string) {
     setItems((prev) =>
-      prev.map((i) => (i.id === itemId ? { ...i, status: "approved" } : i))
+      prev.map((i) => (i.id === itemId ? { ...i, status: "published" } : i))
     );
   }
 

@@ -178,5 +178,11 @@ def upsert_item(item: BacklogItem) -> BacklogItem:
     return item
 
 
+def list_published() -> list[BacklogItem]:
+    """Return published challenges for the public sandbox."""
+    items = [i for i in _store.values() if i.status == BacklogStatus.published]
+    return sorted(items, key=lambda i: i.published_at or i.created_at, reverse=True)
+
+
 def delete_item(item_id: str) -> bool:
     return _store.pop(item_id, None) is not None

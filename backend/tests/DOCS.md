@@ -2,7 +2,7 @@
 
 ## Purpose
 
-pytest suite verifying the privacy proxy and AI PM triage layer. All tests run without network access or a live OpenAI key.
+pytest suite verifying the privacy proxy, AI PM triage layer, and public sandbox. All tests run without network access or a live OpenAI key.
 
 ## Contents
 
@@ -10,6 +10,7 @@ pytest suite verifying the privacy proxy and AI PM triage layer. All tests run w
 |---|---|
 | `test_sanitizer.py` | PII masking, NER status fields, structural extraction, zero-network guard |
 | `test_triage.py` | Scoring, sensitivity tags, relaxation controls, demo store |
+| `test_sandbox.py` | Publish flow, dataset anomalies, sandbox API, submissions |
 | `fixtures/sample_log.txt` | Realistic log lines with synthetic PII for integration tests |
 
 ## How It Fits In

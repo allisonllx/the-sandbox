@@ -1,6 +1,6 @@
 # The Sandbox
 
-A zero-trust, two-sided R&D and proof-of-work talent platform. Startups turn their messy internal backlogs into safe, publishable coding challenges. Students solve those challenges to prove real-world engineering capability — without résumés, referrals, or recruiting filters.
+A zero-trust, two-sided R&D and proof-of-work talent platform. Startups turn their messy internal backlogs into safe, publishable coding challenges. Students solve those challenges to prove real-world engineering capability without résumés, referrals, or recruiting filters.
 
 ---
 
@@ -39,47 +39,38 @@ The critical guarantee: **raw corporate data never leaves the local process.** T
 | Privacy Proxy | Regex PII masking · spaCy `en_core_web_sm` (local NER, offline) |
 | AI / LLM | OpenAI API (`gpt-4o-mini`) · heuristic fallback when key absent |
 | Frontend | Next.js 14 · TypeScript · Tailwind CSS |
-| Testing | pytest · 46 tests, 0 mocks for network calls in privacy layer |
+| Testing | pytest · 54 tests |
 | Code Runner | Docker (ephemeral containers) — planned for `assessor-001` |
 
 ---
 
 ## Project Structure
 
+Subfolder layout with one-line roles. File-level detail lives in each folder's `DOCS.md`.
+
 ```
 the_sandbox/
-├── backend/
-│   ├── privacy_proxy/       # Zero-trust sanitization engine
-│   │   ├── pii_patterns.py  # Regex: email, phone, JWT, AWS/Stripe keys, IPv4 …
-│   │   ├── ner_engine.py    # spaCy local NER (graceful degradation if not installed)
-│   │   ├── structural_extractor.py  # JSON / CSV / log metadata extraction
-│   │   └── sanitizer.py     # Pipeline: guardrail → scrub → NER → extract
-│   ├── ai_pm/               # AI Product Manager layer
-│   │   ├── scorer.py        # LLM Severity / Friction / Sensitivity scoring
-│   │   ├── relaxation.py    # Abstract logic, variable synthesis, noise injection
-│   │   ├── microprd.py      # Micro-PRD generator
-│   │   └── store.py         # In-memory backlog (3 pre-loaded demo items)
-│   ├── api/
-│   │   ├── routes.py        # POST /api/v1/proxy/sanitize
-│   │   └── triage_routes.py # GET/POST /api/v1/triage/*
-│   ├── tests/               # 46 pytest tests
-│   ├── main.py              # FastAPI app entry point
+├── backend/                    # FastAPI app → backend/DOCS.md
+│   ├── privacy_proxy/          # PII scrubbing, NER, structural extraction
+│   ├── ai_pm/                  # Triage scoring, relaxation, Micro-PRD
+│   ├── sandbox/                # Synthetic datasets, submission queue
+│   ├── api/                    # HTTP routes (proxy, triage, sandbox)
+│   ├── tests/                  # pytest suite
+│   ├── main.py
 │   └── requirements.txt
-├── frontend/
-│   ├── app/startup/         # CTO dashboard (split-screen triage UI)
-│   ├── components/          # BacklogCard, RelaxationPanel, SensitivityBadge, ScoreBar
-│   ├── lib/                 # API client, TypeScript types
-│   └── package.json
-├── docs/
-│   ├── api-patterns.md      # API design patterns — required when adding endpoints
-│   ├── ARCHITECTURE.md      # System architecture + data-flow diagrams
-│   ├── PRODUCT.md           # Non-technical product overview
-│   └── documentation-sync.md  # Which docs to update when code changes
-├── AGENTS.md                # Agent operating rules (read first every session)
-├── feature_list.json        # Feature state tracker
-├── claude-progress.md       # Session log
-└── init.sh                  # Standard startup script
+├── frontend/                   # Next.js app → frontend/DOCS.md
+│   ├── app/startup/            # CTO triage dashboard
+│   ├── app/student/            # Challenge browser + workspace
+│   ├── components/
+│   └── lib/                    # API client, TypeScript types
+├── docs/                       # Architecture, product, API conventions
+├── AGENTS.md
+├── feature_list.json
+├── claude-progress.md
+└── init.sh
 ```
+
+Module docs: [`backend/privacy_proxy/DOCS.md`](backend/privacy_proxy/DOCS.md), [`backend/ai_pm/DOCS.md`](backend/ai_pm/DOCS.md), [`backend/sandbox/DOCS.md`](backend/sandbox/DOCS.md), [`backend/api/DOCS.md`](backend/api/DOCS.md), [`backend/tests/DOCS.md`](backend/tests/DOCS.md), [`frontend/DOCS.md`](frontend/DOCS.md)
 
 ---
 
@@ -155,7 +146,7 @@ The dashboard will be live at **http://localhost:3000** → auto-redirects to **
 python -m pytest backend/tests/ -v
 ```
 
-Expected output: **46 passed**.
+Expected output: **54 passed**.
 
 ---
 
@@ -193,7 +184,11 @@ The response contains **only structural metadata** — no email, no token, no IP
 | `GET` | `/api/v1/triage/backlog/{id}` | Get a single backlog item |
 | `POST` | `/api/v1/triage/score` | Score a `SanitizedMetadata` blob |
 | `POST` | `/api/v1/triage/relax/{id}` | Preview relaxation controls (no LLM) |
-| `POST` | `/api/v1/triage/publish/{id}` | Approve item and generate Micro-PRD |
+| `POST` | `/api/v1/triage/publish/{id}` | Publish challenge, generate Micro-PRD + dataset |
+| `GET` | `/api/v1/sandbox/challenges` | List published public challenges |
+| `GET` | `/api/v1/sandbox/challenges/{id}` | Get challenge with Micro-PRD |
+| `GET` | `/api/v1/sandbox/challenges/{id}/dataset` | Download synthetic SQLite dataset |
+| `POST` | `/api/v1/sandbox/challenges/{id}/submit` | Submit student solution |
 
 Full interactive docs: **http://localhost:8000/docs**
 
@@ -215,5 +210,5 @@ Secrets must never be committed. Use `.env` locally (already in `.gitignore`).
 |---|---|
 | `privacy-001` Local Privacy Proxy | ✅ Passing — 23 tests |
 | `triage-001` AI PM Triage Dashboard | ✅ Passing — 20 tests |
-| `sandbox-001` Student Terminal & Micro-PRD | 🔲 Not started |
+| `sandbox-001` Student Terminal & Micro-PRD | ✅ Passing — 8 tests |
 | `assessor-001` AI Assessor & Scorecard | 🔲 Not started |

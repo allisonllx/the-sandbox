@@ -104,6 +104,15 @@ class BacklogItem(BaseModel):
     relaxation_config: RelaxationConfig = Field(default_factory=RelaxationConfig)
     relaxed_preview: RelaxedPreview | None = None
     microprd: MicroPRD | None = None
+    dataset_path: str | None = Field(
+        default=None,
+        description="Filesystem path to generated SQLite dataset (set on publish)",
+    )
+    dataset_anomalies: list[str] = Field(
+        default_factory=list,
+        description="Human-readable list of injected dataset anomalies",
+    )
+    published_at: datetime | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 

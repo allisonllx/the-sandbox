@@ -93,3 +93,21 @@ export interface PublishResponse {
   microprd: MicroPRD;
   status: BacklogStatus;
 }
+
+export interface PublishedChallenge {
+  id: string;
+  title: string;
+  status: string;
+  microprd: MicroPRD;
+  dataset_ready: boolean;
+  dataset_anomalies: string[];
+  published_at: string | null;
+}
+
+export interface SubmitResponse {
+  ok: boolean;
+  submission_id: string;
+  challenge_id: string;
+  status: "received" | "queued_for_assessment";
+  message: string;
+}

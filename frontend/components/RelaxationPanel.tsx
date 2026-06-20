@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { BacklogItem, RelaxationConfig, RelaxedPreview } from "@/lib/types";
 import { api } from "@/lib/api";
 import { SensitivityBadge } from "./SensitivityBadge";
@@ -98,7 +99,7 @@ export function RelaxationPanel({ item, onPublished }: RelaxationPanelProps) {
   const [preview, setPreview] = useState<RelaxedPreview | null>(item.relaxed_preview);
   const [publishing, setPublishing] = useState(false);
   const [previewing, setPreviewing] = useState(false);
-  const [published, setPublished] = useState(item.status === "approved" || item.status === "published");
+  const [published, setPublished] = useState(item.status === "published");
   const [microprd, setMicroprd] = useState(item.microprd);
   const [error, setError] = useState<string | null>(null);
 
@@ -254,8 +255,14 @@ export function RelaxationPanel({ item, onPublished }: RelaxationPanelProps) {
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-green-400 text-sm font-semibold">
             <span>✓</span>
-            <span>Challenge approved</span>
+            <span>Challenge published to public sandbox</span>
           </div>
+          <Link
+            href={`/student/challenges/${item.id}`}
+            className="inline-block text-xs text-accent hover:underline"
+          >
+            Open student view →
+          </Link>
 
           {microprd && (
             <div className="space-y-3 text-xs">

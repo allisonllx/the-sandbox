@@ -17,7 +17,9 @@ from ..ai_pm.models import (
     ScoreResponse,
     SensitivityTag,
 )
-from ..privacy_proxy.models import SanitizeRequest, SanitizeResponse
+from datetime import datetime, timezone
+
+from ..sandbox.synthesizer import generate_dataset
 
 router = APIRouter(prefix="/api/v1/triage", tags=["triage"])
 
@@ -130,14 +132,19 @@ def publish_item(item_id: str, request: RelaxRequest) -> PublishResponse:
         metadata=item.metadata,
     )
 
+    db_path, anomalies = generate_dataset(item_id, preview, item.metadata)
+
     item.relaxation_config = request.config
     item.relaxed_preview = preview
     item.microprd = prd
-    item.status = BacklogStatus.approved
+    item.dataset_path = str(db_path)
+    item.dataset_anomalies = anomalies
+    item.published_at = datetime.now(timezone.utc)
+    item.status = BacklogStatus.published
     store.upsert_item(item)
 
     return PublishResponse(
         item_id=item_id,
         microprd=prd,
-        status=BacklogStatus.approved,
+        status=BacklogStatus.published,
     )
