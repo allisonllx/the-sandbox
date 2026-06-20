@@ -12,7 +12,7 @@ The Sandbox is a two-sided, zero-trust R&D and proof-of-work talent platform org
 - **Persistence (MVP):** In-memory backlog · file-backed drafts/submissions/jobs under `data/`
 - **Datasets:** SQLite per challenge (technical track only)
 - **AI / LLM:** OpenAI API — receives anonymized structural metadata only for triage/Micro-PRD
-- **Code Runner:** In-process public tests (MVP); Docker ephemeral containers planned for `assessor-001`
+- **Code Runner:** Public tests in-process (student Run button); assessor secret tests in Docker (`assessor-001 Phase A`)
 
 ## Directory Structure
 
@@ -118,10 +118,10 @@ Startups do **not** see the student global leaderboard or other sponsors' challe
 | Service | Purpose | Data sent |
 |---|---|---|
 | OpenAI API | Triage scoring, Micro-PRD generation | Anonymized structural metadata only |
-| Docker (planned) | Ephemeral code execution | Student code only |
+| Docker | Ephemeral assessor containers (network disabled) | Student submission code only |
 
 ## Known Constraints
 
 - Privacy proxy is the critical security boundary — see `AGENTS.md`
-- Student code runs in-process for public tests (MVP); Docker isolation deferred to `assessor-001`
+- Public **Run** uses in-process pytest (student feedback loop); **submit grading** uses Docker secret tests for platform signal
 - Backlog and rank data are in-memory / demo seed — no PostgreSQL or auth yet

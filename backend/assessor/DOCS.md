@@ -12,35 +12,35 @@ Dual-layer submission grading:
 | File | Role |
 |---|---|
 | `models.py` | `ScoreLayer`, `ChallengeContext`, `build_dual_layer_scorecard` |
-| `platform_technical.py` | Track-standard technical dimensions (Docker tests in Phase A) |
+| `docker_runner.py` | Ephemeral Docker execution for secret tests (no network, resource limits) |
+| `security_scan.py` | Static forbidden-pattern scan before container run |
+| `secret_tests/test_secret.py` | Platform secret tests — **never** in starter scaffold |
+| `platform_technical.py` | Platform dimensions from Docker + security scan |
 | `platform_product.py` | Structural deliverable rubric (no challenge-specific keywords) |
 | `sponsor_technical.py` | Criteria/taste fit per challenge (LLM in Phase B) |
 | `sponsor_product.py` | Persona/problem framing fit per challenge |
 | `registry.py` | `assess_submission()` — orchestrates both layers |
 
-## Scorecard shape
+## Docker runner
 
-```json
-{
-  "platform": { "dimensions": {}, "score": 91, "summary": "...", "notes": [] },
-  "sponsor": { "dimensions": {}, "score": 80, "summary": "...", "notes": [] },
-  "execution_points": 109,
-  "sponsor_fit_score": 80,
-  "platform_score": 91,
-  "dimensions": { "...": "platform.dimensions alias" }
-}
+Build once:
+
+```bash
+docker build -t the-sandbox-runner docker/sandbox-runner
 ```
 
-## How It Fits In
+Container flags: `--network none`, `--memory 512m`, `--cpus 1.0`, `--cap-drop ALL`, `--security-opt no-new-privileges`.
 
-Called from `api/sandbox_routes.py` on submit with `challenge_item` for sponsor context. `sponsor_matches.py` sorts by `sponsor_fit_score`.
+Student code is written to a temp workspace, dataset copied as `sandbox.sqlite`, secret tests mounted read-only at `/secret_tests/test_secret.py`.
+
+If Docker is unavailable, platform technical scoring degrades (static security scan only — **no host execution** of student code).
 
 ## assessor-001 phases
 
 | Phase | Scope | Status |
 |---|---|---|
 | **Schema + split** | Dual-layer scorecard, heuristic platform/sponsor assessors | Done |
-| **Phase A** | Docker harness + secret tests → `platform_technical` | Not started |
+| **Phase A** | Docker harness + secret tests → `platform_technical` | Done |
 | **Phase B** | LLM sponsor fit from sanitized Micro-PRD + evaluation_focus | Not started |
 
 ## Notes for the Next Session

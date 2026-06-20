@@ -37,7 +37,8 @@ def assess_submission(
         sponsor = assess_sponsor_product(record, challenge_context)
         track_label = "product_feature"
     else:
-        platform = assess_platform_technical(record)
+        dataset_path = getattr(challenge_item, "dataset_path", None) if challenge_item else None
+        platform = assess_platform_technical(record, dataset_path=dataset_path)
         sponsor = assess_sponsor_technical(record, challenge_context)
         track_label = "technical"
 

@@ -310,7 +310,7 @@
           "order": 2,
           "id": "assessor-docker-platform",
           "title": "Docker harness + platform_technical secret tests (Phase A)",
-          "status": "not_started"
+          "status": "completed"
         },
         {
           "order": 3,
@@ -328,7 +328,9 @@
       ],
       "evidence": [
         "python -m pytest backend/tests/test_assessor_layers.py -v → 5 passed (2026-06-20)",
-        "backend/assessor/platform_*.py + sponsor_*.py + models.py",
+        "python -m pytest backend/tests/test_docker_assessor.py -v → 6 passed (2026-06-20)",
+        "backend/assessor/docker_runner.py — network=none, memory/CPU limits, cap-drop",
+        "backend/assessor/secret_tests/test_secret.py — not in starter scaffold",
         "ScorecardView shows Platform Signal + Sponsor Fit sections"
       ],
       "notes": "Schema split complete. Phase A: Docker ephemeral containers for platform_technical. Phase B: LLM sponsor fit with heuristic fallback. Interview pass requires both layers ≥ benchmark."

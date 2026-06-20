@@ -5,8 +5,8 @@
 - Repository root: `/Users/allisonlawlixuan/Documents/repos/the_sandbox`
 - Standard startup path: `./init.sh`
 - Standard verification path: `python -m pytest backend/tests/ -v`
-- Current highest-priority unfinished feature: `assessor-001` Phase A — Docker harness + platform secret tests
-- Latest passing: assessor-001 schema split — dual-layer scorecard (101 tests)
+- Current highest-priority unfinished feature: `assessor-001` Phase B — LLM sponsor fit
+- Latest passing: assessor-001 Phase A — Docker secret tests (107 tests)
 - Current blocker: None
 
 ## Session Log
@@ -166,3 +166,17 @@
 - Docs: updated per documentation-sync.md
 - Commits: none
 - Next best step: assessor-001 Phase A — Docker harness + platform_technical secret tests
+
+### Session 012
+
+- Date: 2026-06-20
+- Goal: assessor-001 Phase A — Docker harness + platform secret tests
+- Completed:
+  - docker/sandbox-runner/Dockerfile + backend/assessor/docker_runner.py
+  - secret_tests/test_secret.py (not in starter scaffold)
+  - security_scan.py static baseline; platform_technical wired to Docker
+  - test_docker_assessor.py (6 tests)
+- Verification run: `python -m pytest backend/tests/ -q` → **107 passed**
+- Docs: assessor/DOCS.md, ARCHITECTURE.md, README.md docker build step
+- Commits: none
+- Next best step: assessor-001 Phase B — LLM sponsor fit layer
