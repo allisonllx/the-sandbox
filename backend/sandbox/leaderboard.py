@@ -27,7 +27,7 @@ _DEMO_ENTRIES = [
         display_name="Candidate A7F2",
         track=ChallengeTrack.technical,
         execution_points=118,
-        highlight="Top 1% Global System Architect (demo)",
+        highlight="Challenge #demo-003 · Anonymous Series B · Technical track",
         challenge_id="demo-003",
     ),
     LeaderboardEntry(
@@ -35,7 +35,7 @@ _DEMO_ENTRIES = [
         display_name="Candidate B3K9",
         track=ChallengeTrack.product_feature,
         execution_points=104,
-        highlight="Product Thinking · UX & IA",
+        highlight="Challenge #demo-005 · Anonymous Series A · Product track",
         challenge_id="demo-005",
     ),
     LeaderboardEntry(
@@ -43,7 +43,7 @@ _DEMO_ENTRIES = [
         display_name="Candidate C1M4",
         track=ChallengeTrack.technical,
         execution_points=96,
-        highlight="Performance · Security Resilience",
+        highlight="Challenge #demo-006 · Anonymous Growth-stage · Technical track",
         challenge_id="demo-006",
     ),
 ]

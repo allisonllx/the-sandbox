@@ -12,6 +12,9 @@ AI Product Manager layer. Scores anonymized backlog items, routes innovation tra
 | `track_router.py` | Heuristic track suggestion (technical vs product_feature) + brand_proxy |
 | `relaxation.py` | Pure transforms: abstract logic, variable synthesis, noise, brand abstraction |
 | `domain_obfuscator.py` | Industry domain masking: public title/narrative + metadata column renames |
+| `company_profile.py` | Blind-audition Company Tech Profile generator (sensitivity-aware) |
+| `public_sanitize.py` | Student API boundary — strips brand, sanitizes evaluation_focus/Micro-PRD |
+| `publish_draft.py` | Founder-editable `PublishDraft` build/apply before release |
 | `microprd.py` | Track-aware LLM Micro-PRD generator (template fallback if no API key) |
 | `llm_client.py` | Injectable OpenAI wrapper — mockable in tests |
 | `store.py` | In-memory backlog pre-seeded with 4 demo items (incl. demo-004 product) |
@@ -27,4 +30,5 @@ Consumes `SanitizedMetadata` from the privacy proxy. Exposed via `api/triage_rou
 - `demo-004` is the Product Feature seed (EatsHub merchant discovery)
 - Relaxation is deterministic: same `challenge_seed` + config → same synthesized field names
 - When `obfuscate_domain` is enabled, `domain_obfuscator.build_field_map` remaps column names (e.g. `restaurant_id` → `locker_id`) in the relaxed preview before publish
+- Public student API never returns `brand_proxy` — only `CompanyTechProfile` via `public_sanitize.build_public_challenge`
 - `store.py` is in-memory only — replace with DB for production

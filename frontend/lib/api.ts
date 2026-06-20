@@ -6,6 +6,7 @@ import type {
   JobStatusResponse,
   LeaderboardEntry,
   PublishedChallenge,
+  PublishDraft,
   RelaxationConfig,
   RelaxResponse,
   PublishResponse,
@@ -37,16 +38,28 @@ export const api = {
   getItem: (id: string): Promise<BacklogItem> =>
     request(`/triage/backlog/${id}`),
 
-  relax: (itemId: string, config: RelaxationConfig, reward?: ChallengeReward, track?: ChallengeTrack): Promise<RelaxResponse> =>
+  relax: (
+    itemId: string,
+    config: RelaxationConfig,
+    reward?: ChallengeReward,
+    track?: ChallengeTrack,
+    draft?: PublishDraft
+  ): Promise<RelaxResponse> =>
     request(`/triage/relax/${itemId}`, {
       method: "POST",
-      body: JSON.stringify({ config, reward, track }),
+      body: JSON.stringify({ config, reward, track, draft }),
     }),
 
-  publish: (itemId: string, config: RelaxationConfig, reward?: ChallengeReward, track?: ChallengeTrack): Promise<PublishResponse> =>
+  publish: (
+    itemId: string,
+    config: RelaxationConfig,
+    reward?: ChallengeReward,
+    track?: ChallengeTrack,
+    draft?: PublishDraft
+  ): Promise<PublishResponse> =>
     request(`/triage/publish/${itemId}`, {
       method: "POST",
-      body: JSON.stringify({ config, reward, track }),
+      body: JSON.stringify({ config, reward, track, draft }),
     }),
 
   listChallenges: (track?: ChallengeTrack): Promise<PublishedChallenge[]> =>

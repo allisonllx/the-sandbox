@@ -8,6 +8,8 @@ from fastapi.responses import FileResponse, Response as RawResponse
 
 from ..ai_pm import store as backlog_store
 from ..ai_pm.models import BacklogStatus, ChallengeTrack
+from ..ai_pm import company_profile as company_profile_module
+from ..ai_pm.public_sanitize import build_public_challenge
 from ..assessor.registry import assess_submission
 from ..sandbox import draft_store, run_jobs, submission_store
 from ..sandbox.archive import ArchiveError, build_zip, extract_zip
@@ -87,25 +89,27 @@ def _to_public(item) -> PublishedChallenge:
             detail={"code": "MICROPRD_MISSING", "message": "Challenge has no Micro-PRD"},
         )
     track = item.track or ChallengeTrack.technical
+    profile = item.company_profile or company_profile_module.generate_profile(item, reward=item.reward)
     microprd = item.microprd.model_copy(
         update={"sandbox_instructions": _platform_instructions_for(item)}
     )
 
-    return PublishedChallenge(
-        id=item.id,
+    return build_public_challenge(
+        item_id=item.id,
         title=item.microprd.title,
         status=item.status.value,
         track=track,
-        brand_proxy=item.brand_proxy,
+        company_profile=profile,
         deliverable_types=item.deliverable_types or [],
         evaluation_focus=item.evaluation_focus or [],
         microprd=microprd,
         dataset_ready=item.dataset_path is not None and Path(item.dataset_path).exists(),
         starter_ready=bool(item.starter_files) or item.status == BacklogStatus.published,
         dataset_anomalies=item.dataset_anomalies,
-        pool_label=item.pool_label,
         reward=item.reward,
         published_at=item.published_at,
+        tag=item.tag,
+        internal_brand=item.brand_proxy,
     )
 
 

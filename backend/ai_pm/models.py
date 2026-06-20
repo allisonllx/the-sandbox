@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -107,6 +107,34 @@ class ChallengeReward(BaseModel):
     locked: bool = False
 
 
+class CompanyTechProfile(BaseModel):
+    stage: str = Field(description="Funding stage, e.g. Series A")
+    team_size_range: str = Field(description="LinkedIn-style range, e.g. 11-50")
+    tech_stack: list[str] = Field(default_factory=list)
+    industry_broad: str | None = Field(
+        default=None,
+        description="Broad industry category — omitted for red-sensitivity stealth items",
+    )
+    verification_status: Literal["verified", "pending"] = "pending"
+    verification_label: str = "Platform-verified sponsor"
+
+
+class PublishDraft(BaseModel):
+    """Founder-editable student-facing challenge copy before publish."""
+
+    title: str = Field(min_length=1, max_length=200)
+    context: str = Field(min_length=1, max_length=4000)
+    definition_of_success: list[str] = Field(min_length=1)
+    structural_constraints: list[str] = Field(default_factory=list)
+    evaluation_focus: list[str] = Field(default_factory=list)
+    company_profile: CompanyTechProfile
+    user_persona: str | None = None
+    problem_framing: str | None = None
+    design_considerations: list[str] = Field(default_factory=list)
+    stack_guidance: list[str] = Field(default_factory=list)
+    deliverable_requirements: list[str] = Field(default_factory=list)
+
+
 class RelaxedPreview(BaseModel):
     original_fields: list[str]
     relaxed_fields: list[str]
@@ -177,7 +205,15 @@ class BacklogItem(BaseModel):
     suggested_track: ChallengeTrack | None = Field(
         default=None, description="AI PM track router suggestion",
     )
-    brand_proxy: str | None = Field(default=None, description="Public fictional brand name")
+    brand_proxy: str | None = Field(default=None, description="Internal fictional brand — CTO-only, never public")
+    company_profile: CompanyTechProfile | None = Field(
+        default=None,
+        description="Student-facing blind-audition company profile",
+    )
+    publish_draft: PublishDraft | None = Field(
+        default=None,
+        description="Founder-editable challenge copy before publish",
+    )
     deliverable_types: list[DeliverableType] = Field(default_factory=list)
     evaluation_focus: list[str] = Field(default_factory=list)
     sponsor_profile: str | None = Field(
@@ -223,6 +259,10 @@ class RelaxRequest(BaseModel):
         default=None,
         description="Guaranteed bounty or interview pass — must be locked to publish",
     )
+    draft: PublishDraft | None = Field(
+        default=None,
+        description="Founder-edited challenge copy — applied on publish (or returned as preview baseline)",
+    )
 
 
 class ScopeCheckResponse(BaseModel):
@@ -236,6 +276,8 @@ class RelaxResponse(BaseModel):
     item_id: str
     preview: RelaxedPreview
     domain_preview: DomainObfuscationPreview | None = None
+    company_profile: CompanyTechProfile | None = None
+    challenge_draft: PublishDraft | None = None
     scope_check: ScopeCheckResponse | None = None
 
 

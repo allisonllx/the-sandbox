@@ -1,4 +1,5 @@
-import type { MicroPRD } from "@/lib/types";
+import type { CompanyTechProfile, MicroPRD } from "@/lib/types";
+import { CompanyProfilePanel } from "./CompanyProfilePanel";
 
 const BASE_SECTIONS = [
   { key: "context", label: "Context", render: (p: MicroPRD) => p.context, list: false },
@@ -50,7 +51,13 @@ const PRODUCT_SECTIONS = [
   },
 ] as const;
 
-export function MicroPRDView({ prd }: { prd: MicroPRD }) {
+export function MicroPRDView({
+  prd,
+  companyProfile,
+}: {
+  prd: MicroPRD;
+  companyProfile?: CompanyTechProfile | null;
+}) {
   const isProduct = prd.track === "product_feature";
   const sections = isProduct
     ? [
@@ -66,10 +73,13 @@ export function MicroPRDView({ prd }: { prd: MicroPRD }) {
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold text-slate-100">{prd.title}</h2>
-        {prd.brand_proxy && (
-          <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">
-            Brand: {prd.brand_proxy}
-          </p>
+        {companyProfile && (
+          <div className="mt-3 p-3 rounded-lg border border-surface-border bg-surface-muted/50">
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-2">
+              Company Profile (blind audition)
+            </p>
+            <CompanyProfilePanel profile={companyProfile} compact />
+          </div>
         )}
       </div>
       {sections.map(({ key, label, render, list }) => {

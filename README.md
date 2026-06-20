@@ -152,12 +152,13 @@ Expected output: **81+ passed**.
 
 ## Judge Demo Script (Defensive Business Model)
 
-Hybrid demo: **real** scope cap + domain obfuscation; **stubbed** bounty lock + execution rank.
+Hybrid demo: **real** blind audition + scope cap + domain obfuscation; **stubbed** bounty lock + execution rank.
 
-1. **StealthCo domain mask** — `/startup` → select `demo-005` → enable *Obfuscate Industry Domain* → Preview → Publish (lock reward first) → `/student/challenges/demo-005` shows equipment-sharing narrative (no food/merchant tokens)
+1. **Blind audition** — `/startup` → `demo-005` → enable *Obfuscate Industry Domain* → Preview (see Company Tech Profile panel) → Lock reward → Publish → `/student/challenges/demo-005` shows **Series A · Team 11-50 · Go/React/AWS** — no LockerShare, StealthCo, or food/merchant tokens
 2. **Scope cap rejection** — select `demo-007` → Publish → 422 with union-rep breakdown
-3. **Bounty guarantee** — select `demo-003` (NovaPay) → Lock $500 bounty → Publish → student card shows bounty badge
-4. **Execution rank** — `/student/leaderboard` and `/enterprise/radar` for reverse-sourcing narrative
+3. **Verified sponsor + bounty** — `demo-003` → Lock $500 bounty → Publish → student card shows Verified Sponsor + escrow label (no NovaPay name)
+4. **Reverse sourcing** — `/student/leaderboard` and `/enterprise/radar` — anonymized challenge signals only
+5. **Trust narrative** — `/student/trust` explains sponsor verification protocol (stub)
 
 ---
 

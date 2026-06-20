@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import type { PublishedChallenge, SubmitResponse } from "@/lib/types";
 import { MicroPRDView } from "@/components/MicroPRDView";
+import { RewardBadges } from "@/components/CompanyProfilePanel";
 import { ChallengeWorkspace } from "@/components/ChallengeWorkspace";
 import { ProductWorkspace } from "@/components/ProductWorkspace";
 import { ScorecardView } from "@/components/ScorecardView";
@@ -98,11 +99,6 @@ export default function ChallengeWorkspacePage() {
             <span className="text-sm text-slate-200 font-medium truncate max-w-md">
               {challenge.title}
             </span>
-            {challenge.brand_proxy && (
-              <span className="text-[10px] text-slate-600 uppercase tracking-wider flex-shrink-0">
-                {challenge.brand_proxy}
-              </span>
-            )}
           </div>
           <div className="flex gap-2 flex-shrink-0">
             <button
@@ -131,7 +127,10 @@ export default function ChallengeWorkspacePage() {
 
       <div className="flex flex-1 min-h-0 overflow-hidden max-w-[1600px] mx-auto w-full">
         <aside className="w-[380px] flex-shrink-0 border-r border-surface-border min-h-0 overflow-y-auto p-6">
-          <MicroPRDView prd={challenge.microprd} />
+          <MicroPRDView prd={challenge.microprd} companyProfile={challenge.company_profile} />
+          <div className="mt-4">
+            <RewardBadges reward={challenge.reward} escrowLabel={challenge.reward_escrow_label} />
+          </div>
           {!isProduct && challenge.dataset_anomalies.length > 0 && (
             <div className="mt-8 pt-6 border-t border-surface-border space-y-2">
               <h3 className="text-[11px] uppercase tracking-widest text-slate-500 font-semibold">

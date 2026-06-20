@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, status
 
+from ..ai_pm import publish_draft as publish_draft_module
+from ..ai_pm import company_profile as company_profile_module
 from ..ai_pm import domain_obfuscator
 from ..ai_pm import microprd as microprd_module
 from ..ai_pm import relaxation as relaxation_module
@@ -148,6 +150,78 @@ def _scope_response(item: BacklogItem) -> ScopeCheckResponse:
     )
 
 
+def _prepare_generation(item: BacklogItem, item_id: str, request: RelaxRequest):
+    """Shared relaxation + Micro-PRD generation for preview and publish."""
+    preview = relaxation_module.apply_relaxation(
+        metadata=item.metadata,
+        config=request.config,
+        challenge_seed=item_id,
+    )
+    domain_preview = _domain_preview_for(item, request.config)
+    preview, domain_transform = _apply_domain_field_obfuscation(item, request.config, preview)
+
+    _ensure_track_suggestion(item)
+    track = request.track or item.track or item.suggested_track or ChallengeTrack.technical
+    brand_proxy = item.brand_proxy or track_router.suggest_track(
+        item.metadata, item.source_label, item.scores.suggested_title if item.scores else ""
+    ).brand_proxy
+    raw_title = item.scores.suggested_title if item.scores else "Innovation Challenge"
+    title = relaxation_module.abstract_brand_text(
+        raw_title, brand_proxy, enabled=request.config.abstract_brand,
+    )
+
+    if domain_transform:
+        title = domain_transform.public_title
+        brand_proxy = domain_transform.brand_proxy
+
+    prd = microprd_module.generate(
+        challenge_id=item_id,
+        title=title,
+        preview=preview,
+        metadata=item.metadata,
+        track=track,
+        brand_proxy=brand_proxy,
+        abstract_brand=request.config.abstract_brand,
+        domain_transform=domain_transform,
+    )
+
+    reward = request.reward or item.reward
+    profile = company_profile_module.generate_profile(item, reward=reward)
+    evaluation_focus = list(item.evaluation_focus or [])
+
+    return {
+        "preview": preview,
+        "domain_preview": domain_preview,
+        "domain_transform": domain_transform,
+        "track": track,
+        "brand_proxy": brand_proxy,
+        "prd": prd,
+        "profile": profile,
+        "evaluation_focus": evaluation_focus,
+        "reward": reward,
+    }
+
+
+def _resolve_challenge_draft(prepared: dict, request: RelaxRequest):
+    """Build or reuse founder-editable draft from generated baseline."""
+    baseline = publish_draft_module.build_publish_draft(
+        prepared["prd"],
+        company_profile=prepared["profile"],
+        evaluation_focus=prepared["evaluation_focus"],
+    )
+    return request.draft or baseline
+
+
+def _apply_draft_to_prepared(prepared: dict, draft) -> dict:
+    """Merge founder draft onto generated artifacts."""
+    prepared = dict(prepared)
+    prepared["prd"] = publish_draft_module.apply_publish_draft(prepared["prd"], draft)
+    prepared["profile"] = draft.company_profile
+    prepared["evaluation_focus"] = publish_draft_module.draft_evaluation_focus(draft)
+    prepared["draft"] = draft
+    return prepared
+
+
 @router.post(
     "/score",
     response_model=ScoreResponse,
@@ -186,28 +260,27 @@ def relax_item(item_id: str, request: RelaxRequest) -> RelaxResponse:
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
 
-    preview = relaxation_module.apply_relaxation(
-        metadata=item.metadata,
-        config=request.config,
-        challenge_seed=item_id,
-    )
+    prepared = _prepare_generation(item, item_id, request)
+    challenge_draft = _resolve_challenge_draft(prepared, request)
 
-    domain_preview = _domain_preview_for(item, request.config)
-    preview, _ = _apply_domain_field_obfuscation(item, request.config, preview)
     item.relaxation_config = request.config
-    item.relaxed_preview = preview
-    item.domain_preview = domain_preview
+    item.relaxed_preview = prepared["preview"]
+    item.domain_preview = prepared["domain_preview"]
+    item.company_profile = challenge_draft.company_profile
+    item.publish_draft = challenge_draft
     item.status = BacklogStatus.reviewing
     if request.track:
-        item.track = request.track
+        item.track = prepared["track"]
     if request.reward is not None:
         item.reward = request.reward
     store.upsert_item(item)
 
     return RelaxResponse(
         item_id=item_id,
-        preview=preview,
-        domain_preview=domain_preview,
+        preview=prepared["preview"],
+        domain_preview=prepared["domain_preview"],
+        company_profile=challenge_draft.company_profile,
+        challenge_draft=challenge_draft,
         scope_check=_scope_response(item),
     )
 
@@ -247,39 +320,24 @@ def publish_item(item_id: str, request: RelaxRequest) -> PublishResponse:
             },
         )
 
-    preview = relaxation_module.apply_relaxation(
-        metadata=item.metadata,
-        config=request.config,
-        challenge_seed=item_id,
-    )
+    prepared = _prepare_generation(item, item_id, request)
+    draft = request.draft or item.publish_draft
+    if draft is not None:
+        prepared = _apply_draft_to_prepared(prepared, draft)
+    else:
+        prepared["draft"] = publish_draft_module.build_publish_draft(
+            prepared["prd"],
+            company_profile=prepared["profile"],
+            evaluation_focus=prepared["evaluation_focus"],
+        )
 
-    domain_preview = _domain_preview_for(item, request.config)
-    preview, domain_transform = _apply_domain_field_obfuscation(item, request.config, preview)
-
-    _ensure_track_suggestion(item)
-    track = request.track or item.track or item.suggested_track or ChallengeTrack.technical
-    brand_proxy = item.brand_proxy or track_router.suggest_track(
-        item.metadata, item.source_label, item.scores.suggested_title if item.scores else ""
-    ).brand_proxy
-    raw_title = item.scores.suggested_title if item.scores else "Innovation Challenge"
-    title = relaxation_module.abstract_brand_text(
-        raw_title, brand_proxy, enabled=request.config.abstract_brand,
-    )
-
-    if domain_transform:
-        title = domain_transform.public_title
-        brand_proxy = domain_transform.brand_proxy
-
-    prd = microprd_module.generate(
-        challenge_id=item_id,
-        title=title,
-        preview=preview,
-        metadata=item.metadata,
-        track=track,
-        brand_proxy=brand_proxy,
-        abstract_brand=request.config.abstract_brand,
-        domain_transform=domain_transform,
-    )
+    prd = prepared["prd"]
+    preview = prepared["preview"]
+    domain_preview = prepared["domain_preview"]
+    domain_transform = prepared["domain_transform"]
+    track = prepared["track"]
+    brand_proxy = prepared["brand_proxy"]
+    reward = prepared["reward"]
 
     if track == ChallengeTrack.product_feature:
         starter_files = generate_product_starter_files(
@@ -298,6 +356,9 @@ def publish_item(item_id: str, request: RelaxRequest) -> PublishResponse:
     item.microprd = prd
     item.track = track
     item.brand_proxy = brand_proxy
+    item.company_profile = prepared["profile"]
+    item.publish_draft = prepared["draft"]
+    item.evaluation_focus = prepared["evaluation_focus"]
     item.reward = reward
     item.dataset_path = str(db_path) if db_path else None
     item.dataset_anomalies = anomalies

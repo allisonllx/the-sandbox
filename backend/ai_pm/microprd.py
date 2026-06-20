@@ -125,7 +125,7 @@ def _fallback_product(
                 "Responsive equipment locker discovery UI works from 375px to 1280px viewports.",
                 "User can browse nearby inventory and add rentals to a cart with clear feedback.",
                 "DESIGN.md explains persona, IA trade-offs, and stack choices without industry leak tokens.",
-                "Voucher redemption flow is stubbed with sensible empty/error states.",
+                "Credit redemption flow is stubbed with sensible empty/error states.",
             ],
             structural_constraints=[
                 "Use the provided starter HTML/CSS/JS scaffold only — no backend required.",
@@ -142,7 +142,7 @@ def _fallback_product(
             ),
             design_considerations=[
                 "Mobile-first layout and touch targets",
-                "Clear hierarchy: discovery → locker detail → cart → voucher redeem",
+                "Clear hierarchy: discovery → locker detail → cart → credit redeem",
                 "Loading and empty states for inventory list",
                 "Accessibility basics (labels, contrast, keyboard focus)",
             ],
@@ -160,13 +160,13 @@ def _fallback_product(
 
     return MicroPRD(
         challenge_id=challenge_id,
-        title=f"{brand} Local Merchant Discovery Hub",
+        title="Local Inventory Discovery Hub",
         track=ChallengeTrack.product_feature,
         brand_proxy=brand,
         context=(
-            f"{brand} wants to help users discover nearby merchants and complete checkout "
-            "without leaving the app. The core team is focused on stability — this feature "
-            "needs a thoughtful prototype and clear product reasoning."
+            "A growth-stage marketplace startup needs to help users discover nearby inventory "
+            "and complete checkout without leaving the app. The core team is focused on stability — "
+            "this feature needs a thoughtful prototype and clear product reasoning."
         ),
         definition_of_success=[
             "Responsive merchant discovery UI works from 375px to 1280px viewports.",

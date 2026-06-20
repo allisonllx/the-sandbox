@@ -77,6 +77,29 @@ export interface DomainObfuscationPreview {
   public_fields?: string[];
 }
 
+export interface CompanyTechProfile {
+  stage: string;
+  team_size_range: string;
+  tech_stack: string[];
+  industry_broad?: string | null;
+  verification_status: "verified" | "pending";
+  verification_label: string;
+}
+
+export interface PublishDraft {
+  title: string;
+  context: string;
+  definition_of_success: string[];
+  structural_constraints: string[];
+  evaluation_focus: string[];
+  company_profile: CompanyTechProfile;
+  user_persona?: string | null;
+  problem_framing?: string | null;
+  design_considerations?: string[];
+  stack_guidance?: string[];
+  deliverable_requirements?: string[];
+}
+
 export type RewardType = "cash_bounty" | "interview_pass";
 
 export interface ChallengeReward {
@@ -132,6 +155,8 @@ export interface BacklogItem {
   track?: ChallengeTrack | null;
   suggested_track?: ChallengeTrack | null;
   brand_proxy?: string | null;
+  company_profile?: CompanyTechProfile | null;
+  publish_draft?: PublishDraft | null;
   deliverable_types?: DeliverableType[];
   evaluation_focus?: string[];
   sponsor_profile?: string | null;
@@ -145,6 +170,8 @@ export interface RelaxResponse {
   item_id: string;
   preview: RelaxedPreview;
   domain_preview?: DomainObfuscationPreview | null;
+  company_profile?: CompanyTechProfile | null;
+  challenge_draft?: PublishDraft | null;
   scope_check?: ScopeCheckResponse | null;
 }
 
@@ -161,15 +188,15 @@ export interface PublishedChallenge {
   title: string;
   status: string;
   track?: ChallengeTrack;
-  brand_proxy?: string | null;
+  company_profile: CompanyTechProfile;
   deliverable_types?: DeliverableType[];
   evaluation_focus?: string[];
   microprd: MicroPRD;
   dataset_ready: boolean;
   starter_ready?: boolean;
   dataset_anomalies: string[];
-  pool_label?: string | null;
   reward?: ChallengeReward | null;
+  reward_escrow_label?: string | null;
   published_at: string | null;
 }
 

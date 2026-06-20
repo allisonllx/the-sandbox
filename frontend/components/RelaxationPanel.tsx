@@ -13,6 +13,8 @@ import type {
 } from "@/lib/types";
 import { api } from "@/lib/api";
 import { SensitivityBadge } from "./SensitivityBadge";
+import { PublishDraftEditor } from "./PublishDraftEditor";
+import type { PublishDraft } from "@/lib/types";
 
 interface RelaxationPanelProps {
   item: BacklogItem;
@@ -155,6 +157,9 @@ export function RelaxationPanel({ item, onPublished }: RelaxationPanelProps) {
   const [domainPreview, setDomainPreview] = useState<DomainObfuscationPreview | null>(
     item.domain_preview ?? null
   );
+  const [challengeDraft, setChallengeDraft] = useState<PublishDraft | null>(
+    item.publish_draft ?? null
+  );
   const [scopeCheck, setScopeCheck] = useState<ScopeCheckResponse | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [previewing, setPreviewing] = useState(false);
@@ -177,9 +182,16 @@ export function RelaxationPanel({ item, onPublished }: RelaxationPanelProps) {
     setPreviewing(true);
     setError(null);
     try {
-      const res = await api.relax(item.id, config, reward, item.track ?? item.suggested_track ?? undefined);
+      const res = await api.relax(
+        item.id,
+        config,
+        reward,
+        item.track ?? item.suggested_track ?? undefined,
+        challengeDraft ?? undefined
+      );
       setPreview(res.preview);
       setDomainPreview(res.domain_preview ?? null);
+      setChallengeDraft(res.challenge_draft ?? null);
       setScopeCheck(res.scope_check ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Preview failed");
@@ -192,7 +204,13 @@ export function RelaxationPanel({ item, onPublished }: RelaxationPanelProps) {
     setPublishing(true);
     setError(null);
     try {
-      const res = await api.publish(item.id, config, reward, item.track ?? item.suggested_track ?? undefined);
+      const res = await api.publish(
+        item.id,
+        config,
+        reward,
+        item.track ?? item.suggested_track ?? undefined,
+        challengeDraft ?? undefined
+      );
       setMicroprd(res.microprd);
       setPublished(true);
       onPublished(item.id);
@@ -218,7 +236,14 @@ export function RelaxationPanel({ item, onPublished }: RelaxationPanelProps) {
     }
   }
 
-  const canPublish = scopeCheck?.allowed !== false && reward.locked;
+  const hasValidDraft =
+    challengeDraft != null &&
+    challengeDraft.title.trim().length > 0 &&
+    challengeDraft.context.trim().length > 0 &&
+    challengeDraft.definition_of_success.some((s) => s.trim().length > 0);
+
+  const canPublish = scopeCheck?.allowed !== false && reward.locked && hasValidDraft;
+  const track = item.track ?? item.suggested_track ?? "technical";
 
   return (
     <div className="h-full flex flex-col gap-6 overflow-y-auto pr-1">
@@ -375,6 +400,21 @@ export function RelaxationPanel({ item, onPublished }: RelaxationPanelProps) {
 
       {domainPreview && <DomainPreviewPanel preview={domainPreview} />}
 
+      {challengeDraft && (
+        <PublishDraftEditor
+          draft={challengeDraft}
+          track={track}
+          onChange={setChallengeDraft}
+        />
+      )}
+
+      {!challengeDraft && preview && (
+        <p className="text-xs text-slate-500 border border-dashed border-surface-border rounded px-3 py-2">
+          Preview generated field mappings. Click <strong>Preview Changes</strong> again if the
+          release draft did not load — then edit the problem statement before publishing.
+        </p>
+      )}
+
       {error && (
         <pre className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded px-3 py-2 whitespace-pre-wrap">
           {error}
@@ -390,7 +430,11 @@ export function RelaxationPanel({ item, onPublished }: RelaxationPanelProps) {
           className="w-full py-2.5 rounded-lg bg-accent hover:bg-accent-dim text-white text-sm font-semibold
             disabled:opacity-50"
         >
-          {publishing ? "Generating Micro-PRD…" : "Approve & Publish Challenge →"}
+          {publishing
+            ? "Publishing…"
+            : !hasValidDraft
+              ? "Preview & edit release copy first"
+              : "Approve & Publish Challenge →"}
         </button>
       ) : (
         <div className="space-y-4">

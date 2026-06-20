@@ -8,21 +8,21 @@ const MOCK_CANDIDATES = [
     rank: "Top 1%",
     track: "Technical",
     points: 118,
-    signal: "Black Friday spike diagnosis · NovaPay bounty",
+    signal: "Challenge #demo-003 · Async event processor diagnosis",
   },
   {
     id: "B3K9",
     rank: "Top 2%",
     track: "Product Feature",
     points: 104,
-    signal: "Equipment discovery IA · StealthCo (obfuscated)",
+    signal: "Challenge #demo-005 · Anonymous Series A · Equipment discovery IA",
   },
   {
     id: "C1M4",
     rank: "Top 3%",
     track: "Technical",
     points: 96,
-    signal: "CDN cache optimization · Platform Pool legacy",
+    signal: "Challenge #demo-006 · Platform traffic spike replay",
   },
 ];
 
@@ -47,8 +47,8 @@ export default function EnterpriseRadarPage() {
           <h1 className="text-xl font-semibold text-slate-100">Verified Talent Radar</h1>
           <p className="text-sm text-slate-500 mt-1">
             Large companies don&apos;t post challenges — they buy access to platform-verified
-            Execution Points. A student solves a startup bounty; a Google recruiter sees the signal
-            tomorrow (demo stub — no ATS integration).
+            Execution Points. A student solves an anonymous startup bounty; a tier-1 recruiter
+            sees the signal tomorrow. No sponsor identity is exposed (demo stub).
           </p>
         </div>
 

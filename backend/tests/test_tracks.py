@@ -93,10 +93,13 @@ class TestProductPublish:
         detail = client.get("/api/v1/sandbox/challenges/demo-004").json()
         prd = detail["microprd"]
         assert detail["track"] == "product_feature"
+        assert detail["company_profile"] is not None
+        assert "brand_proxy" not in detail
         assert prd["user_persona"]
         assert prd["problem_framing"]
         assert len(prd["design_considerations"]) >= 1
         assert "Grab" not in prd["context"]
+        assert prd.get("brand_proxy") is None
 
     def test_technical_publish_unchanged(self):
         _publish("demo-003")

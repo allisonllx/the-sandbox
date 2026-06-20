@@ -6,6 +6,7 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `python -m pytest backend/tests/ -v`
 - Current highest-priority unfinished feature: `assessor-001` — Docker harness + full technical grading
+- Latest passing: `blind-002` — Company Tech Profile blind audition (90 tests)
 - Current blocker: None
 
 ## Session Log
@@ -118,5 +119,21 @@
   - test_trust.py; docs PRODUCT.md defensive posture + README judge script
 - Verification run: `python -m pytest backend/tests/ -v` → **81 passed**; `npm run typecheck` → OK
 - Docs: updated per documentation-sync.md
+- Commits: none
+- Next best step: assessor-001
+
+### Session 009
+
+- Date: 2026-06-20
+- Goal: blind-002 — Blind Audition Company Tech Profile
+- Completed:
+  - CompanyTechProfile model + company_profile.py generator (red sensitivity omits industry)
+  - public_sanitize.py + build_public_challenge — student API strips brand_proxy, sanitizes Micro-PRD/evaluation_focus
+  - Publish/relax wire company_profile; domain obfuscator public titles without fictional brand names
+  - Frontend: ChallengeCard, MicroPRDView, RelaxationPanel profile preview, /student/trust
+  - Anonymized leaderboard + enterprise radar copy
+  - test_blind_audition.py (7 tests); README judge script; PRODUCT.md; feature_list.json blind-002
+- Verification run: blind audition + trust + tracks tests → **21 passed**; `npm run typecheck` → OK
+- Docs: backend/ai_pm/DOCS.md, docs/PRODUCT.md, README.md
 - Commits: none
 - Next best step: assessor-001

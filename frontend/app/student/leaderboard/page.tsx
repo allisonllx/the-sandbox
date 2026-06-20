@@ -37,9 +37,13 @@ export default function LeaderboardPage() {
         <div>
           <h1 className="text-xl font-semibold text-slate-100">Global Proof-of-Work Rank</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Platform-level Execution Points — decoupled from company logos. Top performers surface
-            to enterprise recruiters via reverse sourcing (demo).
+            Platform-level Execution Points — earned on anonymous blind-audition challenges,
+            decoupled from sponsor identity. Top performers surface to enterprise recruiters
+            via reverse sourcing (demo).
           </p>
+          <Link href="/student/trust" className="text-xs text-accent hover:underline mt-2 inline-block">
+            How sponsor verification works →
+          </Link>
         </div>
 
         {loading && <p className="text-slate-600 text-sm">Loading…</p>}

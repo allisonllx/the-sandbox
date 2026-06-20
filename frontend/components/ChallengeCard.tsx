@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ChallengeTrack, PublishedChallenge } from "@/lib/types";
+import { CompanyProfilePanel, RewardBadges } from "./CompanyProfilePanel";
 
 const TRACK_LABELS: Record<ChallengeTrack, string> = {
   technical: "Technical",
@@ -38,23 +39,12 @@ export function ChallengeCard({ challenge }: { challenge: PublishedChallenge }) 
           {trackLabel}
         </span>
       </div>
-      {challenge.brand_proxy && (
-        <p className="text-[10px] text-slate-600 mb-2 uppercase tracking-wider">
-          {challenge.brand_proxy}
-        </p>
-      )}
-      {challenge.pool_label && (
-        <p className="text-[10px] text-slate-500 mb-2 italic">{challenge.pool_label}</p>
-      )}
-      {challenge.reward?.locked && (
-        <div className="mb-2">
-          <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded border border-amber-500/40 text-amber-400 bg-amber-500/10">
-            {challenge.reward.reward_type === "cash_bounty"
-              ? `$${challenge.reward.amount_usd ?? 500} Bounty Locked`
-              : `Interview Pass ≥${challenge.reward.interview_benchmark ?? 75}`}
-          </span>
-        </div>
-      )}
+      <div className="mb-3">
+        <CompanyProfilePanel profile={challenge.company_profile} compact />
+      </div>
+      <div className="mb-2">
+        <RewardBadges reward={challenge.reward} escrowLabel={challenge.reward_escrow_label} />
+      </div>
       <p className="text-xs text-slate-500 line-clamp-2 mb-3">{challenge.microprd.context}</p>
       {challenge.evaluation_focus && challenge.evaluation_focus.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">

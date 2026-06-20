@@ -273,6 +273,26 @@
       "notes": "Decouples student signal from company logo for FAANG-bias mitigation narrative."
     },
     {
+      "id": "blind-002",
+      "priority": 6.8,
+      "area": "trust-governance",
+      "title": "Blind Audition — Company Tech Profile",
+      "user_visible_behavior": "Students never see sponsor names or brand_proxy. Published challenges show a standardized Company Tech Profile (stage, team size range, tech stack). Red-sensitivity items omit industry. Verified sponsor + escrow badges when reward is locked. CTO dashboard previews student-facing profile.",
+      "status": "passing",
+      "verification": [
+        "Publish demo-005 with domain obfuscation — public API has company_profile, no brand_proxy",
+        "demo-005 company_profile.industry_broad is null",
+        "demo-003 shows verification_status verified and reward_escrow_label",
+        "python -m pytest backend/tests/test_blind_audition.py -v passes"
+      ],
+      "evidence": [
+        "backend/ai_pm/company_profile.py + public_sanitize.py",
+        "backend/tests/test_blind_audition.py",
+        "frontend ChallengeCard + MicroPRDView + /student/trust"
+      ],
+      "notes": "Auth + multi-tenant + real escrow deferred. brand_proxy remains CTO-internal only."
+    },
+    {
       "id": "assessor-001",
       "priority": 7,
       "area": "ai-assessor",

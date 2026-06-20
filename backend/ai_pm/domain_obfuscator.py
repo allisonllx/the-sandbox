@@ -177,9 +177,9 @@ def obfuscate_domain(
         field_map = build_field_map([f.name for f in metadata.fields], domain)
         return DomainTransform(
             domain_proxy="hyperlocal_equipment",
-            public_title=f"{brand_proxy} Neighborhood Equipment Discovery Hub",
+            public_title="Hyperlocal Community Equipment Discovery Platform",
             public_narrative=(
-                f"{brand_proxy} operates a hyperlocal community equipment-sharing network. "
+                "A hyperlocal community equipment-sharing network. "
                 "Users discover nearby locker inventory, reserve power tools or sporting gear, "
                 "and redeem rental credits — the frontend flows mirror discovery → detail → cart "
                 "but the business domain is fully masked from the original industry context."
@@ -197,10 +197,10 @@ def obfuscate_domain(
         field_map = build_field_map([f.name for f in metadata.fields], domain)
         return DomainTransform(
             domain_proxy="municipal_fleet",
-            public_title=f"{brand_proxy} Municipal Fleet Scheduling Console",
+            public_title="Municipal Fleet Scheduling Console",
             public_narrative=(
-                f"{brand_proxy} needs a dispatch console for municipal maintenance fleets — "
-                "route assignment, geo-proximity matching, and driver handoff states."
+                "A dispatch console for municipal maintenance fleets — "
+                "route assignment, geo-proximity matching, and technician handoff states."
             ),
             internal_intent=f"Internal (CTO only): {title} — {source_label}",
             transform_rationale="Ride-hailing/geo dispatch signals mapped to municipal fleet scheduling.",
@@ -212,10 +212,10 @@ def obfuscate_domain(
         field_map = build_field_map([f.name for f in metadata.fields], domain)
         return DomainTransform(
             domain_proxy="subscription_fulfillment",
-            public_title=f"{brand_proxy} Subscription Box Fulfillment Retry Pipeline",
+            public_title="Subscription Box Fulfillment Retry Pipeline",
             public_narrative=(
-                f"{brand_proxy} ships curated subscription boxes. Students diagnose retry storms "
-                "and idempotency issues in the fulfillment billing pipeline."
+                "A curated subscription box fulfillment pipeline. Students diagnose retry storms "
+                "and idempotency issues in the billing pipeline."
             ),
             internal_intent=f"Internal (CTO only): {title} — {source_label}",
             transform_rationale="Payment/retry metadata abstracted to subscription fulfillment domain.",

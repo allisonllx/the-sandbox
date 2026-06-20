@@ -10,7 +10,7 @@ export function ScorecardView({ scorecard }: { scorecard: Scorecard }) {
         <p className="text-xs text-slate-400 mt-1">{scorecard.summary}</p>
         {scorecard.execution_points != null && (
           <p className="text-xs text-amber-400/90 mt-2 font-mono">
-            +{scorecard.execution_points} Execution Points (demo)
+            +{scorecard.execution_points} Execution Points — platform-global rank (sponsor anonymous)
           </p>
         )}
       </div>

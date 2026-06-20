@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from ..ai_pm.models import ChallengeTrack, DeliverableType, MicroPRD, ChallengeReward
+from ..ai_pm.models import ChallengeTrack, DeliverableType, MicroPRD, ChallengeReward, CompanyTechProfile
 
 
 class SubmissionStatus(str, Enum):
@@ -22,15 +22,15 @@ class PublishedChallenge(BaseModel):
     title: str
     status: str
     track: ChallengeTrack = ChallengeTrack.technical
-    brand_proxy: str | None = None
+    company_profile: CompanyTechProfile
     deliverable_types: list[DeliverableType] = Field(default_factory=list)
     evaluation_focus: list[str] = Field(default_factory=list)
     microprd: MicroPRD
     dataset_ready: bool
     starter_ready: bool = False
     dataset_anomalies: list[str] = Field(default_factory=list)
-    pool_label: str | None = None
     reward: ChallengeReward | None = None
+    reward_escrow_label: str | None = None
     published_at: datetime | None = None
 
 
