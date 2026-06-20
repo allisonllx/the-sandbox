@@ -298,7 +298,7 @@
       "area": "ai-assessor",
       "title": "Dual-Layer AI Assessor (Platform Signal + Sponsor Fit)",
       "user_visible_behavior": "After submit, students see a scorecard with two layers: Platform Signal (track-standard, feeds Execution Points for global rank) and Sponsor Fit (challenge-specific criteria, feeds Match Radar only). Docker secret tests and LLM taste land in Phase A/B.",
-      "status": "in_progress",
+      "status": "passing",
       "implementation_order": [
         {
           "order": 1,
@@ -316,7 +316,7 @@
           "order": 3,
           "id": "assessor-sponsor-llm",
           "title": "LLM sponsor fit from sanitized Micro-PRD (Phase B)",
-          "status": "not_started"
+          "status": "completed"
         }
       ],
       "verification": [
@@ -329,11 +329,12 @@
       "evidence": [
         "python -m pytest backend/tests/test_assessor_layers.py -v → 5 passed (2026-06-20)",
         "python -m pytest backend/tests/test_docker_assessor.py -v → 6 passed (2026-06-20)",
-        "backend/assessor/docker_runner.py — network=none, memory/CPU limits, cap-drop",
-        "backend/assessor/secret_tests/test_secret.py — not in starter scaffold",
-        "ScorecardView shows Platform Signal + Sponsor Fit sections"
+        "python -m pytest backend/tests/test_sponsor_fit_llm.py -v → 6 passed (2026-06-20)",
+        "python -m pytest backend/tests/ -q → 113 passed (2026-06-20)",
+        "backend/assessor/docker_runner.py + sponsor_fit.py",
+        "ScorecardView: Platform Signal + Sponsor Fit sections"
       ],
-      "notes": "Schema split complete. Phase A: Docker ephemeral containers for platform_technical. Phase B: LLM sponsor fit with heuristic fallback. Interview pass requires both layers ≥ benchmark."
+      "notes": "Dual-layer complete. Platform: Docker secret tests. Sponsor: LLM with heuristic fallback. Interview pass requires both layers ≥ benchmark."
     }
   ]
 }

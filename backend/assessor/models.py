@@ -27,31 +27,52 @@ class ChallengeContext:
     evaluation_focus: list[str] = field(default_factory=list)
     definition_of_success: list[str] = field(default_factory=list)
     microprd_title: str | None = None
+    microprd_context: str | None = None
+    structural_constraints: list[str] = field(default_factory=list)
+    user_persona: str | None = None
+    problem_framing: str | None = None
 
 
 def challenge_context_from_item(item) -> ChallengeContext:
     """Build assessor context from a backlog item (no brand_proxy)."""
     microprd: MicroPRD | None = getattr(item, "microprd", None)
     draft = getattr(item, "publish_draft", None)
-    success = (
-        list(draft.definition_of_success)
-        if draft and draft.definition_of_success
-        else list(microprd.definition_of_success)
-        if microprd
-        else []
+
+    def _from_draft_or_microprd(draft_attr: str, microprd_attr: str, default=None):
+        if draft is not None:
+            val = getattr(draft, draft_attr, None)
+            if val:
+                return val
+        if microprd is not None:
+            return getattr(microprd, microprd_attr, default)
+        return default
+
+    success = list(
+        _from_draft_or_microprd("definition_of_success", "definition_of_success", []) or []
     )
-    focus = (
-        list(draft.evaluation_focus)
-        if draft and draft.evaluation_focus
-        else list(getattr(item, "evaluation_focus", []) or [])
+    focus = list(
+        _from_draft_or_microprd("evaluation_focus", "evaluation_focus", None)
+        or getattr(item, "evaluation_focus", [])
+        or []
     )
-    title = draft.title if draft else (microprd.title if microprd else None)
+    title = _from_draft_or_microprd("title", "title", None)
+    context_text = _from_draft_or_microprd("context", "context", None)
+    constraints = list(
+        _from_draft_or_microprd("structural_constraints", "structural_constraints", []) or []
+    )
+    persona = _from_draft_or_microprd("user_persona", "user_persona", None)
+    framing = _from_draft_or_microprd("problem_framing", "problem_framing", None)
+
     return ChallengeContext(
         challenge_id=item.id,
         track=item.track or ChallengeTrack.technical,
         evaluation_focus=focus,
         definition_of_success=success,
         microprd_title=title,
+        microprd_context=context_text,
+        structural_constraints=constraints,
+        user_persona=persona,
+        problem_framing=framing,
     )
 
 

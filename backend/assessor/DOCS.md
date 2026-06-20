@@ -17,9 +17,19 @@ Dual-layer submission grading:
 | `secret_tests/test_secret.py` | Platform secret tests — **never** in starter scaffold |
 | `platform_technical.py` | Platform dimensions from Docker + security scan |
 | `platform_product.py` | Structural deliverable rubric (no challenge-specific keywords) |
-| `sponsor_technical.py` | Criteria/taste fit per challenge (LLM in Phase B) |
-| `sponsor_product.py` | Persona/problem framing fit per challenge |
+| `sponsor_fit.py` | LLM sponsor fit + heuristic fallback (technical + product) |
+| `sponsor_technical.py` | Thin delegate to `sponsor_fit` |
+| `sponsor_product.py` | Thin delegate to `sponsor_fit` |
 | `registry.py` | `assess_submission()` — orchestrates both layers |
+
+## Sponsor Fit LLM
+
+Uses `ai_pm.llm_client.LLMClient` with sanitized challenge payload only:
+
+- Title, context, definition of success, evaluation focus, structural constraints
+- Truncated student submission files (no `brand_proxy`, no corporate metadata)
+
+Falls back to deterministic heuristics when `OPENAI_API_KEY` is absent.
 
 ## Docker runner
 
@@ -29,22 +39,10 @@ Build once:
 docker build -t the-sandbox-runner docker/sandbox-runner
 ```
 
-Container flags: `--network none`, `--memory 512m`, `--cpus 1.0`, `--cap-drop ALL`, `--security-opt no-new-privileges`.
-
-Student code is written to a temp workspace, dataset copied as `sandbox.sqlite`, secret tests mounted read-only at `/secret_tests/test_secret.py`.
-
 If Docker is unavailable, platform technical scoring degrades (static security scan only — **no host execution** of student code).
-
-## assessor-001 phases
-
-| Phase | Scope | Status |
-|---|---|---|
-| **Schema + split** | Dual-layer scorecard, heuristic platform/sponsor assessors | Done |
-| **Phase A** | Docker harness + secret tests → `platform_technical` | Done |
-| **Phase B** | LLM sponsor fit from sanitized Micro-PRD + evaluation_focus | Not started |
 
 ## Notes for the Next Session
 
 - Interview pass requires **both** platform score and sponsor fit ≥ benchmark
 - Do not add challenge-specific keyword checks to platform assessors
-- LLM sponsor fit must receive sanitized challenge context only — never `brand_proxy`
+- Wire live global leaderboard aggregation from platform EP (optional polish)

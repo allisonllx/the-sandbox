@@ -5,8 +5,8 @@
 - Repository root: `/Users/allisonlawlixuan/Documents/repos/the_sandbox`
 - Standard startup path: `./init.sh`
 - Standard verification path: `python -m pytest backend/tests/ -v`
-- Current highest-priority unfinished feature: `assessor-001` Phase B — LLM sponsor fit
-- Latest passing: assessor-001 Phase A — Docker secret tests (107 tests)
+- Current highest-priority unfinished feature: see `feature_list.json` — assessor-001 complete
+- Latest passing: assessor-001 Phase B — LLM sponsor fit (113 tests)
 - Current blocker: None
 
 ## Session Log
@@ -180,3 +180,17 @@
 - Docs: assessor/DOCS.md, ARCHITECTURE.md, README.md docker build step
 - Commits: none
 - Next best step: assessor-001 Phase B — LLM sponsor fit layer
+
+### Session 013
+
+- Date: 2026-06-20
+- Goal: assessor-001 Phase B — LLM sponsor fit layer
+- Completed:
+  - backend/assessor/sponsor_fit.py — LLM JSON scoring + heuristic fallback
+  - Extended ChallengeContext with sanitized Micro-PRD fields
+  - test_sponsor_fit_llm.py (6 tests); brand_proxy excluded from LLM payload
+  - feature_list.json assessor-001 → passing
+- Verification run: `python -m pytest backend/tests/ -q` → **113 passed**
+- Docs: assessor/DOCS.md, README.md feature status
+- Commits: none
+- Next best step: pick next feature from feature_list.json (all MVP features passing)

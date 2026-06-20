@@ -39,7 +39,7 @@ The critical guarantee: **raw corporate data never leaves the local process.** T
 | Privacy Proxy | Regex PII masking · spaCy `en_core_web_sm` (local NER, offline) |
 | AI / LLM | OpenAI API (`gpt-4o-mini`) · heuristic fallback when key absent |
 | Frontend | Next.js 14 · TypeScript · Tailwind CSS |
-| Testing | pytest · 107 tests |
+| Testing | pytest · 113 tests |
 | Code Runner | Docker assessor (`the-sandbox-runner`) for secret tests; in-process for public Run |
 
 ---
@@ -147,7 +147,7 @@ The dashboard will be live at **http://localhost:3000** → auto-redirects to **
 python -m pytest backend/tests/ -v
 ```
 
-Expected output: **107 passed**.
+Expected output: **113 passed**.
 
 ### 5. (Optional) Build the assessor Docker runner
 
@@ -253,4 +253,4 @@ Secrets must never be committed. Use `.env` locally (already in `.gitignore`).
 | `rewards-001` Bounty / interview lock (stub) | ✅ Passing |
 | `blind-002` Blind Audition — Company Tech Profile | ✅ Passing |
 | `rank-001` Three rank surfaces (student / sponsor / enterprise) | ✅ Passing |
-| `assessor-001` Dual-Layer Assessor (Phase A Docker done; Phase B LLM sponsor fit next) | 🔄 In progress |
+| `assessor-001` Dual-Layer Assessor (Platform Docker + LLM Sponsor Fit) | ✅ Passing |
