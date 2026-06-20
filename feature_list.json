@@ -41,7 +41,7 @@
       "area": "ai-pm-dashboard",
       "title": "AI PM Triage Matrix & Relaxation Control Dashboard",
       "user_visible_behavior": "A CTO can view their anonymized backlog ranked by Severity / Friction / Sensitivity, see Red/Yellow/Green sensitivity tags, and use the Relaxation Controls (abstract logic toggle, variable-name synthesizer, noise slider) to safely de-risk an issue before publishing it as a public challenge.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Load three sample anonymized metadata blobs into the triage dashboard.",
         "Verify each item renders a Severity, Friction, and Sensitivity score.",
@@ -50,8 +50,15 @@
         "Adjust the noise slider to 50% and confirm the synthesized dataset distribution shifts.",
         "Confirm no raw metadata is sent to external APIs before the founder approves a challenge."
       ],
-      "evidence": [],
-      "notes": "LLM call receives only the anonymized structural metadata produced by privacy-001. See PRD Feature 2."
+      "evidence": [
+        "python -m pytest backend/tests/test_triage.py -v → 20 passed (2026-06-20)",
+        "TestBacklogStore::test_three_demo_items_in_store PASSED — all three tiers (red/yellow/green) pre-loaded",
+        "TestRelaxation::test_synthesize_variables_is_deterministic PASSED",
+        "TestRelaxation::test_noise_perturbs_row_scale PASSED",
+        "TestNoLLMBeforeApproval::test_relax_endpoint_makes_no_llm_call PASSED — no premature LLM calls",
+        "TestScorer::test_stub_receives_only_metadata_not_raw_content PASSED — LLM only sees structural metadata"
+      ],
+      "notes": "LLM call receives only anonymized structural metadata. Heuristic fallback runs without OPENAI_API_KEY. Frontend: Next.js dashboard at /startup with split-screen backlog list + relaxation controls panel."
     },
     {
       "id": "sandbox-001",

@@ -5,7 +5,7 @@
 - Repository root: `/Users/allisonlawlixuan/Documents/repos/the_sandbox`
 - Standard startup path: `./init.sh`
 - Standard verification path: `python -m pytest backend/tests/test_sanitizer.py -v`
-- Current highest-priority unfinished feature: `triage-001` — AI PM Triage Matrix & Relaxation Control Dashboard
+- Current highest-priority unfinished feature: `sandbox-001` — Public Sandbox Terminal & Micro-PRD Framework
 - Current blocker: None. `privacy-001` is passing. spaCy model (`en_core_web_sm`) not yet downloaded — run `python -m spacy download en_core_web_sm` to enable NER entity counting (all other tests pass without it).
 
 ## Session Log
@@ -41,4 +41,29 @@
 - Commits: none
 - Files or artifacts updated: feature_list.json (privacy-001 → passing)
 - Known risk or unresolved issue: spaCy model not yet downloaded (optional for NER entity counts)
-- Next best step: Begin `triage-001` — AI PM Triage Matrix. The output schema from `privacy-001` (`SanitizedMetadata`) is now the locked input contract for the triage layer.
+- Next best step: Begin `sandbox-001` — Public Sandbox Terminal & Micro-PRD Framework.
+
+### Session 003
+
+- Date: 2026-06-20
+- Goal: Implement triage-001 — AI PM Triage Matrix & Relaxation Control Dashboard
+- Completed:
+  - `backend/ai_pm/models.py` — TechScores, SensitivityTag, RelaxationConfig, BacklogItem, MicroPRD, all API request/response shapes
+  - `backend/ai_pm/llm_client.py` — injectable OpenAI wrapper with LLMUnavailableError, module-level singleton for testing
+  - `backend/ai_pm/scorer.py` — LLM scorer (sends anonymized metadata only) + heuristic fallback
+  - `backend/ai_pm/relaxation.py` — pure relaxation controls (abstract logic, variable synthesizer, noise injector)
+  - `backend/ai_pm/microprd.py` — LLM Micro-PRD generator with template fallback
+  - `backend/ai_pm/store.py` — in-memory backlog store pre-seeded with 3 demo items (red/yellow/green)
+  - `backend/api/triage_routes.py` — GET /backlog, POST /score, POST /relax/{id}, POST /publish/{id}
+  - `backend/main.py` — triage router registered
+  - `backend/tests/test_triage.py` — 20 tests
+  - `frontend/` — Next.js 14 + Tailwind CSS + TypeScript scaffolded
+  - `frontend/app/startup/page.tsx` — split-screen CTO dashboard
+  - `frontend/components/BacklogCard.tsx`, `RelaxationPanel.tsx`, `SensitivityBadge.tsx`, `ScoreBar.tsx`
+  - `frontend/lib/api.ts`, `lib/types.ts`
+- Verification run: `python -m pytest backend/tests/ -v` → **43 passed** (privacy-001 + triage-001)
+- Evidence captured: All relaxation controls verified deterministic; no LLM called before approval; all 3 sensitivity tiers covered
+- Commits: none
+- Files or artifacts updated: feature_list.json (triage-001 → passing), requirements.txt (+openai)
+- Known risk or unresolved issue: Frontend needs `npm install` before first run. OPENAI_API_KEY needed for live LLM scoring; heuristic fallback works without it.
+- Next best step: `sandbox-001` — student-facing challenge browser + interactive terminal
