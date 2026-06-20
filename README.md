@@ -39,7 +39,7 @@ The critical guarantee: **raw corporate data never leaves the local process.** T
 | Privacy Proxy | Regex PII masking · spaCy `en_core_web_sm` (local NER, offline) |
 | AI / LLM | OpenAI API (`gpt-4o-mini`) · heuristic fallback when key absent |
 | Frontend | Next.js 14 · TypeScript · Tailwind CSS |
-| Testing | pytest · 96 tests |
+| Testing | pytest · 101 tests |
 | Code Runner | Docker (ephemeral containers) — planned for `assessor-001` |
 
 ---
@@ -147,7 +147,7 @@ The dashboard will be live at **http://localhost:3000** → auto-redirects to **
 python -m pytest backend/tests/ -v
 ```
 
-Expected output: **96 passed**.
+Expected output: **101 passed**.
 
 ---
 
@@ -243,4 +243,4 @@ Secrets must never be committed. Use `.env` locally (already in `.gitignore`).
 | `rewards-001` Bounty / interview lock (stub) | ✅ Passing |
 | `blind-002` Blind Audition — Company Tech Profile | ✅ Passing |
 | `rank-001` Three rank surfaces (student / sponsor / enterprise) | ✅ Passing |
-| `assessor-001` AI Assessor & Scorecard | 🔲 Not started |
+| `assessor-001` Dual-Layer Assessor (schema split done; Docker Phase A next) | 🔄 In progress |

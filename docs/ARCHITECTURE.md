@@ -25,7 +25,7 @@ the_sandbox/
 │   │   ├── domain_obfuscator.py
 │   │   ├── public_sanitize.py
 │   │   └── publish_draft.py
-│   ├── assessor/             # Pluggable per-track assessor plugins
+│   ├── assessor/             # Dual-layer platform signal + sponsor fit
 │   ├── sandbox/              # Datasets, submissions, rank stubs
 │   │   ├── leaderboard.py          # Student global rank (demo)
 │   │   ├── sponsor_matches.py      # Per-challenge match radar (startup)
@@ -96,20 +96,20 @@ GET /sandbox/challenges/{id}  →  public_sanitize.build_public_challenge()
 
 ```
 Student workspace → submit → assessor/registry.py
-  ├─ TechnicalAssessor / ProductAssessor (deterministic MVP rubric)
-  └─ execution_points on scorecard (per submission, not yet aggregated globally)
+  ├─ platform_* assessor → platform_signal_score → execution_points (global rank)
+  └─ sponsor_* assessor → sponsor_fit_score (Match Radar only)
   │
   ▼
-Scorecard in browser (+ interview pass banner when benchmark met)
+Dual-layer scorecard in browser (+ interview pass when both layers ≥ benchmark)
 ```
 
 ### 3. Three Rank Surfaces (demo stubs)
 
 | Audience | Route | API | Scope |
 |---|---|---|---|
-| **Students** | `/student/leaderboard` | `GET /sandbox/leaderboard` | Global platform rank (motivation) |
-| **Startup sponsors** | `/startup/matches/{id}` | `GET /triage/backlog/{id}/matches` | **This challenge only** — live submissions or demo stubs |
-| **Enterprises** | `/enterprise/radar` | `GET /sandbox/enterprise/radar` | Platform-wide top tier (subscription narrative) |
+| **Students** | `/student/leaderboard` | `GET /sandbox/leaderboard` | Global platform Execution Points |
+| **Startup sponsors** | `/startup/matches/{id}` | `GET /triage/backlog/{id}/matches` | **Sponsor Fit** for this challenge only |
+| **Enterprises** | `/enterprise/radar` | `GET /sandbox/enterprise/radar` | Platform-wide top tier (platform signal) |
 
 Startups do **not** see the student global leaderboard or other sponsors' challenge performers.
 

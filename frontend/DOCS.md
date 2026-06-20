@@ -37,5 +37,5 @@ Next.js 14 student, startup, and enterprise UIs for The Sandbox. Proxies `/api/*
 - Run `npm install` once (includes `@monaco-editor/react`), then `npm run dev`
 - Workspace bootstrap: `GET /sandbox/challenges/{id}/workspace` sets cookie; drafts sync to server + IndexedDB
 - RelaxationPanel: **Preview Changes** loads `challenge_draft`; **Approve & Publish** sends edited `draft` in publish body
-- Assessor scorecard UI wired via ScorecardView; Docker harness deferred to assessor-001
+- Assessor scorecard: dual-layer Platform Signal + Sponsor Fit in ScorecardView
 - After code changes, check `docs/documentation-sync.md`

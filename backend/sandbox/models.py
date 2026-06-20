@@ -154,6 +154,13 @@ class JobStatusResponse(BaseModel):
     finished_at: datetime | None = None
 
 
+class ScoreLayerResponse(BaseModel):
+    dimensions: dict[str, int] = Field(default_factory=dict)
+    score: int = 0
+    summary: str = ""
+    notes: list[str] = Field(default_factory=list)
+
+
 class ScorecardResponse(BaseModel):
     ok: bool = True
     submission_id: str
@@ -161,3 +168,8 @@ class ScorecardResponse(BaseModel):
     dimensions: dict[str, int]
     summary: str
     notes: list[str] = Field(default_factory=list)
+    platform: ScoreLayerResponse | None = None
+    sponsor: ScoreLayerResponse | None = None
+    execution_points: int | None = None
+    sponsor_fit_score: int | None = None
+    platform_score: int | None = None

@@ -21,6 +21,7 @@ Use this file as a lookup: find the code path you touched, check every doc in th
 |---|---|---|
 | `backend/privacy_proxy/` | `backend/privacy_proxy/DOCS.md` | **ARCHITECTURE.md** — data-flow or trust-boundary changes; **api-patterns.md** — `SanitizedMetadata` / `NERSummary` response shape changes |
 | `backend/ai_pm/` | `backend/ai_pm/DOCS.md` | **ARCHITECTURE.md** — triage or relaxation pipeline changes; **PRODUCT.md** — founder/student flow changes; **api-patterns.md** — new triage endpoints or response fields |
+| `backend/assessor/` | `backend/assessor/DOCS.md` | **ARCHITECTURE.md** — scorecard pipeline; **PRODUCT.md** — EP vs sponsor fit; **api-patterns.md** — scorecard shape |
 | `backend/sandbox/` | `backend/sandbox/DOCS.md` | **ARCHITECTURE.md** — student flow; **PRODUCT.md** — student UX; **api-patterns.md** — sandbox endpoints |
 | `backend/api/` | `backend/api/DOCS.md` | **api-patterns.md** — any new/changed endpoint (required); **README.md** — API reference table; **ARCHITECTURE.md** — new external integration |
 | `backend/tests/` | `backend/tests/DOCS.md` | Usually no `docs/` update unless verification rules or API contracts changed |
@@ -59,6 +60,7 @@ Current module docs:
 backend/DOCS.md
 backend/privacy_proxy/DOCS.md
 backend/ai_pm/DOCS.md
+backend/assessor/DOCS.md
 backend/api/DOCS.md
 backend/sandbox/DOCS.md
 backend/tests/DOCS.md

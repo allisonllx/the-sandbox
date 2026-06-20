@@ -231,3 +231,21 @@ Three intentionally separate rank surfaces:
 | `GET /api/v1/sandbox/enterprise/radar` | Enterprise recruiters | Platform-wide top tier |
 
 Responses use anonymized display names (e.g. `Candidate A7F2`) — no sponsor or company names.
+
+### Reference: Dual-Layer Scorecard
+
+Submit responses include nested `platform` and `sponsor` layers:
+
+```json
+{
+  "platform": { "dimensions": { "tests_passed": 95 }, "score": 91 },
+  "sponsor": { "dimensions": { "criteria_alignment": 82 }, "score": 80 },
+  "execution_points": 109,
+  "sponsor_fit_score": 80,
+  "dimensions": { "tests_passed": 95 }
+}
+```
+
+- `execution_points` = `round(platform.score * 1.2)` — global rank only
+- `sponsor_fit_score` = `sponsor.score` — Match Radar sort key
+- Top-level `dimensions` aliases `platform.dimensions` for backward compatibility

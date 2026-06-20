@@ -5,8 +5,8 @@
 - Repository root: `/Users/allisonlawlixuan/Documents/repos/the_sandbox`
 - Standard startup path: `./init.sh`
 - Standard verification path: `python -m pytest backend/tests/ -v`
-- Current highest-priority unfinished feature: `assessor-001` — Docker harness + full technical grading
-- Latest passing: doc sync Session 010 — publish draft + three rank surfaces documented (96 tests)
+- Current highest-priority unfinished feature: `assessor-001` Phase A — Docker harness + platform secret tests
+- Latest passing: assessor-001 schema split — dual-layer scorecard (101 tests)
 - Current blocker: None
 
 ## Session Log
@@ -151,3 +151,18 @@
 - Docs: updated per documentation-sync.md (all rows for touched modules)
 - Commits: none
 - Next best step: assessor-001 — Docker harness + full technical grading
+
+### Session 011
+
+- Date: 2026-06-20
+- Goal: assessor-001 schema split — dual-layer Platform Signal + Sponsor Fit
+- Completed:
+  - backend/assessor/models.py, platform_*.py, sponsor_*.py, registry refactor
+  - execution_points from platform only; Match Radar sorts by sponsor_fit_score
+  - ScorecardView + types.ts dual sections; startup matches UI updated
+  - test_assessor_layers.py (5 tests); feature_list.json assessor-001 phased
+  - Docs: assessor/DOCS.md, ARCHITECTURE, PRODUCT, api-patterns, documentation-sync
+- Verification run: `python -m pytest backend/tests/ -q` → **101 passed**; `npm run typecheck` → OK
+- Docs: updated per documentation-sync.md
+- Commits: none
+- Next best step: assessor-001 Phase A — Docker harness + platform_technical secret tests

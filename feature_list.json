@@ -296,18 +296,42 @@
       "id": "assessor-001",
       "priority": 7,
       "area": "ai-assessor",
-      "title": "AI Assessor & Taste-and-Judgment Scorecard",
-      "user_visible_behavior": "After a student submits a solution, the AI Assessor runs it against secret edge-case tests in an ephemeral sandbox, evaluates code taste (error handling, architectural simplicity, optimization), and renders a dynamic scorecard. Top profiles are surfaced to the sponsoring company dashboard.",
-      "status": "not_started",
-      "verification": [
-        "Submit two solutions to a sample challenge — one well-structured, one naive.",
-        "Verify both run inside an isolated container with no network access and enforced memory/CPU limits.",
-        "Verify the scorecard shows distinct scores for 'Performance', 'Security Resilience', and 'Architectural Elegance'.",
-        "Verify the well-structured solution scores higher on taste metrics.",
-        "Confirm the top-performing candidate profile appears in the sponsoring company's matching radar."
+      "title": "Dual-Layer AI Assessor (Platform Signal + Sponsor Fit)",
+      "user_visible_behavior": "After submit, students see a scorecard with two layers: Platform Signal (track-standard, feeds Execution Points for global rank) and Sponsor Fit (challenge-specific criteria, feeds Match Radar only). Docker secret tests and LLM taste land in Phase A/B.",
+      "status": "in_progress",
+      "implementation_order": [
+        {
+          "order": 1,
+          "id": "assessor-schema-split",
+          "title": "Dual-layer scorecard schema + platform/sponsor assessor split",
+          "status": "completed"
+        },
+        {
+          "order": 2,
+          "id": "assessor-docker-platform",
+          "title": "Docker harness + platform_technical secret tests (Phase A)",
+          "status": "not_started"
+        },
+        {
+          "order": 3,
+          "id": "assessor-sponsor-llm",
+          "title": "LLM sponsor fit from sanitized Micro-PRD (Phase B)",
+          "status": "not_started"
+        }
       ],
-      "evidence": [],
-      "notes": "Code runner uses Docker ephemeral containers. LLM evaluates taste after test execution. Consumes disk-backed multi-file submissions from workspace-002. See PRD Feature 4."
+      "verification": [
+        "Submit returns scorecard with platform and sponsor layers",
+        "execution_points derives from platform.score only",
+        "Sponsor Match Radar sorts by sponsor_fit_score",
+        "Phase A: solutions run in isolated Docker with no network",
+        "Phase B: well-structured solution scores higher on sponsor taste dimensions"
+      ],
+      "evidence": [
+        "python -m pytest backend/tests/test_assessor_layers.py -v → 5 passed (2026-06-20)",
+        "backend/assessor/platform_*.py + sponsor_*.py + models.py",
+        "ScorecardView shows Platform Signal + Sponsor Fit sections"
+      ],
+      "notes": "Schema split complete. Phase A: Docker ephemeral containers for platform_technical. Phase B: LLM sponsor fit with heuristic fallback. Interview pass requires both layers ≥ benchmark."
     }
   ]
 }

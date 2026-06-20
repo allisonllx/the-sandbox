@@ -45,9 +45,9 @@ export default function StartupMatchesPage() {
         <div>
           <h1 className="text-xl font-semibold text-slate-100">Your Challenge Matches</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Candidates ranked by Execution Points on{" "}
-            <span className="text-slate-400">{title ?? challengeId}</span> only. You do not see
-            performers from other sponsors&apos; challenges.
+            Candidates ranked by <strong className="text-slate-400 font-normal">Sponsor Fit</strong>{" "}
+            on <span className="text-slate-400">{title ?? challengeId}</span> only — how well they
+            match your success criteria, not global Execution Points.
           </p>
           <p className="text-[10px] text-slate-600 mt-2 uppercase tracking-widest">
             Source: {source} · Blind-audition IDs only
@@ -82,9 +82,14 @@ export default function StartupMatchesPage() {
                   {e.track.replace("_", " ")}
                 </p>
               </div>
-              <div className="text-right">
-                <p className="text-lg font-mono text-amber-400">{e.execution_points}</p>
-                <p className="text-[10px] text-slate-600 uppercase">pts</p>
+              <div className="text-right shrink-0">
+                <p className="text-lg font-mono text-amber-400">{e.sponsor_fit_score}</p>
+                <p className="text-[10px] text-slate-600 uppercase">sponsor fit</p>
+                {e.platform_score != null && (
+                  <p className="text-[10px] text-slate-600 font-mono mt-1">
+                    platform {e.platform_score} · EP {e.execution_points}
+                  </p>
+                )}
               </div>
             </div>
           ))}

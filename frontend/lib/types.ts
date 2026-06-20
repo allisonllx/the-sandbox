@@ -235,12 +235,23 @@ export interface JobStatusResponse {
   finished_at: string | null;
 }
 
+export interface ScoreLayer {
+  dimensions: Record<string, number>;
+  score: number;
+  summary?: string;
+  notes?: string[];
+}
+
 export interface Scorecard {
   track?: string;
   dimensions: Record<string, number>;
   summary: string;
   notes?: string[];
+  platform?: ScoreLayer;
+  sponsor?: ScoreLayer;
   execution_points?: number;
+  sponsor_fit_score?: number;
+  platform_score?: number;
   interview_pass_earned?: boolean;
   interview_benchmark?: number;
 }
@@ -258,6 +269,8 @@ export interface SponsorMatchEntry {
   rank: number;
   candidate_id: string;
   track: ChallengeTrack;
+  sponsor_fit_score: number;
+  platform_score?: number | null;
   execution_points: number;
   summary: string;
   submitted_at?: string | null;
@@ -301,4 +314,9 @@ export interface ScorecardResponse {
   dimensions: Record<string, number>;
   summary: string;
   notes: string[];
+  platform?: ScoreLayer | null;
+  sponsor?: ScoreLayer | null;
+  execution_points?: number | null;
+  sponsor_fit_score?: number | null;
+  platform_score?: number | null;
 }

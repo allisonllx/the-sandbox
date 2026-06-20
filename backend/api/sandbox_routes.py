@@ -22,6 +22,7 @@ from ..sandbox.models import (
     PublishedChallenge,
     RunJobRequest,
     RunJobResponse,
+    ScoreLayerResponse,
     ScorecardResponse,
     StarterResponse,
     SubmissionRecord,
@@ -141,7 +142,12 @@ def _submit_and_assess(
         status=SubmissionStatus.received,
         mode=mode,
     )
-    scorecard = assess_submission(pending, track, reward=getattr(item, "reward", None))
+    scorecard = assess_submission(
+        pending,
+        track,
+        reward=getattr(item, "reward", None),
+        challenge_item=item,
+    )
     return submission_store.save_submission(
         challenge_id=item.id,
         code=body.code if body.mode == "legacy" else None,
@@ -465,12 +471,19 @@ def get_scorecard(submission_id: str) -> ScorecardResponse:
             detail={"code": "SCORECARD_NOT_FOUND", "message": "Scorecard not available."},
         )
     sc = record.scorecard
+    platform_raw = sc.get("platform")
+    sponsor_raw = sc.get("sponsor")
     return ScorecardResponse(
         submission_id=submission_id,
         track=record.track,
         dimensions=sc.get("dimensions", {}),
         summary=sc.get("summary", ""),
         notes=sc.get("notes", []),
+        platform=ScoreLayerResponse(**platform_raw) if platform_raw else None,
+        sponsor=ScoreLayerResponse(**sponsor_raw) if sponsor_raw else None,
+        execution_points=sc.get("execution_points"),
+        sponsor_fit_score=sc.get("sponsor_fit_score"),
+        platform_score=sc.get("platform_score"),
     )
 
 

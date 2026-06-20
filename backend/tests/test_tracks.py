@@ -147,7 +147,8 @@ class TestProductSubmit:
         body = res.json()
         assert body["status"] == "assessed"
         assert body["scorecard"] is not None
-        assert "Product Thinking" in body["scorecard"]["dimensions"]
+        assert "deliverable_completeness" in body["scorecard"]["platform"]["dimensions"]
+        assert "persona_fit" in body["scorecard"]["sponsor"]["dimensions"]
 
         record = submission_store.get_submission(body["submission_id"])
         assert record is not None
@@ -157,4 +158,4 @@ class TestProductSubmit:
             f"/api/v1/sandbox/submissions/{body['submission_id']}/scorecard"
         ).json()
         assert scorecard["track"] == "product_feature"
-        assert scorecard["dimensions"]["Communication"] > 15
+        assert scorecard["platform"]["dimensions"]["design_doc_structure"] > 15

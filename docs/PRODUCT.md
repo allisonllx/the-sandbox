@@ -24,7 +24,9 @@ Technically capable but locked out of top roles by the absence of a pedigreed ne
 
 5. **Startup: Review matches** — Track-aware assessor plugins score submissions (Technical: tests + taste; Product: structure + DESIGN.md rubric). Scorecard dimensions differ by track. After publish, sponsors open **Sponsor Match Radar** at `/startup/matches/{challengeId}` — ranked performers for **that challenge only** (live submissions or demo stubs). They do not see other companies' challenges or the student global leaderboard.
 
-6. **Rank surfaces (demo stubs)** — **Students** use `/student/leaderboard` for global Execution Points motivation. **Enterprises** use `/enterprise/radar` for platform-wide top-tier candidates (subscription narrative). These views are intentionally separate from the sponsor-scoped Match Radar.
+6. **Rank surfaces (demo stubs)** — **Students** use `/student/leaderboard` for global Execution Points (platform signal only). **Startups** use `/startup/matches/{id}` ranked by **Sponsor Fit** for that challenge. **Enterprises** use `/enterprise/radar` for platform-wide top tier. A student can rank highly globally while not topping a specific sponsor's Match Radar — and vice versa.
+
+> **Execution Points measure platform-verified engineering signal, not sponsor preference.** Sponsors grade fit to *their* success criteria; the platform grades proof-of-work against track-standard benchmarks.
 
 ## Defensive Posture (Hackathon Narrative)
 
@@ -34,7 +36,7 @@ The platform addresses three existential B2B talent risks with **hybrid demo mec
 |---|---|---|
 | **Free labor / exploitation** | Guaranteed reward locked before publish; AI PM scope cap (~8h) | Real scope gate + stubbed bounty/interview lock |
 | **Stealth roadmap leak** | **Blind Audition**: Company Tech Profile replaces sponsor identity; domain obfuscation + column renames for high-sensitivity items | Real public API boundary + domain transform |
-| **FAANG prestige bias** | **Execution Points** rank decoupled from company logos; three rank surfaces (student global / sponsor per-challenge / enterprise platform-wide) | Stub: demo seed data + anonymized display names (e.g. Candidate A7F2) |
+| **FAANG prestige bias** | **Execution Points** from platform signal only; sponsor fit is per-challenge | Dual-layer scorecard: global EP ≠ sponsor Match Radar rank |
 | **Scam bounties** | Platform-verified sponsor badge + escrow label (stub) | Per-challenge verification metadata; `/student/trust` narrative |
 
 > *"We aren't a job board; we are a zero-trust proof-of-work protocol."*
