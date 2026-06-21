@@ -12,7 +12,7 @@ import logging
 import re
 from typing import Any
 
-from ..ai_pm.llm_client import LLMClientProtocol, LLMUnavailableError, get_default_client
+from ..ai_pm.llm_client import LLMClientProtocol, LLMTier, LLMUnavailableError, get_default_client
 from ..ai_pm.models import ChallengeTrack
 from ..sandbox.models import SubmissionRecord
 from .models import ChallengeContext, ScoreLayer
@@ -252,7 +252,7 @@ def _llm_sponsor_fit(
     }
     user = json.dumps(user_payload, indent=2)
 
-    result = client.chat(system=system, user=user, temperature=0.2)
+    result = client.chat(system=system, user=user, temperature=0.2, tier=LLMTier.sensitive)
     raw_dims = result.get("dimensions") or {}
     dimensions = _normalize_dimensions(raw_dims, expected)
     score = int(round(sum(dimensions.values()) / len(dimensions)))

@@ -18,35 +18,6 @@ Startups never see other companies' performers. Students never see sponsor names
 
 ---
 
-## What's Real vs Demo
-
-This repo is a **hackathon MVP**: core trust and grading mechanics are implemented; billing, auth, and some recruiter UX are narrative stubs. Use this table when demoing to judges.
-
-| Area | Status | Notes |
-|---|---|---|
-| Privacy proxy (PII strip) | **Real** | Local-only; no raw content in API responses |
-| Ingest (`sanitize` → `score`) | **Real API**, no UI | Backlog pre-seeded with `demo-*` items for judges |
-| Triage, relaxation, domain obfuscation | **Real** | Deterministic transforms + optional LLM |
-| Blind audition boundary | **Real** | Students never get `brand_proxy`; public API sanitized |
-| Editable release preview | **Real** | `PublishDraft` before publish |
-| Scope cap (~8h) | **Real gate** | `demo-007` → 422 |
-| Reward lock before publish | **Real gate** | No Stripe / escrow — money is fake |
-| Publish → dataset + starter | **Real** | SQLite synthesizer + scaffold on disk |
-| Student workspace + submit | **Real** | Monaco, drafts, disk-backed submissions |
-| Public **Run** (pre-submit tests) | **Real** | In-process pytest on host |
-| Assessor platform signal | **Real** (needs Docker) | Secret tests in isolated container; degrades without Docker |
-| Assessor sponsor fit | **Real** (needs `OPENAI_API_KEY`) | Heuristic fallback offline |
-| Dual-layer scorecard | **Real** | EP from platform only; Match Radar from sponsor fit |
-| Sponsor Match Radar | **Hybrid** | **Live** rankings when submissions exist; **demo seed** when empty |
-| Student leaderboard | **Demo seed** | Not aggregated from live submissions yet |
-| Enterprise radar | **Demo seed** | Subscription narrative only |
-| `/student/trust`, verified badges | **Narrative stub** | UI copy; no KYC backend |
-| Auth, multi-tenant, persistent DB | **Not built** | In-memory backlog; anonymous workspace cookies |
-
-**Rule of thumb:** if a student or sponsor *does something in the app* (publish, submit, score), it usually hits real backend logic. If a page shows **platform-wide talent rankings** without a submit flow behind it, treat it as demo seed unless Match Radar shows `source: live`.
-
----
-
 ## End-to-End Flow
 
 ```
@@ -114,8 +85,8 @@ On `/startup`, founders:
 1. Review Severity / Friction / Sensitivity and sensitivity shield (Red / Yellow / Green)
 2. Apply **Relaxation Controls** — abstract logic, synthesize column names, noise injection, domain obfuscation
 3. **Preview Changes** — edit the **Release Preview** (title, success criteria, company profile, evaluation focus)
-4. **Lock reward** (required gate — escrow is stubbed, see table above)
-5. **Approve & Publish** — scope cap (~8h) blocks oversized items (`demo-007` → 422)
+4. **Lock reward** (required gate — escrow is stubbed; see [What's Implemented vs Demo Theater](#whats-implemented-vs-whats-demo-theater))
+5. **Approve & Publish** — generic scope check (~8h estimate) blocks oversized items; `demo-007` is a **hardcoded** always-fail demo (see disclaimer)
 
 Published challenges expose a **Company Tech Profile** to students (stage, team size, stack) — never the internal `brand_proxy`.
 
@@ -127,7 +98,7 @@ Published challenges expose a **Company Tech Profile** to students (stage, team 
 | Domain before/after preview | Sanitized Micro-PRD + obfuscated column names |
 | Real industry tokens | Abstract titles, red-sensitivity omits `industry_broad` |
 
-Students verify sponsor legitimacy at `/student/trust` (narrative stub — see disclaimer).
+Students verify sponsor legitimacy at `/student/trust` (narrative stub — see [demo disclaimer](#whats-implemented-vs-whats-demo-theater)).
 
 ### 4. Solve & submit (student)
 
@@ -149,7 +120,7 @@ A student can rank highly on Execution Points globally while not topping a speci
 
 ### 6. Three rank surfaces (by design)
 
-See **What's Real vs Demo** — only Match Radar uses live submission data today.
+See [What's Implemented vs Demo Theater](#whats-implemented-vs-whats-demo-theater) — only Match Radar uses live submission data today.
 
 | Audience | Route | Sort key |
 |---|---|---|
@@ -161,7 +132,7 @@ See **What's Real vs Demo** — only Match Radar uses live submission data today
 
 ## Defensive Posture
 
-See **What's Real vs Demo** for which mitigations are enforced vs narrated. Demo CTO-only labels: **StealthCo** (`demo-005`), **NovaPay** (`demo-003`), **Platform Pool** (`demo-006`). Students never see these names.
+See [What's Implemented vs Demo Theater](#whats-implemented-vs-whats-demo-theater) for which mitigations are enforced vs narrated. Demo CTO-only labels: **StealthCo** (`demo-005`), **NovaPay** (`demo-003`), **Platform Pool** (`demo-006`). Students never see these names.
 
 ---
 
@@ -171,10 +142,10 @@ See **What's Real vs Demo** for which mitigations are enforced vs narrated. Demo
 |---|---|
 | Backend | Python 3.11+ · FastAPI · Pydantic v2 |
 | Privacy Proxy | Regex PII masking · spaCy `en_core_web_sm` (local NER, offline) |
-| AI / LLM | OpenAI API (`gpt-4o-mini`) · heuristic fallback when key absent |
+| AI / LLM | Local vLLM (Qwen via OpenAI-compatible API) for sensitive paths · OpenAI (`gpt-4o-mini`) fallback for `standard` tier and optional cloud sensitive · heuristic fallback when no LLM |
 | Assessor | Dual-layer: Docker secret tests (platform) + LLM sponsor fit |
 | Frontend | Next.js 14 · TypeScript · Tailwind CSS · Monaco editor |
-| Testing | pytest · 113 tests |
+| Testing | pytest · 121 tests |
 | Code Runner | Docker assessor (`the-sandbox-runner`) for secret tests; in-process for student **Run** |
 
 ---
@@ -196,6 +167,7 @@ the_sandbox/
 │   └── app/enterprise/radar/   # Enterprise subscription view (demo)
 ├── docker/sandbox-runner/      # Assessor container image
 ├── docs/                       # ARCHITECTURE, PRODUCT, api-patterns
+├── .env.example                # Environment template (copy to .env)
 ├── feature_list.json           # Feature state + verification evidence
 └── init.sh
 ```
@@ -213,7 +185,8 @@ Topic docs: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/PRODUCT.md`
 - Python 3.11+
 - Node.js 20+
 - Docker *(optional — required for full platform secret-test grading on submit)*
-- `OPENAI_API_KEY` *(optional — heuristic + offline fallbacks work without it)*
+- vLLM + Qwen *(optional — recommended for sensitive triage/obfuscation; keeps column names on-prem)*
+- LLM / OpenAI keys *(optional — heuristics work without any LLM; see [Environment Variables](#environment-variables))*
 
 ### Backend
 
@@ -225,7 +198,9 @@ pip install -r backend/requirements.txt
 pip install "spacy==3.7.0"
 pip install "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl"
 
-export OPENAI_API_KEY=sk-...   # optional
+cp .env.example .env
+# Edit .env — uncomment OPENAI_API_KEY and/or adjust LLM_BASE_URL
+set -a && source .env && set +a
 
 python -m uvicorn backend.main:app --reload --port 8000
 ```
@@ -243,7 +218,7 @@ App: **http://localhost:3000** → redirects to **/startup**
 ### Tests
 
 ```bash
-python -m pytest backend/tests/ -v    # expect 113 passed
+python -m pytest backend/tests/ -v    # expect 121 passed
 ```
 
 ### Assessor Docker image (optional)
@@ -258,15 +233,108 @@ Or run everything via `./init.sh`.
 
 ---
 
+## Environment Variables
+
+Copy [`.env.example`](.env.example) to `.env` and load it before starting the backend:
+
+```bash
+cp .env.example .env
+set -a && source .env && set +a
+```
+
+The backend does not auto-load `.env` — export vars manually or use the `source` pattern above. Never commit `.env` (listed in `.gitignore`).
+
+### Local LLM (sensitive tier — privacy-first)
+
+| Variable | Default | Description |
+|---|---|---|
+| `LLM_BASE_URL` | *(unset)* | OpenAI-compatible local endpoint, e.g. `http://localhost:8000/v1` when running vLLM. **Preferred for triage, domain obfuscation, Micro-PRD, sponsor fit.** |
+| `LLM_MODEL` | `Qwen/Qwen2.5-7B-Instruct` | Model id on the local server. |
+| `LLM_API_KEY` | `local` | API key sent to the local server (vLLM often accepts any value). |
+| `LLM_ALLOW_CLOUD_SENSITIVE` | off | Set `1` to allow OpenAI when local vLLM is down for **sensitive** tier. Default: blocked (privacy-first). |
+| `LLM_DOMAIN_OBFUSCATE` | on | Set `0` to disable LLM domain masking for novel industries. |
+
+Start vLLM in a separate terminal (not a pip dependency of this repo):
+
+```bash
+vllm serve Qwen/Qwen2.5-7B-Instruct --port 8000
+```
+
+### OpenAI cloud (optional)
+
+| Variable | Default | Description |
+|---|---|---|
+| `OPENAI_API_KEY` | *(unset)* | Cloud fallback for **standard** tier; optional sensitive fallback when `LLM_ALLOW_CLOUD_SENSITIVE=1`. Heuristic/template paths if absent. |
+| `OPENAI_MODEL` | `gpt-4o-mini` | Model id for OpenAI requests. |
+
+### Minimal setups
+
+| Goal | Config |
+|---|---|
+| Offline demo (no LLM) | Leave all vars unset — heuristics + templates |
+| Privacy-first production | `LLM_BASE_URL` only; keep `LLM_ALLOW_CLOUD_SENSITIVE` unset |
+| Local + cloud fallback | `LLM_BASE_URL` + `OPENAI_API_KEY` + `LLM_ALLOW_CLOUD_SENSITIVE=1` |
+| Cloud only (dev) | `OPENAI_API_KEY` only *(sensitive tier hits OpenAI unless local is also set)* |
+
+---
+
+## What's Implemented vs What's Demo Theater
+
+Read this before the judge script — it labels what is real pipeline code vs hackathon shortcuts.
+
+The README uses three labels:
+
+| Label | Meaning |
+|---|---|
+| **Implemented** | Code runs for any backlog item you create — not limited to `demo-*` seeds |
+| **Demo shortcut** | Real UI/API exists, but this hackathon uses pre-written samples or hardcoded IDs to make judging easy |
+| **Not built** | Shown in copy or UI only; no backend |
+
+### Implemented (works beyond seeded items)
+
+These pipelines are **general-purpose**. You can `POST /triage/score` a new item from sanitized metadata and run the same flow as `demo-003`:
+
+- **Privacy proxy** — any raw log text via `POST /proxy/sanitize`
+- **Triage scoring** — Severity / Friction / Sensitivity on any `SanitizedMetadata`
+- **Relaxation controls** — column rename, noise, abstract logic on any item's metadata
+- **Domain obfuscation** — keyword/field transforms when you toggle it at publish (not tied to one demo ID)
+- **Blind audition** — every published challenge strips `brand_proxy` on the student API
+- **Release preview + publish** — Micro-PRD, synthetic dataset, starter scaffold for any item that passes guards
+- **Student workspace + submit** — Monaco editor, drafts, submission storage
+- **Dual-layer assessor** — platform (Docker if available) + sponsor fit (LLM if key set) on any submission
+
+The dashboard opens on **7 pre-seeded backlog items** (`demo-001` … `demo-007`) so judges skip ingest UI. That is sample **input data**, not a separate code path — except where noted below.
+
+### Demo shortcuts (don't over-generalize these)
+
+| What | What actually happens |
+|---|---|
+| **Pre-seeded backlog** | `demo-*` items ship in `store.py` with crafted titles/metadata for the judge script. New items via API work the same way once scored. |
+| **`demo-007` publish fails** | A **deliberate demo prop**. `demo-007` is hardcoded in `scope_guard.py` to always fail publish with HTTP **422** (`SCOPE_EXCEEDED`) so you can show “AI PM blocks oversized scope.” Other items use the generic ~8h estimate; `demo-007` always fails regardless. |
+| **Reward “lock”** | **Rule is enforced** — publish returns 422 if you don't click Lock reward. **Payment is not** — no Stripe, no escrow account; `locked: true` is a boolean in the request body. Think: real checklist gate, fake money. |
+| **Match Radar empty state** | If nobody submitted yet, shows **hardcoded fake candidates** for that challenge ID. After a real submit, rankings use live scorecards (`source: live`). |
+| **Student leaderboard / enterprise radar** | Always **hardcoded seed rows** (e.g. Candidate A7F2). Not computed from live submissions yet. |
+| **`/student/trust`, verified badges** | Marketing copy + UI badges only; no sponsor KYC backend. |
+| **LLM / Docker** | Optional. **Sensitive** calls prefer local vLLM (`LLM_BASE_URL`); OpenAI remains fallback / **standard** tier. Without any LLM or Docker, assessor and triage use heuristics — still runs, less “smart.” |
+
+### Not built
+
+Auth, multi-tenant startups, persistent database (backlog is in-memory), real escrow/KYC, startup paste/upload UI (use API or seeds).
+
+**Practical demo tip:** show **implemented** flows on `demo-003` or `demo-005` (publish + student submit + live Match Radar). Show **demo shortcuts** explicitly: try publishing `demo-007` (422 scope rejection), open leaderboard (seed data), mention reward lock is a gate not a payment.
+
+---
+
 ## Judge Demo Script
 
 1. **Blind audition** — `/startup` → `demo-005` → *Obfuscate Industry Domain* → Preview (Company Tech Profile) → Lock reward → Publish → `/student/challenges/demo-005` shows stage/team/stack only — no StealthCo or food/merchant tokens
 2. **Editable release preview** — Preview Changes → edit title, success criteria, company profile → Publish with draft
-3. **Scope cap** — `demo-007` → Publish → 422 `SCOPE_EXCEEDED` with breakdown
-4. **Verified sponsor + bounty** — `demo-003` → Lock $500 → Publish → student card shows Verified Sponsor + escrow label
-5. **Dual-layer scorecard** — submit as student → Platform Signal + Sponsor Fit sections; EP from platform only
-6. **Three rank surfaces** — `/student/leaderboard` · `/startup/matches/demo-003` (Sponsor Fit) · `/enterprise/radar`
-7. **Trust narrative** — `/student/trust`
+3. **Scope cap demo** — select `demo-007` → Publish → HTTP 422 `SCOPE_EXCEEDED` (hardcoded reject for judges; other items use generic hour estimate)
+4. **Reward lock** — must Lock reward before publish (422 if not); no real payment rails
+5. **Verified sponsor + bounty** — `demo-003` → Lock $500 → Publish → student card shows Verified Sponsor + escrow label (UI only)
+6. **Dual-layer scorecard** — submit as student → Platform Signal + Sponsor Fit sections; EP from platform only
+7. **Three rank surfaces** — `/student/leaderboard` (seed) · `/startup/matches/demo-003` (live after submit) · `/enterprise/radar` (seed)
+8. **Trust narrative** — `/student/trust`
 
 ---
 
@@ -314,16 +382,6 @@ Key entry points only. Full contract: **http://localhost:8000/docs** · module d
 
 ---
 
-## Environment Variables
-
-| Variable | Required | Description |
-|---|---|---|
-| `OPENAI_API_KEY` | No | Triage scoring, Micro-PRD generation, sponsor fit LLM. Heuristic fallback if absent. |
-
-Secrets must never be committed. Use `.env` locally (in `.gitignore`).
-
----
-
 ## Feature Status
 
 All hackathon MVP features passing (`feature_list.json`):
@@ -340,6 +398,7 @@ All hackathon MVP features passing (`feature_list.json`):
 | `blind-002` | Blind audition Company Tech Profile |
 | `rank-001` | Three rank surfaces (student / sponsor / enterprise) |
 | `assessor-001` | Dual-layer assessor (Docker platform + LLM sponsor fit) |
+| `llm-local-001` | Local vLLM routing + LLM domain obfuscation (OpenAI fallback) |
 
 **Deferred post-MVP:** auth, multi-tenant isolation, real Stripe escrow, sponsor KYC, startup ingest UI, live global leaderboard aggregation.
 

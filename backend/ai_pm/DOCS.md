@@ -11,14 +11,28 @@ AI Product Manager layer. Scores anonymized backlog items, routes innovation tra
 | `scorer.py` | Severity / Friction / Sensitivity scoring → Red/Yellow/Green tag |
 | `track_router.py` | Heuristic track suggestion (technical vs product_feature) + brand_proxy |
 | `relaxation.py` | Pure transforms: abstract logic, variable synthesis, noise, brand abstraction |
-| `domain_obfuscator.py` | Industry domain masking: public title/narrative + metadata column renames |
+| `domain_obfuscator.py` | Industry domain masking: rule-based (food/fintech/ride) + LLM for novel domains |
+| `llm_domain_obfuscator.py` | LLM proposes `field_map` + public narrative when rules don't match |
 | `company_profile.py` | Blind-audition Company Tech Profile generator (sensitivity-aware) |
 | `public_sanitize.py` | Student API boundary — strips brand, sanitizes evaluation_focus/Micro-PRD |
 | `publish_draft.py` | Founder-editable `PublishDraft` build/apply before release |
-| `microprd.py` | Track-aware LLM Micro-PRD generator (template fallback if no API key) |
-| `llm_client.py` | Injectable OpenAI wrapper — mockable in tests |
+| `microprd.py` | Track-aware LLM Micro-PRD generator (template fallback if no LLM) |
+| `llm_client.py` | `RoutingLLMClient`: local vLLM → OpenAI per tier; mockable in tests |
 | `store.py` | In-memory backlog pre-seeded with 4 demo items (incl. demo-004 product) |
 | `models.py` | `ChallengeTrack`, `BacklogItem`, `MicroPRD` product sections, etc. |
+
+## LLM routing
+
+| Tier | Default chain | Use |
+|---|---|---|
+| `sensitive` | local vLLM only | Triage scoring, domain obfuscation, Micro-PRD, sponsor fit |
+| `standard` | local vLLM → OpenAI | Non-sensitive future paths (e.g. Keep on Bay copy) |
+
+Env:
+
+- `LLM_BASE_URL` — OpenAI-compatible local server (vLLM)
+- `OPENAI_API_KEY` — cloud fallback / standard tier
+- `LLM_ALLOW_CLOUD_SENSITIVE=1` — allow OpenAI for sensitive when local is unavailable (off by default)
 
 ## How It Fits In
 
@@ -26,9 +40,10 @@ Consumes `SanitizedMetadata` from the privacy proxy. Exposed via `api/triage_rou
 
 ## Notes for the Next Session
 
-- Heuristic scorer runs when `OPENAI_API_KEY` is absent — demo works offline
+- Heuristic scorer runs when no LLM backend is configured — demo works offline
 - `demo-004` is the Product Feature seed (EatsHub merchant discovery)
 - Relaxation is deterministic: same `challenge_seed` + config → same synthesized field names
 - When `obfuscate_domain` is enabled, `domain_obfuscator.build_field_map` remaps column names (e.g. `restaurant_id` → `locker_id`) in the relaxed preview before publish
+- Yellow/Red sensitivity on **generic** domains triggers `llm_domain_obfuscator` when `LLM_DOMAIN_OBFUSCATE=1`
 - Public student API never returns `brand_proxy` — only `CompanyTechProfile` via `public_sanitize.build_public_challenge`
 - `store.py` is in-memory only — replace with DB for production

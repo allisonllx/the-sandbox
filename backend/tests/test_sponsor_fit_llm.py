@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.ai_pm.llm_client import LLMClient, set_default_client
+from backend.ai_pm.llm_client import LLMClient, reset_default_client, set_default_client
 from backend.ai_pm.models import ChallengeTrack, RelaxationConfig
 from backend.assessor.models import ChallengeContext
 from backend.assessor.sponsor_fit import assess_sponsor_fit
@@ -46,7 +46,14 @@ class SponsorFitStub:
         self.dimensions = dimensions
         self.calls: list[dict[str, str]] = []
 
-    def chat(self, *, system: str, user: str, temperature: float = 0.2) -> dict[str, Any]:
+    def chat(
+        self,
+        *,
+        system: str,
+        user: str,
+        temperature: float = 0.2,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
         self.calls.append({"system": system, "user": user})
         return {
             "dimensions": self.dimensions,
@@ -57,9 +64,8 @@ class SponsorFitStub:
 
 @pytest.fixture(autouse=True)
 def _restore_llm_client():
-    original = LLMClient()
     yield
-    set_default_client(original)
+    reset_default_client()
 
 
 def _publish(item_id: str) -> None:
@@ -133,7 +139,14 @@ class TestSponsorFitLLM:
 
     def test_well_structured_scores_higher_than_naive_via_llm(self):
         class ComparativeStub:
-            def chat(self, *, system: str, user: str, temperature: float = 0.2) -> dict[str, Any]:
+            def chat(
+                self,
+                *,
+                system: str,
+                user: str,
+                temperature: float = 0.2,
+                **kwargs: Any,
+            ) -> dict[str, Any]:
                 is_strong = "README" in user or "trade" in user.lower()
                 base = 85 if is_strong else 45
                 return {

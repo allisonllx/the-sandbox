@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 import logging
 from .domain_obfuscator import DomainTransform
-from .llm_client import LLMClientProtocol, LLMUnavailableError, get_default_client
+from .llm_client import LLMClientProtocol, LLMTier, LLMUnavailableError, get_default_client
 from .models import ChallengeTrack, MicroPRD, RelaxedPreview
 from .relaxation import abstract_brand_text
 
@@ -235,7 +235,7 @@ def generate(
     user_msg = _build_user_message(preview, metadata, brand_proxy, track)
 
     try:
-        result = client.chat(system=system, user=user_msg, temperature=0.4)
+        result = client.chat(system=system, user=user_msg, temperature=0.4, tier=LLMTier.sensitive)
         base = {
             "challenge_id": challenge_id,
             "title": _apply_brand(str(result.get("title", title)), brand_proxy, enabled=abstract_brand),

@@ -20,7 +20,7 @@ import pytest
 from backend.ai_pm import relaxation as relaxation_module
 from backend.ai_pm import scorer as scorer_module
 from backend.ai_pm import store
-from backend.ai_pm.llm_client import set_default_client
+from backend.ai_pm.llm_client import reset_default_client, set_default_client
 from backend.ai_pm.models import (
     BacklogStatus,
     ChallengeTrack,
@@ -271,6 +271,4 @@ class TestNoLLMBeforeApproval:
         relaxation_module.apply_relaxation(metadata, config, "seed")
 
         assert call_count == 0, "apply_relaxation must not call the LLM"
-        # Reset
-        from backend.ai_pm.llm_client import LLMClient
-        set_default_client(LLMClient())
+        reset_default_client()

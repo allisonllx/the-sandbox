@@ -167,8 +167,9 @@ def obfuscate_domain(
     Returns None when obfuscation is not required/applicable.
     """
     domain = _detect_domain(metadata, source_label, title)
-    should_obfuscate = force or (
-        sensitivity_tag in (SensitivityTag.yellow, SensitivityTag.red) and domain != "generic"
+    should_obfuscate = force or sensitivity_tag in (
+        SensitivityTag.yellow,
+        SensitivityTag.red,
     )
     if not should_obfuscate:
         return None
@@ -222,6 +223,21 @@ def obfuscate_domain(
             brand_proxy=brand_proxy or "BoxFlow",
             field_map=field_map,
         )
+
+    # Novel industries — local LLM proposes field_map + narrative (falls back to None)
+    if force or sensitivity_tag in (SensitivityTag.yellow, SensitivityTag.red):
+        from . import llm_domain_obfuscator
+
+        llm_transform = llm_domain_obfuscator.suggest_domain_transform(
+            metadata,
+            source_label,
+            title,
+            brand_proxy=brand_proxy,
+            sensitivity_tag=sensitivity_tag,
+        )
+        if llm_transform:
+            llm_transform.internal_intent = f"Internal (CTO only): {title} — {source_label}"
+            return llm_transform
 
     return None
 

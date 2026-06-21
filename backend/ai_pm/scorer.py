@@ -9,8 +9,8 @@ Derives a Red / Yellow / Green sensitivity tag from the sensitivity score.
 Primary path: calls the LLM with the anonymized metadata (ONLY structural
 descriptors — never raw content).
 
-Fallback path: if OPENAI_API_KEY is absent or openai is not installed, the
-scorer uses a fast heuristic so the rest of the pipeline still works.
+Fallback path: if no LLM backend is configured (no LLM_BASE_URL / OPENAI_API_KEY),
+the scorer uses a fast heuristic so the rest of the pipeline still works.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ import json
 import logging
 
 from ..privacy_proxy.models import SanitizedMetadata
-from .llm_client import LLMUnavailableError, LLMClientProtocol, get_default_client
+from .llm_client import LLMClientProtocol, LLMTier, LLMUnavailableError, get_default_client
 from .models import SensitivityTag, TechScores
 
 logger = logging.getLogger(__name__)
@@ -153,7 +153,7 @@ def score(
     user_msg = _build_user_message(metadata)
 
     try:
-        result = client.chat(system=_SYSTEM_PROMPT, user=user_msg)
+        result = client.chat(system=_SYSTEM_PROMPT, user=user_msg, tier=LLMTier.sensitive)
         return TechScores(
             severity=int(result["severity"]),
             friction=int(result["friction"]),

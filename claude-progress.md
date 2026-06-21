@@ -5,8 +5,8 @@
 - Repository root: `/Users/allisonlawlixuan/Documents/repos/the_sandbox`
 - Standard startup path: `./init.sh`
 - Standard verification path: `python -m pytest backend/tests/ -v`
-- Current highest-priority unfinished feature: see `feature_list.json` — assessor-001 complete
-- Latest passing: README stakeholder flow refresh; all MVP features passing (113 tests)
+- Current highest-priority unfinished feature: see `feature_list.json` — all MVP + llm-local-001 passing
+- Latest passing: llm-local-001 — vLLM routing + LLM domain obfuscation; **121 tests**
 - Current blocker: None
 
 ## Session Log
@@ -203,3 +203,18 @@
 - Docs: README.md — real vs demo disclaimer, shortened API ref
 - Verification run: n/a (docs only)
 - Commits: none
+
+### Session 015
+
+- Date: 2026-06-20
+- Goal: llm-local-001 — local vLLM (Qwen) routing with OpenAI fallback
+- Completed:
+  - `backend/ai_pm/llm_client.py` — `RoutingLLMClient`, `LLMTier.sensitive` / `standard`
+  - `backend/ai_pm/llm_domain_obfuscator.py` — LLM mask for novel domains
+  - Wired into `domain_obfuscator.py`; scorer/microprd/sponsor_fit use sensitive tier
+  - `test_llm_routing.py` (5), `test_llm_domain_obfuscator.py` (3)
+- Verification run: `python -m pytest backend/tests/ -q` → **121 passed**
+- Docs: README vLLM quickstart + env table, `backend/ai_pm/DOCS.md`, `docs/ARCHITECTURE.md`
+- Docs: no update required for api-patterns — no HTTP contract change
+- Commits: none
+- Next best step: run vLLM locally and smoke-test triage with `LLM_BASE_URL` set

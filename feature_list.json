@@ -1,6 +1,6 @@
 {
   "project": "the-sandbox",
-  "last_updated": "2026-06-20T22:00+08:00",
+  "last_updated": "2026-06-20T23:30+08:00",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -335,6 +335,29 @@
         "ScorecardView: Platform Signal + Sponsor Fit sections"
       ],
       "notes": "Dual-layer complete. Platform: Docker secret tests. Sponsor: LLM with heuristic fallback. Interview pass requires both layers ≥ benchmark."
+    },
+    {
+      "id": "llm-local-001",
+      "priority": 12,
+      "area": "ai-pm",
+      "title": "Local vLLM routing + LLM domain obfuscation",
+      "user_visible_behavior": "Sensitive LLM calls (triage scoring, domain masking, Micro-PRD, sponsor fit) prefer a local OpenAI-compatible vLLM endpoint so column names never leave infra. OpenAI remains available for standard-tier / optional cloud fallback. Novel industries get LLM-proposed field_map + public narrative when rule-based masks don't apply.",
+      "status": "passing",
+      "verification": [
+        "RoutingLLMClient serves sensitive tier from local only when LLM_BASE_URL set",
+        "OpenAI used for standard tier or sensitive only when LLM_ALLOW_CLOUD_SENSITIVE=1",
+        "LLM domain obfuscator validates public_text_is_safe before accepting transform",
+        "Generic yellow/red items invoke LLM path; known domains still use rules",
+        "Full test suite passes with new routing tests"
+      ],
+      "evidence": [
+        "python -m pytest backend/tests/test_llm_routing.py -v → 5 passed (2026-06-20)",
+        "python -m pytest backend/tests/test_llm_domain_obfuscator.py -v → 3 passed (2026-06-20)",
+        "python -m pytest backend/tests/ -q → 121 passed (2026-06-20)",
+        "backend/ai_pm/llm_client.py — RoutingLLMClient + LLMTier",
+        "backend/ai_pm/llm_domain_obfuscator.py wired into domain_obfuscator.py"
+      ],
+      "notes": "No new pip deps — vLLM runs as external process. Set LLM_BASE_URL=http://localhost:8000/v1. OpenAI kept for fallback and future non-sensitive paths (Keep on Bay)."
     }
   ]
 }

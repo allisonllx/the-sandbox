@@ -11,7 +11,7 @@ The Sandbox is a two-sided, zero-trust R&D and proof-of-work talent platform org
 - **Frontend:** Next.js 14 · TypeScript · Tailwind CSS · Monaco editor
 - **Persistence (MVP):** In-memory backlog · file-backed drafts/submissions/jobs under `data/`
 - **Datasets:** SQLite per challenge (technical track only)
-- **AI / LLM:** OpenAI API — receives anonymized structural metadata only for triage/Micro-PRD
+- **AI / LLM:** Local vLLM (OpenAI-compatible) for **sensitive** tier by default; OpenAI cloud for **standard** tier and optional sensitive fallback (`LLM_ALLOW_CLOUD_SENSITIVE`). Receives anonymized structural metadata only for triage/Micro-PRD; never raw PII.
 - **Code Runner:** Public tests in-process (student Run button); assessor secret tests in Docker (`assessor-001 Phase A`)
 
 ## Directory Structure
@@ -117,7 +117,8 @@ Startups do **not** see the student global leaderboard or other sponsors' challe
 
 | Service | Purpose | Data sent |
 |---|---|---|
-| OpenAI API | Triage scoring, Micro-PRD generation | Anonymized structural metadata only |
+| Local vLLM (Qwen) | Triage, domain obfuscation, sponsor fit (**sensitive** tier) | Anonymized structural metadata + sanitized challenge context — stays on-prem when `LLM_BASE_URL` set |
+| OpenAI API | **Standard** tier; optional cloud fallback for sensitive | Anonymized structural metadata only (sensitive cloud blocked unless `LLM_ALLOW_CLOUD_SENSITIVE=1`) |
 | Docker | Ephemeral assessor containers (network disabled) | Student submission code only |
 
 ## Known Constraints
