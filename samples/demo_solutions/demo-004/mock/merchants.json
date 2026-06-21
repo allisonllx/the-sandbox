@@ -1,0 +1,9 @@
+{
+  "brand": "EatsHub",
+  "merchants": [
+    { "id": "m1", "name": "River Noodle House", "distance_km": 0.4, "wait_min": 5, "rating": 4.6, "tags": ["noodles", "quick"] },
+    { "id": "m2", "name": "Green Bowl Co", "distance_km": 0.8, "wait_min": 12, "rating": 4.4, "tags": ["healthy", "bowls"] },
+    { "id": "m3", "name": "Late Night Slice", "distance_km": 1.2, "wait_min": 20, "rating": 4.2, "tags": ["pizza", "late"] },
+    { "id": "m4", "name": "Harbor Sushi", "distance_km": 1.5, "wait_min": 25, "rating": 4.8, "tags": ["sushi", "premium"] }
+  ]
+}

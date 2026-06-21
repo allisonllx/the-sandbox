@@ -187,6 +187,7 @@ the_sandbox/
 │   ├── app/student/            # Innovation Hub, workspace, leaderboard, trust
 │   └── app/enterprise/radar/   # Enterprise subscription view (demo)
 ├── docker/sandbox-runner/      # Assessor container image
+├── samples/demo_solutions/     # Reference submissions for demo-003/004/005
 ├── docs/                       # ARCHITECTURE, PRODUCT, api-patterns
 ├── .env.example                # Environment template (copy to .env)
 ├── feature_list.json           # Feature state + verification evidence
@@ -251,6 +252,14 @@ docker build -t the-sandbox-runner docker/sandbox-runner
 Without Docker, platform technical grading degrades to static security scan only — student code is **never** executed on the host.
 
 Or run everything via `./init.sh`.
+
+### Sample solutions (testing)
+
+Ready-to-submit reference projects for `demo-003`, `demo-004`, and `demo-005` live in [`samples/demo_solutions/`](samples/demo_solutions/README.md). One-liner after the backend is running:
+
+```bash
+./samples/demo_solutions/test_sample.sh demo-003
+```
 
 ---
 

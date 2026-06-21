@@ -1,0 +1,9 @@
+{
+  "brand": "LockerShare",
+  "inventory": [
+    { "id": "l1", "name": "Cordless Drill Kit", "distance_km": 0.3, "available": true, "daily_rate": 18.0, "tags": ["tools", "diy"] },
+    { "id": "l2", "name": "Pressure Washer", "distance_km": 0.6, "available": true, "daily_rate": 24.0, "tags": ["outdoor", "cleaning"] },
+    { "id": "l3", "name": "Camping Tent (4p)", "distance_km": 1.1, "available": false, "daily_rate": 15.0, "tags": ["outdoor", "gear"] },
+    { "id": "l4", "name": "Mountain Bike", "distance_km": 1.4, "available": true, "daily_rate": 22.0, "tags": ["sport", "bike"] }
+  ]
+}
