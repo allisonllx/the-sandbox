@@ -21,35 +21,10 @@ import logging
 from ..privacy_proxy.models import SanitizedMetadata
 from .llm_client import LLMClientProtocol, LLMTier, LLMUnavailableError, get_default_client
 from .models import SensitivityTag, TechScores
+from .prompts.scorer import SCORER_SYSTEM_PROMPT
+from .prompts.scorer_validation import llm_result_to_scores
 
 logger = logging.getLogger(__name__)
-
-_SYSTEM_PROMPT = """\
-You are an AI Product Manager performing backlog triage for a growth-stage startup.
-
-You receive ONLY anonymized structural metadata — field names, inferred types, \
-event-type frequencies, and row scale. There is NO raw content, NO PII, and NO \
-business-specific values in the input.
-
-Score the issue on three axes (0-100 integer each):
-  - severity:    How severely does this affect system performance or stability?
-  - friction:    How frequently or broadly are users impacted?
-  - sensitivity: How risky is it to publish the structural shape of this problem publicly?
-                 (Higher = more likely to reveal IP, internal architecture, or exploitable patterns)
-
-Also provide:
-  - sensitivity_reason: one sentence (≤ 20 words) explaining the sensitivity score
-  - suggested_title:    a public-facing challenge title (≤ 10 words, no internal names)
-
-Respond with ONLY a JSON object matching this exact schema:
-{
-  "severity": <integer 0-100>,
-  "friction": <integer 0-100>,
-  "sensitivity": <integer 0-100>,
-  "sensitivity_reason": "<string>",
-  "suggested_title": "<string>"
-}
-"""
 
 
 def _build_user_message(metadata: SanitizedMetadata) -> str:
@@ -153,14 +128,12 @@ def score(
     user_msg = _build_user_message(metadata)
 
     try:
-        result = client.chat(system=_SYSTEM_PROMPT, user=user_msg, tier=LLMTier.sensitive)
-        return TechScores(
-            severity=int(result["severity"]),
-            friction=int(result["friction"]),
-            sensitivity=int(result["sensitivity"]),
-            sensitivity_reason=str(result.get("sensitivity_reason", "")),
-            suggested_title=str(result.get("suggested_title", "Untitled challenge")),
-        )
+        result = client.chat(system=SCORER_SYSTEM_PROMPT, user=user_msg, tier=LLMTier.sensitive)
+        scores = llm_result_to_scores(result)
+        if scores is None:
+            logger.warning("LLM scorer signals inconsistent with scores, using heuristic scorer.")
+            return _heuristic_score(metadata)
+        return scores
     except LLMUnavailableError as exc:
         logger.warning("LLM unavailable, using heuristic scorer: %s", exc)
         return _heuristic_score(metadata)

@@ -14,6 +14,10 @@ from typing import Any
 
 from ..ai_pm.llm_client import LLMClientProtocol, LLMTier, LLMUnavailableError, get_default_client
 from ..ai_pm.models import ChallengeTrack
+from ..ai_pm.prompts.sponsor_fit import (
+    SPONSOR_FIT_PRODUCT_SYSTEM_PROMPT,
+    SPONSOR_FIT_TECHNICAL_SYSTEM_PROMPT,
+)
 from ..sandbox.models import SubmissionRecord
 from .models import ChallengeContext, ScoreLayer
 
@@ -35,56 +39,6 @@ _PRODUCT_DIMENSIONS = (
     "ux_judgment",
     "communication",
 )
-
-_SYSTEM_TECHNICAL = """\
-You are a blind-audition technical reviewer for a proof-of-work talent platform.
-
-You evaluate how well a student submission fits THIS challenge's published success \
-criteria and evaluation focus. You do NOT know the sponsor company name.
-
-Score four dimensions (integers 0-100):
-  - criteria_alignment:    Alignment with definition of success
-  - architectural_taste:   Code clarity, structure, maintainability
-  - edge_case_handling:    Defensive coding, error paths, boundary cases
-  - tradeoff_reasoning:    Documented trade-offs (README/comments)
-
-Respond with ONLY JSON:
-{
-  "dimensions": {
-    "criteria_alignment": <int>,
-    "architectural_taste": <int>,
-    "edge_case_handling": <int>,
-    "tradeoff_reasoning": <int>
-  },
-  "summary": "<one sentence for sponsor Match Radar>",
-  "notes": ["<optional bullet>", "..."]
-}
-"""
-
-_SYSTEM_PRODUCT = """\
-You are a blind-audition product reviewer for a proof-of-work talent platform.
-
-You evaluate how well a student prototype and DESIGN.md fit THIS challenge's \
-persona, problem framing, and success criteria. You do NOT know the sponsor company.
-
-Score four dimensions (integers 0-100):
-  - persona_fit:       Target user / persona alignment
-  - problem_framing:   Problem understanding and trade-off reasoning
-  - ux_judgment:       IA, flows, responsive/prototype quality signals
-  - communication:     Clarity of DESIGN.md and narrative
-
-Respond with ONLY JSON:
-{
-  "dimensions": {
-    "persona_fit": <int>,
-    "problem_framing": <int>,
-    "ux_judgment": <int>,
-    "communication": <int>
-  },
-  "summary": "<one sentence for sponsor Match Radar>",
-  "notes": ["<optional bullet>", "..."]
-}
-"""
 
 
 def _word_count(text: str) -> int:
@@ -244,7 +198,7 @@ def _llm_sponsor_fit(
 ) -> ScoreLayer:
     is_product = context.track == ChallengeTrack.product_feature
     expected = _PRODUCT_DIMENSIONS if is_product else _TECHNICAL_DIMENSIONS
-    system = _SYSTEM_PRODUCT if is_product else _SYSTEM_TECHNICAL
+    system = SPONSOR_FIT_PRODUCT_SYSTEM_PROMPT if is_product else SPONSOR_FIT_TECHNICAL_SYSTEM_PROMPT
 
     user_payload = {
         "challenge": _build_challenge_payload(context),

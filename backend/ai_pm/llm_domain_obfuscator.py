@@ -15,32 +15,9 @@ from ..privacy_proxy.models import SanitizedMetadata
 from .domain_obfuscator import DomainTransform, public_text_is_safe
 from .llm_client import LLMClientProtocol, LLMTier, LLMUnavailableError, get_default_client
 from .models import SensitivityTag
+from .prompts.domain_obfuscator import DOMAIN_OBFUSCATOR_SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
-
-_SYSTEM_PROMPT = """\
-You are a privacy engineer masking confidential industry intent for blind-audition \
-coding challenges.
-
-You receive INTERNAL field names and labels — never repeat real company names, \
-food-delivery brands, or obvious industry tokens in public outputs.
-
-Produce an EQUIVALENT but structurally masked public domain (e.g. food merchant \
-checkout → equipment locker rental).
-
-Respond with ONLY JSON:
-{
-  "domain_proxy": "short_domain_key",
-  "public_title": "Public challenge title without industry leaks",
-  "public_narrative": "2-3 sentences for students",
-  "transform_rationale": "One sentence for CTO audit",
-  "brand_proxy": "Fictional public brand name",
-  "field_map": { "original_column": "masked_column", ... }
-}
-
-Every input field name must appear as a key in field_map. Masked names must not \
-reveal the original industry.
-"""
 
 
 def _build_user_payload(
@@ -140,7 +117,7 @@ def suggest_domain_transform(
 
     try:
         result = client.chat(
-            system=_SYSTEM_PROMPT,
+            system=DOMAIN_OBFUSCATOR_SYSTEM_PROMPT,
             user=user_msg,
             temperature=0.2,
             tier=LLMTier.sensitive,

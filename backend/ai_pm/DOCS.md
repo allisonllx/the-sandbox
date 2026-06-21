@@ -18,6 +18,7 @@ AI Product Manager layer. Scores anonymized backlog items, routes innovation tra
 | `publish_draft.py` | Founder-editable `PublishDraft` build/apply before release |
 | `microprd.py` | Track-aware LLM Micro-PRD generator (template fallback if no LLM) |
 | `llm_client.py` | `RoutingLLMClient`: local vLLM → OpenAI per tier; mockable in tests |
+| `prompts/` | System prompts + scorer signal validation (`shared.py`, per call site) |
 | `store.py` | In-memory backlog pre-seeded with 4 demo items (incl. demo-004 product) |
 | `models.py` | `ChallengeTrack`, `BacklogItem`, `MicroPRD` product sections, etc. |
 

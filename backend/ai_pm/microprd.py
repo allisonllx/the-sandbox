@@ -9,46 +9,10 @@ import logging
 from .domain_obfuscator import DomainTransform
 from .llm_client import LLMClientProtocol, LLMTier, LLMUnavailableError, get_default_client
 from .models import ChallengeTrack, MicroPRD, RelaxedPreview
+from .prompts.microprd import PRODUCT_SYSTEM_PROMPT, TECH_SYSTEM_PROMPT
 from .relaxation import abstract_brand_text
 
 logger = logging.getLogger(__name__)
-
-_TECH_SYSTEM_PROMPT = """\
-You are a technical challenge designer for a developer talent platform.
-Generate a technical engineering Micro-PRD from anonymized metadata only.
-Never mention real company names — use the provided brand_proxy instead.
-
-Respond with ONLY JSON:
-{
-  "title": "<≤10 words>",
-  "context": "<paragraph>",
-  "definition_of_success": ["..."],
-  "structural_constraints": ["..."],
-  "sandbox_instructions": ["..."]
-}
-"""
-
-_PRODUCT_SYSTEM_PROMPT = """\
-You are a product/design challenge designer for a developer talent platform.
-Generate a Product Feature sprint Micro-PRD that reads like a strong technical interview prompt:
-personas, trade-offs, stack choices, and deliverables — not just "build a page".
-
-Never mention real company names — use brand_proxy. Students submit DESIGN.md + prototype code.
-
-Respond with ONLY JSON:
-{
-  "title": "<≤10 words>",
-  "context": "<paragraph>",
-  "definition_of_success": ["..."],
-  "structural_constraints": ["..."],
-  "user_persona": "<1-2 sentences>",
-  "problem_framing": "<interview-style framing question>",
-  "design_considerations": ["..."],
-  "stack_guidance": ["..."],
-  "deliverable_requirements": ["..."],
-  "sandbox_instructions": ["..."]
-}
-"""
 
 
 def _build_user_message(
@@ -219,10 +183,10 @@ def generate(
 ) -> MicroPRD:
     if track == ChallengeTrack.product_feature:
         fallback = lambda: _fallback_product(challenge_id, title, brand_proxy, domain_transform)
-        system = _PRODUCT_SYSTEM_PROMPT
+        system = PRODUCT_SYSTEM_PROMPT
     else:
         fallback = lambda: _fallback_technical(challenge_id, title, brand_proxy)
-        system = _TECH_SYSTEM_PROMPT
+        system = TECH_SYSTEM_PROMPT
 
     if domain_transform and track == ChallengeTrack.product_feature:
         return _finalize_platform_instructions(

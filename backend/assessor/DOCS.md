@@ -24,7 +24,7 @@ Dual-layer submission grading:
 
 ## Sponsor Fit LLM
 
-Uses `ai_pm.llm_client.LLMClient` with sanitized challenge payload only:
+System prompts live in `ai_pm/prompts/sponsor_fit.py`. Uses sanitized challenge payload only:
 
 - Title, context, definition of success, evaluation focus, structural constraints
 - Truncated student submission files (no `brand_proxy`, no corporate metadata)
