@@ -5,8 +5,8 @@
 - Repository root: `/Users/allisonlawlixuan/Documents/repos/the_sandbox`
 - Standard startup path: `./init.sh`
 - Standard verification path: `python -m pytest backend/tests/ -v`
-- Current highest-priority unfinished feature: see `feature_list.json` — all MVP + llm-local-001 passing
-- Latest passing: llm-local-001 — vLLM routing + LLM domain obfuscation; **121 tests**
+- Current highest-priority unfinished feature: `factory-001` Phase 2 (optional data plane + per-challenge secret tests)
+- Latest passing: factory-001 Phase 1 — Dynamic Challenge Factory (blueprint + Preview generation); **136 tests**
 - Current blocker: None
 
 ## Session Log
@@ -218,3 +218,18 @@
 - Docs: no update required for api-patterns — no HTTP contract change
 - Commits: none
 - Next best step: run vLLM locally and smoke-test triage with `LLM_BASE_URL` set
+
+### Session 016
+
+- Date: 2026-06-21
+- Goal: factory-001 Phase 1 — Dynamic Challenge Factory (Preview → Review → Publish)
+- Completed:
+  - `backend/challenge_factory/` — blueprint planner, multi-archetype scaffolds, validator, builder
+  - `ChallengeBlueprint` + `ChallengePackage` on `BacklogItem`; founder `RelaxRequest.blueprint`
+  - `POST /relax` generates package for non-demo items; `POST /regenerate`; publish requires valid package
+  - Legacy bypass for `demo-*` and product track (`CHALLENGE_FACTORY_MODE=auto`)
+  - `test_challenge_factory.py` (10 tests); frontend types for package preview
+- Verification run: `python -m pytest backend/tests/ -q` → **136 passed**
+- Docs: `backend/challenge_factory/DOCS.md`, `backend/api/DOCS.md`, `docs/documentation-sync.md`, `frontend/lib/types.ts`
+- Commits: none
+- Next best step: factory-001 Phase 2 — schema/fixture agents + per-challenge secret tests

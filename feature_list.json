@@ -1,6 +1,6 @@
 {
   "project": "the-sandbox",
-  "last_updated": "2026-06-20T23:30+08:00",
+  "last_updated": "2026-06-21T14:30+08:00",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -358,6 +358,48 @@
         "backend/ai_pm/llm_domain_obfuscator.py wired into domain_obfuscator.py"
       ],
       "notes": "No new pip deps — vLLM runs as external process. Set LLM_BASE_URL=http://localhost:8000/v1. OpenAI kept for fallback and future non-sensitive paths (Keep on Bay)."
+    },
+    {
+      "id": "factory-001",
+      "priority": 13,
+      "area": "challenge-factory",
+      "title": "Dynamic Challenge Factory — Blueprint-driven artifact generation",
+      "user_visible_behavior": "Non-demo technical challenges generate starter files at Preview from a ChallengeBlueprint (archetype, stack hints, optional data layer). Founder reviews validation + file tree before Publish. Demo items keep legacy hardcoded scaffolds.",
+      "status": "in_progress",
+      "implementation_order": [
+        {
+          "order": 1,
+          "id": "factory-phase1",
+          "title": "Blueprint models + multi-archetype scaffold + Preview/Publish wiring",
+          "status": "completed"
+        },
+        {
+          "order": 2,
+          "id": "factory-phase2",
+          "title": "Optional data plane agents + per-challenge secret tests",
+          "status": "not_started"
+        },
+        {
+          "order": 3,
+          "id": "factory-phase3",
+          "title": "Product track factory + founder artifact review UI",
+          "status": "not_started"
+        }
+      ],
+      "verification": [
+        "Score new backlog item → Preview returns challenge_package with validation.passed",
+        "Publish without Preview returns PACKAGE_MISSING for non-demo items",
+        "Founder blueprint override (algorithm archetype) generates src/solution.py starter",
+        "demo-003 publish unchanged (legacy path)",
+        "python -m pytest backend/tests/test_challenge_factory.py -v passes"
+      ],
+      "evidence": [
+        "python -m pytest backend/tests/test_challenge_factory.py -v → 10 passed (2026-06-21)",
+        "python -m pytest backend/tests/ -q → 136 passed (2026-06-21)",
+        "backend/challenge_factory/ — blueprint_planner, scaffold_technical, validator, builder",
+        "POST /triage/regenerate/{id} + RelaxResponse.challenge_package"
+      ],
+      "notes": "Phase 1 complete. MVP grading Python+pytest only. reference_solution stripped from API JSON. Phase 2: sqlite/json fixtures + docker_runner per-challenge secret tests."
     }
   ]
 }

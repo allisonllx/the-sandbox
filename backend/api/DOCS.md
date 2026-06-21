@@ -23,8 +23,10 @@ Routers are mounted in `main.py`. OpenAPI docs at `/docs`.
 | `GET` | `/backlog/{id}/scope` | Scope estimate + union-rep breakdown |
 | `GET` | `/backlog/{id}/matches` | **Sponsor Match Radar** — performers for this challenge only |
 | `POST` | `/score` | Score a `SanitizedMetadata` blob |
-| `POST` | `/relax/{id}` | Relaxation preview; returns `challenge_draft` (`PublishDraft`) |
-| `POST` | `/publish/{id}` | Publish challenge; accepts optional `draft` in body; requires locked reward + scope pass |
+| `POST` | `/intake` | Founder brief: local sanitize → score → backlog item |
+| `POST` | `/relax/{id}` | Relaxation preview + **dynamic factory** (`challenge_package`, `challenge_blueprint`); returns `challenge_draft` |
+| `POST` | `/regenerate/{id}` | Re-run factory after draft/blueprint edits |
+| `POST` | `/publish/{id}` | Publish challenge; non-legacy items require valid non-stale `challenge_package` from Preview |
 
 ### Sandbox (`sandbox_routes.py`)
 

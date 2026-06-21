@@ -18,6 +18,8 @@ from ..ai_pm.models import (
     BacklogStatus,
     ChallengeTrack,
     DomainObfuscationPreview,
+    IntakeRequest,
+    IntakeResponse,
     PublishResponse,
     RelaxRequest,
     RelaxResponse,
@@ -26,8 +28,13 @@ from ..ai_pm.models import (
     ScoreResponse,
     SensitivityTag,
 )
-from ..sandbox.sponsor_matches import SponsorMatchesResponse, get_sponsor_matches
+from ..challenge_factory.builder import build_package, is_package_stale
+from ..challenge_factory.legacy_router import use_legacy_factory
+from ..challenge_factory.models import ChallengeBlueprint, ChallengePackage, ChallengePackagePreview
+from ..privacy_proxy.models import InputFormat
+from ..privacy_proxy.sanitizer import sanitize
 from ..sandbox.product_starter_scaffold import generate_product_starter_files
+from ..sandbox.sponsor_matches import SponsorMatchesResponse, get_sponsor_matches
 from ..sandbox.starter_scaffold import generate_starter_files
 from ..sandbox.synthesizer import generate_dataset
 
@@ -244,21 +251,61 @@ def _apply_draft_to_prepared(prepared: dict, draft) -> dict:
     return prepared
 
 
-@router.post(
-    "/score",
-    response_model=ScoreResponse,
-    summary="Score a SanitizedMetadata blob and add it to the backlog",
-)
-def score_metadata(request: ScoreRequest) -> ScoreResponse:
-    scores = scorer_module.score(request.metadata)
-    tag = scores.tag
-    suggestion = track_router.suggest_track(
-        request.metadata, request.source_label, scores.suggested_title
-    )
+def _resolve_blueprint(item: BacklogItem, request: RelaxRequest) -> ChallengeBlueprint | None:
+    if request.blueprint is not None:
+        return request.blueprint
+    return item.challenge_blueprint
 
+
+def _generate_challenge_package(
+    item: BacklogItem,
+    item_id: str,
+    prepared: dict,
+    challenge_draft,
+    request: RelaxRequest,
+) -> tuple[ChallengeBlueprint | None, ChallengePackage | None, ChallengePackagePreview | None]:
+    track = prepared["track"]
+    if use_legacy_factory(item_id, track):
+        return None, None, None
+
+    founder_blueprint = _resolve_blueprint(item, request)
+    package = build_package(
+        item_id,
+        prepared["prd"],
+        prepared["preview"],
+        item.metadata,
+        draft=challenge_draft,
+        founder_blueprint=founder_blueprint,
+    )
+    blueprint = package.blueprint
+    stale = is_package_stale(package, challenge_draft, blueprint)
+    preview = ChallengePackagePreview.from_package(package, stale=stale)
+    return blueprint, package, preview
+
+
+def _package_preview_response(
+    item: BacklogItem,
+    challenge_draft,
+    blueprint: ChallengeBlueprint | None,
+    package_preview: ChallengePackagePreview | None,
+) -> tuple[ChallengeBlueprint | None, ChallengePackagePreview | None]:
+    if package_preview is None and item.challenge_package is not None:
+        stale = is_package_stale(item.challenge_package, challenge_draft, blueprint or item.challenge_blueprint)
+        package_preview = ChallengePackagePreview.from_package(item.challenge_package, stale=stale)
+    return blueprint, package_preview
+
+
+    return blueprint, package_preview
+
+
+def _create_backlog_item(metadata, source_label: str) -> BacklogItem:
+    """Score sanitized metadata and persist a new backlog item."""
+    scores = scorer_module.score(metadata)
+    tag = scores.tag
+    suggestion = track_router.suggest_track(metadata, source_label, scores.suggested_title)
     item = BacklogItem(
-        source_label=request.source_label,
-        metadata=request.metadata,
+        source_label=source_label,
+        metadata=metadata,
         scores=scores,
         tag=tag,
         status=BacklogStatus.pending,
@@ -268,8 +315,64 @@ def score_metadata(request: ScoreRequest) -> ScoreResponse:
         evaluation_focus=suggestion.evaluation_focus,
     )
     store.upsert_item(item)
+    return item
 
-    return ScoreResponse(item_id=item.id, scores=scores, tag=tag)
+
+@router.post(
+    "/intake",
+    response_model=IntakeResponse,
+    summary="Ingest a founder problem statement (local sanitize → sensitivity score)",
+)
+def intake_problem_statement(request: IntakeRequest) -> IntakeResponse:
+    """
+    Founder path: paste an internal problem brief without log files.
+
+    Runs the privacy proxy locally, then scores the resulting SanitizedMetadata.
+    Raw prose never leaves the process boundary.
+    """
+    try:
+        fmt = InputFormat(request.format)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"code": "INVALID_FORMAT", "message": f"Unknown format: {request.format}"},
+        ) from exc
+
+    metadata = sanitize(request.problem_statement, fmt=fmt)
+
+    if metadata.processing_notes and any("All content was blocked" in n for n in metadata.processing_notes):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "code": "CONTENT_BLOCKED",
+                "message": "Problem statement was fully blocked by the zero-leak guardrail.",
+                "processing_notes": metadata.processing_notes,
+            },
+        )
+
+    item = _create_backlog_item(metadata, request.source_label)
+    assert item.scores is not None and item.suggested_track is not None
+
+    return IntakeResponse(
+        item_id=item.id,
+        scores=item.scores,
+        tag=item.tag or SensitivityTag.green,
+        suggested_track=item.suggested_track,
+        metadata=metadata,
+        pii_types_stripped=[d.pii_type for d in metadata.pii_detections],
+        processing_notes=list(metadata.processing_notes),
+    )
+
+
+@router.post(
+    "/score",
+    response_model=ScoreResponse,
+    summary="Score a SanitizedMetadata blob and add it to the backlog",
+)
+def score_metadata(request: ScoreRequest) -> ScoreResponse:
+    item = _create_backlog_item(request.metadata, request.source_label)
+    assert item.scores is not None and item.tag is not None
+    return ScoreResponse(item_id=item.id, scores=item.scores, tag=item.tag)
 
 
 @router.post(
@@ -284,18 +387,30 @@ def relax_item(item_id: str, request: RelaxRequest) -> RelaxResponse:
 
     prepared = _prepare_generation(item, item_id, request)
     challenge_draft = _resolve_challenge_draft(prepared, request)
+    blueprint, package, package_preview = _generate_challenge_package(
+        item, item_id, prepared, challenge_draft, request
+    )
 
     item.relaxation_config = request.config
     item.relaxed_preview = prepared["preview"]
     item.domain_preview = prepared["domain_preview"]
     item.company_profile = challenge_draft.company_profile
     item.publish_draft = challenge_draft
+    item.microprd = prepared["prd"]
     item.status = BacklogStatus.reviewing
     if request.track:
         item.track = prepared["track"]
     if request.reward is not None:
         item.reward = request.reward
+    if blueprint is not None:
+        item.challenge_blueprint = blueprint
+    if package is not None:
+        item.challenge_package = package
     store.upsert_item(item)
+
+    blueprint, package_preview = _package_preview_response(
+        item, challenge_draft, blueprint, package_preview
+    )
 
     return RelaxResponse(
         item_id=item_id,
@@ -304,7 +419,19 @@ def relax_item(item_id: str, request: RelaxRequest) -> RelaxResponse:
         company_profile=challenge_draft.company_profile,
         challenge_draft=challenge_draft,
         scope_check=_scope_response(item),
+        challenge_blueprint=blueprint,
+        challenge_package=package_preview,
     )
+
+
+@router.post(
+    "/regenerate/{item_id}",
+    response_model=RelaxResponse,
+    summary="Re-run challenge factory after founder edits blueprint or draft",
+)
+def regenerate_package(item_id: str, request: RelaxRequest) -> RelaxResponse:
+    """Same as relax but explicitly re-generates the challenge package."""
+    return relax_item(item_id, request)
 
 
 @router.post(
@@ -360,16 +487,51 @@ def publish_item(item_id: str, request: RelaxRequest) -> PublishResponse:
     track = prepared["track"]
     brand_proxy = prepared["brand_proxy"]
     reward = prepared["reward"]
+    draft = prepared["draft"]
 
-    if track == ChallengeTrack.product_feature:
+    legacy = use_legacy_factory(item_id, track)
+
+    if not legacy:
+        package = item.challenge_package
+        blueprint = item.challenge_blueprint or (package.blueprint if package else None)
+        if package is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "code": "PACKAGE_MISSING",
+                    "message": "Run Preview to generate a challenge package before publish.",
+                },
+            )
+        if is_package_stale(package, draft, blueprint):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "code": "PACKAGE_STALE",
+                    "message": "Challenge package is stale — click Regenerate after editing draft or blueprint.",
+                },
+            )
+        if not package.validation.passed:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "code": "PACKAGE_INVALID",
+                    "message": "Challenge package failed validation — fix or regenerate before publish.",
+                    "errors": package.validation.errors,
+                },
+            )
+        starter_files = package.starter_files
+        db_path = package.dataset_path
+        anomalies = package.dataset_anomalies
+    elif track == ChallengeTrack.product_feature:
         starter_files = generate_product_starter_files(
             item_id, prd.title, brand_proxy, domain_proxy=domain_transform.domain_proxy if domain_transform else None
         )
         db_path = None
-        anomalies: list[str] = []
+        anomalies = []
     else:
         db_path, anomalies = generate_dataset(item_id, preview, item.metadata)
         starter_files = generate_starter_files(item_id, prd.title)
+        db_path = str(db_path)
 
     item.relaxation_config = request.config
     item.relaxed_preview = preview
@@ -379,10 +541,10 @@ def publish_item(item_id: str, request: RelaxRequest) -> PublishResponse:
     item.track = track
     item.brand_proxy = brand_proxy
     item.company_profile = prepared["profile"]
-    item.publish_draft = prepared["draft"]
+    item.publish_draft = draft
     item.evaluation_focus = prepared["evaluation_focus"]
     item.reward = reward
-    item.dataset_path = str(db_path) if db_path else None
+    item.dataset_path = db_path if db_path else None
     item.dataset_anomalies = anomalies
     item.starter_files = starter_files
     item.published_at = datetime.now(timezone.utc)

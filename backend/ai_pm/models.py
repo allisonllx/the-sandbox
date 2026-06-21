@@ -5,8 +5,9 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
+from ..challenge_factory.models import ChallengeBlueprint, ChallengePackage, ChallengePackagePreview
 from ..privacy_proxy.models import SanitizedMetadata
 
 
@@ -226,12 +227,28 @@ class BacklogItem(BaseModel):
         description="CTO-only before/after domain transform preview",
     )
     reward: ChallengeReward | None = Field(default=None, description="Guaranteed student reward")
+    challenge_blueprint: ChallengeBlueprint | None = Field(
+        default=None,
+        description="Founder-editable technical challenge shape for factory generation",
+    )
+    challenge_package: ChallengePackage | None = Field(
+        default=None,
+        description="Generated starter package from Preview — required for dynamic publish",
+    )
     pool_label: str | None = Field(
         default=None,
         description="Open sandbox pool label for legacy anonymized scenarios",
     )
     published_at: datetime | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    @field_serializer("challenge_package")
+    def _strip_reference_solution(self, package: ChallengePackage | None):
+        if package is None:
+            return None
+        data = package.model_dump(mode="json")
+        data.pop("reference_solution", None)
+        return data
 
 
 # ---------------------------------------------------------------------------
@@ -249,6 +266,27 @@ class ScoreResponse(BaseModel):
     tag: SensitivityTag
 
 
+class IntakeRequest(BaseModel):
+    """Founder-authored problem brief — sanitized locally before scoring."""
+
+    problem_statement: str = Field(min_length=1, max_length=20000)
+    source_label: str = Field(default="Founder brief", min_length=1, max_length=200)
+    format: str = Field(
+        default="text",
+        description="Input format hint for the privacy proxy: text, log, auto, etc.",
+    )
+
+
+class IntakeResponse(BaseModel):
+    item_id: str
+    scores: TechScores
+    tag: SensitivityTag
+    suggested_track: ChallengeTrack
+    metadata: SanitizedMetadata
+    pii_types_stripped: list[str] = Field(default_factory=list)
+    processing_notes: list[str] = Field(default_factory=list)
+
+
 class RelaxRequest(BaseModel):
     config: RelaxationConfig
     track: ChallengeTrack | None = Field(
@@ -262,6 +300,10 @@ class RelaxRequest(BaseModel):
     draft: PublishDraft | None = Field(
         default=None,
         description="Founder-edited challenge copy — applied on publish (or returned as preview baseline)",
+    )
+    blueprint: ChallengeBlueprint | None = Field(
+        default=None,
+        description="Founder override for technical challenge archetype, stack, and starter hints",
     )
 
 
@@ -279,6 +321,8 @@ class RelaxResponse(BaseModel):
     company_profile: CompanyTechProfile | None = None
     challenge_draft: PublishDraft | None = None
     scope_check: ScopeCheckResponse | None = None
+    challenge_blueprint: ChallengeBlueprint | None = None
+    challenge_package: ChallengePackagePreview | None = None
 
 
 class PublishRequest(BaseModel):

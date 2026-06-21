@@ -58,6 +58,16 @@ export interface TechScores {
   suggested_title: string;
 }
 
+export interface IntakeResponse {
+  item_id: string;
+  scores: TechScores;
+  tag: SensitivityTag;
+  suggested_track: ChallengeTrack;
+  metadata: SanitizedMetadata;
+  pii_types_stripped: string[];
+  processing_notes: string[];
+}
+
 export interface RelaxationConfig {
   abstract_logic: boolean;
   synthesize_variables: boolean;
@@ -166,6 +176,37 @@ export interface BacklogItem {
   created_at: string;
 }
 
+export interface ChallengeBlueprint {
+  archetype: "data_adjacent" | "data_core" | "service_module" | "algorithm" | "integration";
+  primary_focus: string;
+  data_plane?: "none" | "sqlite" | "csv_fixtures" | "json_fixtures";
+  languages?: string[];
+  stack_guidance?: string[];
+  starter_hints?: string | null;
+  edit_targets?: string[];
+}
+
+export interface ValidationReport {
+  passed: boolean;
+  test_count?: number;
+  tests_passed?: number;
+  tests_failed?: number;
+  security_score?: number;
+  security_violations?: string[];
+  errors?: string[];
+}
+
+export interface ChallengePackagePreview {
+  blueprint: ChallengeBlueprint;
+  starter_files: Record<string, string>;
+  validation: ValidationReport;
+  generation_source: "legacy" | "dynamic";
+  generated_at: string;
+  stale?: boolean;
+  dataset_path?: string | null;
+  dataset_anomalies?: string[];
+}
+
 export interface RelaxResponse {
   item_id: string;
   preview: RelaxedPreview;
@@ -173,6 +214,8 @@ export interface RelaxResponse {
   company_profile?: CompanyTechProfile | null;
   challenge_draft?: PublishDraft | null;
   scope_check?: ScopeCheckResponse | null;
+  challenge_blueprint?: ChallengeBlueprint | null;
+  challenge_package?: ChallengePackagePreview | null;
 }
 
 export interface PublishResponse {

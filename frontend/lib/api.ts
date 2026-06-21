@@ -8,6 +8,7 @@ import type {
   EnterpriseRadarResponse,
   SponsorMatchesResponse,
   PublishedChallenge,
+  IntakeResponse,
   PublishDraft,
   RelaxationConfig,
   RelaxResponse,
@@ -39,6 +40,16 @@ export const api = {
 
   getItem: (id: string): Promise<BacklogItem> =>
     request(`/triage/backlog/${id}`),
+
+  intake: (problemStatement: string, sourceLabel = "Founder brief"): Promise<IntakeResponse> =>
+    request("/triage/intake", {
+      method: "POST",
+      body: JSON.stringify({
+        problem_statement: problemStatement,
+        source_label: sourceLabel,
+        format: "text",
+      }),
+    }),
 
   relax: (
     itemId: string,

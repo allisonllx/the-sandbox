@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { BacklogItem } from "@/lib/types";
 import { api } from "@/lib/api";
 import { BacklogCard } from "@/components/BacklogCard";
+import { FounderIntakePanel } from "@/components/FounderIntakePanel";
 import { RelaxationPanel } from "@/components/RelaxationPanel";
 
 export default function StartupDashboard() {
@@ -32,6 +33,14 @@ export default function StartupDashboard() {
   useEffect(() => {
     loadBacklog();
   }, []);
+
+  function handleIntake(item: BacklogItem) {
+    setItems((prev) => {
+      const rest = prev.filter((i) => i.id !== item.id);
+      return [item, ...rest];
+    });
+    setSelectedId(item.id);
+  }
 
   function handlePublished(itemId: string) {
     setItems((prev) =>
@@ -76,6 +85,7 @@ export default function StartupDashboard() {
           </div>
 
           <div className="p-3 space-y-2">
+            <FounderIntakePanel onIntake={handleIntake} />
             {loading && (
               <div className="text-center py-12 text-slate-600 text-sm">Loading…</div>
             )}

@@ -407,6 +407,7 @@ Key entry points only. Full contract: **http://localhost:8000/docs** · module d
 |---|---|---|
 | `POST` | `/api/v1/proxy/sanitize` | Ingest: raw text → metadata |
 | `POST` | `/api/v1/triage/score` | Ingest: metadata → backlog item |
+| `POST` | `/api/v1/triage/intake` | Ingest: founder problem brief → local sanitize → backlog item |
 | `POST` | `/api/v1/triage/publish/{id}` | Publish challenge |
 | `GET` | `/api/v1/sandbox/challenges` | Student: list public challenges |
 | `POST` | `/api/v1/sandbox/challenges/{id}/submit` | Student: submit → scorecard |

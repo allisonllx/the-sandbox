@@ -79,14 +79,21 @@ ai_pm/relaxation.py + domain_obfuscator.py (optional)
   ▼
 POST /triage/relax/{id}
   ├─ Returns relaxed field preview + challenge_draft (PublishDraft)
-  └─ Founder edits title, context, success criteria, company profile in UI
+  ├─ Non-demo technical: challenge_factory.build_package() → challenge_package + validation
+  └─ Founder edits title, context, blueprint (archetype, stack hints), company profile in UI
+  │
+  ▼
+POST /triage/regenerate/{id}  (optional — after draft/blueprint edits)
+  └─ Re-runs challenge_factory; marks stale until validation passes
   │
   ▼
 POST /triage/publish/{id}  (requires locked reward + scope guard pass)
   ├─ Applies founder PublishDraft overrides
+  ├─ Non-demo technical: requires valid non-stale challenge_package (no generation at publish)
+  ├─ Legacy demo-* / product track: hardcoded starter_scaffold / synthesizer at publish
   ├─ Generates track-aware Micro-PRD
   ├─ company_profile.py → CompanyTechProfile on BacklogItem
-  └─ Branch: technical → SQLite + Python starter | product → frontend starter
+  └─ Branch: technical → Python starter (+ SQLite if data_plane) | product → frontend starter
   │
   ▼
 GET /sandbox/challenges/{id}  →  public_sanitize.build_public_challenge()
