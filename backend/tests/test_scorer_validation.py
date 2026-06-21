@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 from backend.ai_pm import scorer as scorer_module
 from backend.ai_pm.llm_client import LLMUnavailableError
-from backend.ai_pm.prompts.scorer_validation import llm_result_to_scores, validate_scorer_result
+from backend.prompts.scorer_validation import llm_result_to_scores, validate_scorer_result
 from backend.privacy_proxy.models import EventFrequency, FieldMetadata, InputFormat, SanitizedMetadata
 
 

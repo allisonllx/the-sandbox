@@ -157,6 +157,7 @@ the_sandbox/
 ├── backend/
 │   ├── privacy_proxy/          # Local PII scrubbing, NER, structural extraction
 │   ├── ai_pm/                  # Triage, relaxation, blind audition, Micro-PRD, publish draft
+│   ├── prompts/                # LLM system prompts (ai_pm + assessor)
 │   ├── assessor/               # Dual-layer platform signal + sponsor fit
 │   ├── sandbox/                # Datasets, submissions, leaderboard, match radar
 │   ├── api/                    # HTTP routes
@@ -172,7 +173,7 @@ the_sandbox/
 └── init.sh
 ```
 
-Module docs: [`backend/privacy_proxy/DOCS.md`](backend/privacy_proxy/DOCS.md) · [`backend/ai_pm/DOCS.md`](backend/ai_pm/DOCS.md) · [`backend/assessor/DOCS.md`](backend/assessor/DOCS.md) · [`backend/sandbox/DOCS.md`](backend/sandbox/DOCS.md) · [`backend/api/DOCS.md`](backend/api/DOCS.md) · [`frontend/DOCS.md`](frontend/DOCS.md)
+Module docs: [`backend/privacy_proxy/DOCS.md`](backend/privacy_proxy/DOCS.md) · [`backend/ai_pm/DOCS.md`](backend/ai_pm/DOCS.md) · [`backend/prompts/DOCS.md`](backend/prompts/DOCS.md) · [`backend/assessor/DOCS.md`](backend/assessor/DOCS.md) · [`backend/sandbox/DOCS.md`](backend/sandbox/DOCS.md) · [`backend/api/DOCS.md`](backend/api/DOCS.md) · [`frontend/DOCS.md`](frontend/DOCS.md)
 
 Topic docs: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/PRODUCT.md`](docs/PRODUCT.md) · [`docs/api-patterns.md`](docs/api-patterns.md)
 

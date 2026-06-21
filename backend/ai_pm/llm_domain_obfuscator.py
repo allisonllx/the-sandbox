@@ -15,7 +15,7 @@ from ..privacy_proxy.models import SanitizedMetadata
 from .domain_obfuscator import DomainTransform, public_text_is_safe
 from .llm_client import LLMClientProtocol, LLMTier, LLMUnavailableError, get_default_client
 from .models import SensitivityTag
-from .prompts.domain_obfuscator import DOMAIN_OBFUSCATOR_SYSTEM_PROMPT
+from backend.prompts.domain_obfuscator import DOMAIN_OBFUSCATOR_SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
 

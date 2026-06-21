@@ -21,8 +21,8 @@ import logging
 from ..privacy_proxy.models import SanitizedMetadata
 from .llm_client import LLMClientProtocol, LLMTier, LLMUnavailableError, get_default_client
 from .models import SensitivityTag, TechScores
-from .prompts.scorer import SCORER_SYSTEM_PROMPT
-from .prompts.scorer_validation import llm_result_to_scores
+from backend.prompts.scorer import SCORER_SYSTEM_PROMPT
+from backend.prompts.scorer_validation import llm_result_to_scores
 
 logger = logging.getLogger(__name__)
 

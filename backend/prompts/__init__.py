@@ -1,4 +1,4 @@
-"""System prompts for AI PM and shared LLM call sites."""
+"""Cross-module LLM system prompts (ai_pm + assessor)."""
 
 from .domain_obfuscator import DOMAIN_OBFUSCATOR_SYSTEM_PROMPT
 from .microprd import PRODUCT_SYSTEM_PROMPT, TECH_SYSTEM_PROMPT

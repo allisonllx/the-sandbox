@@ -9,7 +9,7 @@ import logging
 from .domain_obfuscator import DomainTransform
 from .llm_client import LLMClientProtocol, LLMTier, LLMUnavailableError, get_default_client
 from .models import ChallengeTrack, MicroPRD, RelaxedPreview
-from .prompts.microprd import PRODUCT_SYSTEM_PROMPT, TECH_SYSTEM_PROMPT
+from backend.prompts.microprd import PRODUCT_SYSTEM_PROMPT, TECH_SYSTEM_PROMPT
 from .relaxation import abstract_brand_text
 
 logger = logging.getLogger(__name__)

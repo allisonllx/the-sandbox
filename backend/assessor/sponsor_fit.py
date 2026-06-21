@@ -14,7 +14,7 @@ from typing import Any
 
 from ..ai_pm.llm_client import LLMClientProtocol, LLMTier, LLMUnavailableError, get_default_client
 from ..ai_pm.models import ChallengeTrack
-from ..ai_pm.prompts.sponsor_fit import (
+from backend.prompts.sponsor_fit import (
     SPONSOR_FIT_PRODUCT_SYSTEM_PROMPT,
     SPONSOR_FIT_TECHNICAL_SYSTEM_PROMPT,
 )
