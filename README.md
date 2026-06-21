@@ -1,68 +1,77 @@
 # The Sandbox
 
-A zero-trust **Innovation Hub** and proof-of-work talent platform. Growth-stage startups turn internal backlogs into safe, blind-audition challenges. Students prove capability on real engineering problems without résumés, referrals, or company logos on the line.
+Startups turn internal bugs and backlog items into **public coding challenges**. Students solve them to prove skill — without a traditional job application and without seeing which company wrote the problem.
 
-> *"We aren't a job board; we are a zero-trust proof-of-work protocol."*
+**Zero-trust** here means: sensitive data (log lines, emails, internal product names) is cleaned up **on the startup's machine first**. Only a safe, abstract summary crosses into the rest of the platform.
+
+> *"We aren't a job board; we are a proof-of-work protocol."*
 
 ---
 
-## Stakeholders
+## Who uses this?
 
-| Stakeholder | Role | Primary surfaces |
+| Who | What they do | Where in the app |
 |---|---|---|
-| **Startup sponsor** (CTO / founder) | Ingests problems, de-risks IP, publishes challenges, reviews **Sponsor Match Radar** for their challenge only | `/startup` · `/startup/matches/{id}` |
-| **Student** | Discovers blind-audition challenges, solves in track workspace, earns **Execution Points** from platform-verified signal | `/student` · `/student/challenges/{id}` · `/student/leaderboard` · `/student/trust` |
-| **Enterprise recruiter** | Browses platform-wide top-tier talent (demo seed UI) | `/enterprise/radar` |
+| **Startup** (CTO / founder) | Turn an internal problem into a publishable challenge, set a bounty, review who submitted | `/startup` · `/startup/matches/{id}` |
+| **Student** | Browse challenges, read the brief, build a solution, submit | `/student` · `/student/challenges/{id}` · `/student/leaderboard` |
+| **Enterprise recruiter** *(demo UI)* | Browse platform-wide top talent | `/enterprise/radar` |
 
-Startups never see other companies' performers. Students never see sponsor names. Global rank and sponsor fit are **intentionally different scores**.
+Three things to know up front:
 
----
-
-## End-to-End Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ STARTUP SPONSOR                                                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Raw logs / feedback  →  Privacy Proxy (local PII strip)                    │
-│       →  POST /triage/score  →  AI PM triage (Severity / Friction / Sens.)  │
-│       →  Relaxation + domain obfuscation  →  editable Release Preview       │
-│       →  Lock reward + scope check  →  Publish                              │
-│       →  Match Radar (/startup/matches/{id}) sorted by Sponsor Fit          │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                    public challenge (blind audition — no brand_proxy)
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ STUDENT                                                                     │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Innovation Hub  →  Company Tech Profile + Micro-PRD (no sponsor name)      │
-│       →  Technical: Monaco workspace + dataset + public Run                 │
-│       →  Product: prototype + DESIGN.md                                     │
-│       →  Submit  →  Dual-layer scorecard                                    │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ ASSESSOR (dual-layer)                                                       │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Platform Signal  — Docker secret tests + security scan (track-standard)    │
-│       →  Execution Points  →  student leaderboard (demo) + enterprise radar │
-|       (demo)                                                                │
-│  Sponsor Fit      — LLM vs challenge success criteria (heuristic offline)   │
-│       →  Match Radar rank for that challenge only                           │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-**Trust guarantee:** raw corporate data never leaves the sanitization boundary. External LLMs see anonymized structural metadata (triage) or sanitized public challenge context + student submission (sponsor fit) — never `brand_proxy`, source labels, or raw log lines.
+- Students **never** see the real company name on a challenge (see [Blind audition](#3-blind-audition)).
+- Startups **only** see submitters for **their own** challenge — not other companies' candidates.
+- "How good are they in general?" and "How well did they solve *my* problem?" are **two different scores** (see [Grading & rankings](#5-grading--rankings)).
 
 ---
 
-## How the Pieces Fit Together
+## The journey (at a glance)
+
+Plain-language view of the full loop. Technical terms are defined in the sections below.
+
+```
+  ┌────────────────────── STARTUP ──────────────────────┐
+  │  1. Paste logs / feedback (cleaned locally first)   │
+  │  2. See how urgent & risky the issue is             │
+  │  3. Tweak the public brief, set bounty, publish     │
+  │  4. Review who submitted — ranked for this challenge│
+  └──────────────────────────┬──────────────────────────┘
+                             │  public challenge goes live
+                             │  (no company logo / internal names)
+                             ▼
+  ┌────────────────────── STUDENT ──────────────────────┐
+  │  1. Browse challenges in the Innovation Hub         │
+  │  2. Read brief + anonymous company profile          │
+  │  3. Build solution (code editor or prototype)       │
+  │  4. Submit → receive feedback scores                │
+  └──────────────────────────┬──────────────────────────┘
+                             ▼
+  ┌──────────────────── OUTCOMES ───────────────────────┐
+  │  Student: points on global leaderboard (demo seed)  │
+  │  Startup: ranked list for their challenge (live)    │
+  │  Enterprise: top-tier view across platform (demo)   │
+  └─────────────────────────────────────────────────────┘
+```
+
+**Privacy rule:** Raw corporate text never leaves the local sanitization step. External AI (if enabled) sees field names and counts — not full log lines, emails, or internal codenames.
+
+---
+
+## How the pieces fit together
+
+The sections below map to the journey above. Skim the headings first; drill in where you need detail.
 
 ### 1. Ingest & triage (startup)
 
-Founders add problems by piping text through the privacy proxy, then scoring metadata into the backlog:
+**Goal:** Get a messy internal signal (Slack thread, log export, ticket) into a ranked backlog item — without leaking PII.
+
+1. **Privacy proxy** — runs locally. Strips emails, tokens, names, etc. Output is *structural metadata* (column names, event counts, row scale) — not the original text.
+2. **AI triage** — scores each item on three axes (0–100):
+   - **Severity** — how badly it hurts the system
+   - **Friction** — how often users hit it
+   - **Sensitivity** — how risky it is to publish the *shape* of this problem publicly
+3. **Sensitivity shield** — Red / Yellow / Green tag derived from the sensitivity score. Guides how aggressively to mask before publish.
+
+The hackathon dashboard ships with **pre-seeded demo items** (`demo-003` … `demo-007`) so you can skip ingest UI. Adding new items via API also works:
 
 ```bash
 # Step 1 — sanitize locally (metadata only in response)
@@ -76,63 +85,74 @@ curl -s -X POST http://localhost:8000/api/v1/triage/score \
   -d '{"metadata": { ... }, "source_label": "Slack #bugs"}'
 ```
 
-The hackathon dashboard ships with **pre-seeded demo backlog items** (`demo-003` … `demo-007`) so judges can run the full loop without ingest UI. Adding new problems via API is supported; a startup paste/upload UI is optional polish.
-
 ### 2. De-risk & publish (startup)
 
-On `/startup`, founders:
+**Goal:** Founder controls what students actually see before anything goes live.
 
-1. Review Severity / Friction / Sensitivity and sensitivity shield (Red / Yellow / Green)
-2. Apply **Relaxation Controls** — abstract logic, synthesize column names, noise injection, domain obfuscation
-3. **Preview Changes** — edit the **Release Preview** (title, success criteria, company profile, evaluation focus)
-4. **Lock reward** (required gate — escrow is stubbed; see [What's Implemented vs Demo Theater](#whats-implemented-vs-whats-demo-theater))
-5. **Approve & Publish** — generic scope check (~8h estimate) blocks oversized items; `demo-007` is a **hardcoded** always-fail demo (see disclaimer)
+On `/startup`, for each backlog item:
 
-Published challenges expose a **Company Tech Profile** to students (stage, team size, stack) — never the internal `brand_proxy`.
+1. **Review scores** — Severity / Friction / Sensitivity and the Red / Yellow / Green shield
+2. **Relaxation controls** — optional transforms that make the public challenge safer:
+   - Rename internal column names to generic ones
+   - Inject noise into scale hints
+   - **Domain obfuscation** — reframe an industry-specific problem as a neutral scenario (e.g. food-delivery checkout → equipment locker rental) so students can't guess the sponsor
+3. **Release preview** — edit the public title, success criteria, company profile, and evaluation focus before publish
+4. **Lock reward** — required checklist step before publish (payment is stubbed in the demo — see [disclaimer](#whats-implemented-vs-whats-demo-theater))
+5. **Approve & publish** — scope guard blocks oversized challenges; `demo-007` is a hardcoded always-fail demo prop
 
-### 3. Blind audition (student-facing boundary)
+### 3. Blind audition
 
-| Internal (CTO only) | Public (students) |
+**Goal:** Students trust the challenge is real without learning *which* company posted it.
+
+| What the startup sees (internal) | What the student sees (public) |
 |---|---|
-| `brand_proxy`, `source_label`, `sponsor_profile` | `CompanyTechProfile` |
-| Domain before/after preview | Sanitized Micro-PRD + obfuscated column names |
-| Real industry tokens | Abstract titles, red-sensitivity omits `industry_broad` |
+| Real source label, internal codenames | Anonymous **Company Tech Profile** (stage, team size, stack) |
+| Before/after domain masking preview | Sanitized **Micro-PRD** (the challenge brief) |
+| Industry-specific field names | Renamed / abstract column names |
 
-Students verify sponsor legitimacy at `/student/trust` (narrative stub — see [demo disclaimer](#whats-implemented-vs-whats-demo-theater)).
+Students can read `/student/trust` for the trust narrative (marketing copy in the demo — no live KYC backend).
 
 ### 4. Solve & submit (student)
 
-| Track | Workspace | Deliverables |
+**Goal:** Student builds and submits in-browser.
+
+| Track | What you do | What you submit |
 |---|---|---|
-| **Technical** | Monaco multi-file editor, public Run, autosave | `src/queries.py` + starter scaffold; synthetic SQLite dataset |
-| **Product Feature** | Prototype editor | HTML/CSS/JS + **DESIGN.md**; optional Figma/deploy links |
+| **Technical** | Multi-file **Monaco** editor (same engine as VS Code), run public tests, autosave | Python starter + synthetic SQLite dataset |
+| **Product Feature** | Prototype editor | HTML/CSS/JS + **DESIGN.md** |
 
-### 5. Dual-layer assessment
+After submit, the student sees a **scorecard** with two sections (see next).
 
-Every submission produces two independent scores:
+### 5. Grading & rankings
 
-| Layer | What it measures | Used for |
+**Goal:** Separate "objective platform quality" from "does this person fit *my* challenge?"
+
+Every submission gets a **dual-layer scorecard**:
+
+| Layer | Plain English | Feeds |
 |---|---|---|
-| **Platform Signal** | Track-standard objective rubric (Docker secret tests, security scan, deliverable structure) | **Execution Points** — global student motivation + enterprise radar |
-| **Sponsor Fit** | Alignment with *this* challenge's success criteria and evaluation focus (LLM or heuristic) | **Match Radar** — `/startup/matches/{id}` only |
+| **Platform Signal** | Did the solution pass automated checks? (secret tests in Docker, security scan, deliverable structure) | **Execution Points** — global student motivation score |
+| **Sponsor Fit** | How well does this submission match *this challenge's* success criteria? (LLM or heuristic) | **Match Radar** — startup's ranked list at `/startup/matches/{id}` |
 
-A student can rank highly on Execution Points globally while not topping a specific sponsor's Match Radar — and vice versa.
+A student can score high globally but not top a specific startup's list — and vice versa. That's intentional.
 
-### 6. Three rank surfaces (by design)
+### 6. Three places rankings appear
 
-See [What's Implemented vs Demo Theater](#whats-implemented-vs-whats-demo-theater) — only Match Radar uses live submission data today.
+See [What's Implemented vs Demo Theater](#whats-implemented-vs-whats-demo-theater) for which of these use live data today.
 
-| Audience | Route | Sort key |
+| Who looks | Page | Sorted by |
 |---|---|---|
-| Students | `/student/leaderboard` | Execution Points (demo seed) |
-| Startup sponsors | `/startup/matches/{id}` | Sponsor Fit (live when submissions exist) |
-| Enterprises | `/enterprise/radar` | Platform signal (demo seed) |
+| Student | `/student/leaderboard` | Execution Points *(demo seed)* |
+| Startup | `/startup/matches/{id}` | Sponsor Fit *(live after submissions)* |
+| Enterprise | `/enterprise/radar` | Platform Signal *(demo seed)* |
 
 ---
 
-## Defensive Posture
+## Defensive posture
 
-See [What's Implemented vs Demo Theater](#whats-implemented-vs-whats-demo-theater) for which mitigations are enforced vs narrated. Demo CTO-only labels: **StealthCo** (`demo-005`), **NovaPay** (`demo-003`), **Platform Pool** (`demo-006`). Students never see these names.
+Which security rules are enforced vs narrated for the demo: [What's Implemented vs Demo Theater](#whats-implemented-vs-whats-demo-theater).
+
+Demo-only internal names students never see: **StealthCo** (`demo-005`), **NovaPay** (`demo-003`), **Platform Pool** (`demo-006`).
 
 ---
 
@@ -145,7 +165,7 @@ See [What's Implemented vs Demo Theater](#whats-implemented-vs-whats-demo-theate
 | AI / LLM | Local vLLM (Qwen via OpenAI-compatible API) for sensitive paths · OpenAI (`gpt-4o-mini`) fallback for `standard` tier and optional cloud sensitive · heuristic fallback when no LLM |
 | Assessor | Dual-layer: Docker secret tests (platform) + LLM sponsor fit |
 | Frontend | Next.js 14 · TypeScript · Tailwind CSS · Monaco editor |
-| Testing | pytest · 121 tests |
+| Testing | pytest · 126 tests |
 | Code Runner | Docker assessor (`the-sandbox-runner`) for secret tests; in-process for student **Run** |
 
 ---
@@ -219,7 +239,7 @@ App: **http://localhost:3000** → redirects to **/startup**
 ### Tests
 
 ```bash
-python -m pytest backend/tests/ -v    # expect 121 passed
+python -m pytest backend/tests/ -v    # expect 126 passed
 ```
 
 ### Assessor Docker image (optional)
@@ -326,34 +346,36 @@ Auth, multi-tenant startups, persistent database (backlog is in-memory), real es
 
 ---
 
-## Judge Demo Script
+## Judge demo script
 
-1. **Blind audition** — `/startup` → `demo-005` → *Obfuscate Industry Domain* → Preview (Company Tech Profile) → Lock reward → Publish → `/student/challenges/demo-005` shows stage/team/stack only — no StealthCo or food/merchant tokens
+Terms above in plain English — this is the click-by-click path for judges.
+
+1. **Blind audition** — `/startup` → `demo-005` → toggle *Obfuscate Industry Domain* → Preview → Lock reward → Publish → open `/student/challenges/demo-005` — students see stage/team/stack only, not StealthCo or food/merchant tokens
 2. **Editable release preview** — Preview Changes → edit title, success criteria, company profile → Publish with draft
-3. **Scope cap demo** — select `demo-007` → Publish → HTTP 422 `SCOPE_EXCEEDED` (hardcoded reject for judges; other items use generic hour estimate)
+3. **Scope cap demo** — select `demo-007` → Publish → HTTP 422 `SCOPE_EXCEEDED` (hardcoded reject for judges)
 4. **Reward lock** — must Lock reward before publish (422 if not); no real payment rails
 5. **Verified sponsor + bounty** — `demo-003` → Lock $500 → Publish → student card shows Verified Sponsor + escrow label (UI only)
-6. **Dual-layer scorecard** — submit as student → Platform Signal + Sponsor Fit sections; EP from platform only
-7. **Three rank surfaces** — `/student/leaderboard` (seed) · `/startup/matches/demo-003` (live after submit) · `/enterprise/radar` (seed)
+6. **Dual-layer scorecard** — submit as student → Platform Signal + Sponsor Fit sections on the scorecard
+7. **Three ranking pages** — `/student/leaderboard` (seed) · `/startup/matches/demo-003` (live after submit) · `/enterprise/radar` (seed)
 8. **Trust narrative** — `/student/trust`
 
 ---
 
-## Demo Walkthrough (5 min)
+## Demo walkthrough (5 min)
 
 **Startup path**
 
 1. Open `/startup` — pick `demo-003` or `demo-005`
-2. Toggle relaxation controls → **Preview Changes** → edit Release Preview
+2. Try relaxation toggles → **Preview Changes** → edit the public brief
 3. Lock reward → **Approve & Publish**
-4. Open **Match Radar** link → `/startup/matches/{id}`
+4. Open the match list → `/startup/matches/{id}`
 
 **Student path**
 
-1. Open `/student` — filter by track
-2. Open a challenge — note Company Tech Profile (no sponsor name)
-3. Technical: run public tests, submit → dual-layer scorecard
-4. Product (`demo-004`): submit with DESIGN.md
+1. Open `/student` — pick a challenge
+2. Note: no company name, only anonymous company profile
+3. Technical track: code in Monaco, run tests, submit → scorecard with two score sections
+4. Product track (`demo-004`): submit prototype + DESIGN.md
 
 **Ingest (API)**
 
