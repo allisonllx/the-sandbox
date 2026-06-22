@@ -18,8 +18,15 @@ AI Product Manager layer. Scores anonymized backlog items, routes innovation tra
 | `publish_draft.py` | Founder-editable `PublishDraft` build/apply before release |
 | `microprd.py` | Track-aware LLM Micro-PRD generator (template fallback if no LLM) |
 | `llm_client.py` | `RoutingLLMClient`: local vLLM → OpenAI per tier; mockable in tests |
-| `store.py` | In-memory backlog pre-seeded with 4 demo items (incl. demo-004 product) |
-| `models.py` | `ChallengeTrack`, `BacklogItem`, `MicroPRD` product sections, etc. |
+| `store.py` | In-memory backlog pre-seeded with demo items |
+| `models.py` | `ChallengeTrack`, `BacklogItem`, `IntakeRequest`, `MicroPRD`, etc. |
+
+Founder ingest is implemented in `api/triage_routes.py`:
+
+- `POST /triage/intake` — calls `privacy_proxy.sanitize` then `_create_backlog_item`
+- `POST /triage/score` — metadata-only path (upload loading page step 2)
+
+Dynamic starter generation: see [`../challenge_factory/DOCS.md`](../challenge_factory/DOCS.md).
 
 ## LLM routing
 
@@ -36,7 +43,11 @@ Env:
 
 ## How It Fits In
 
-Consumes `SanitizedMetadata` from the privacy proxy. Exposed via `api/triage_routes.py`. Publish branches by track: technical generates SQLite + Python starter; product_feature generates frontend starter + DESIGN.md.
+Consumes `SanitizedMetadata` from the privacy proxy. Exposed via `api/triage_routes.py`.
+
+- **Ingest:** `/intake`, `/score`, or `/proxy/sanitize` + `/score`
+- **Preview:** `/relax` runs Micro-PRD + `challenge_factory.build_package()` for non-demo technical items
+- **Publish:** legacy `demo-*` / product track use hardcoded scaffolds; dynamic items require valid `challenge_package` from Preview
 
 ## Notes for the Next Session
 

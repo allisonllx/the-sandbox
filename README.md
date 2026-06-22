@@ -12,7 +12,7 @@ Startups turn internal bugs and backlog items into **public coding challenges**.
 
 | Who | What they do | Where in the app |
 |---|---|---|
-| **Startup** (CTO / founder) | Turn an internal problem into a publishable challenge, set a bounty, review who submitted | `/startup` · `/startup/matches/{id}` |
+| **Startup** (CTO / founder) | Turn an internal problem into a publishable challenge, set a bounty, review who submitted | `/startup` · `/startup/upload` · `/startup/matches/{id}` |
 | **Student** | Browse challenges, read the brief, build a solution, submit | `/student` · `/student/challenges/{id}` · `/student/leaderboard` |
 | **Enterprise recruiter** *(demo UI)* | Browse platform-wide top talent | `/enterprise/radar` |
 
@@ -30,7 +30,7 @@ Plain-language view of the full loop. Technical terms are defined in the section
 
 ```
   ┌────────────────────── STARTUP ──────────────────────┐
-  │  1. Paste logs / feedback (cleaned locally first)   │
+  │  1. Paste logs, upload a file, or write a problem brief (cleaned locally) │
   │  2. See how urgent & risky the issue is             │
   │  3. Tweak the public brief, set bounty, publish     │
   │  4. Review who submitted — ranked for this challenge│
@@ -62,7 +62,15 @@ The sections below map to the journey above. Skim the headings first; drill in w
 
 ### 1. Ingest & triage (startup)
 
-**Goal:** Get a messy internal signal (Slack thread, log export, ticket) into a ranked backlog item — without leaking PII.
+**Goal:** Get a messy internal signal (Slack thread, log export, ticket, or founder-written brief) into a ranked backlog item — without leaking PII.
+
+Three equivalent ingest paths (all run **sanitize → score** locally before triage):
+
+| Path | Where | API |
+|---|---|---|
+| **Upload UI** | `/startup/upload` → loading page | `POST /proxy/sanitize` then `POST /triage/score` |
+| **Quick intake** | Sidebar on `/startup` | `POST /triage/intake` (wraps sanitize + score) |
+| **API / scripts** | curl or `./scripts/factory_*.sh` | same as above |
 
 1. **Privacy proxy** — runs locally. Strips emails, tokens, names, etc. Output is *structural metadata* (column names, event counts, row scale) — not the original text.
 2. **AI triage** — scores each item on three axes (0–100):
@@ -71,19 +79,33 @@ The sections below map to the journey above. Skim the headings first; drill in w
    - **Sensitivity** — how risky it is to publish the *shape* of this problem publicly
 3. **Sensitivity shield** — Red / Yellow / Green tag derived from the sensitivity score. Guides how aggressively to mask before publish.
 
-The hackathon dashboard ships with **pre-seeded demo items** (`demo-003` … `demo-007`) so you can skip ingest UI. Adding new items via API also works:
+The hackathon dashboard ships with **pre-seeded demo items** (`demo-003` … `demo-007`) so you can skip ingest UI. Adding new items:
 
 ```bash
-# Step 1 — sanitize locally (metadata only in response)
+# Option A — founder brief (one call)
+curl -s -X POST http://localhost:8000/api/v1/triage/intake \
+  -H "Content-Type: application/json" \
+  -d '{"problem_statement":"Our webhook retries duplicate charges on 502...","source_label":"Founder brief","format":"text"}'
+
+# Option B — logs (two steps, same as /startup/upload)
 curl -s -X POST http://localhost:8000/api/v1/proxy/sanitize \
   -H "Content-Type: application/json" \
-  -d '{"content": "2024-03-12 ERROR Login failed for user@example.com ...", "format": "log"}'
+  -d '{"content": "2024-03-12 ERROR Login failed for user@example.com ...", "format": "log"}' \
+  | tee /tmp/meta.json
 
-# Step 2 — score and add to backlog
 curl -s -X POST http://localhost:8000/api/v1/triage/score \
   -H "Content-Type: application/json" \
-  -d '{"metadata": { ... }, "source_label": "Slack #bugs"}'
+  -d "$(jq '{metadata: .metadata, source_label: "Slack #bugs"}' /tmp/meta.json)"
 ```
+
+**End-to-end scripts** (non-demo item → Preview → Publish):
+
+```bash
+./scripts/factory_intake.sh    # founder brief via /triage/intake
+./scripts/factory_pipeline.sh  # log sanitize → score → relax → publish
+```
+
+See [`samples/demo_solutions/README.md`](samples/demo_solutions/README.md) for publish → submit demos on `demo-*` items.
 
 ### 2. De-risk & publish (startup)
 
@@ -92,13 +114,14 @@ curl -s -X POST http://localhost:8000/api/v1/triage/score \
 On `/startup`, for each backlog item:
 
 1. **Review scores** — Severity / Friction / Sensitivity and the Red / Yellow / Green shield
-2. **Relaxation controls** — optional transforms that make the public challenge safer:
+2. **Preview Changes** — generates Micro-PRD + **challenge package** (starter files + validation) for non-demo technical items via the [Challenge Factory](backend/challenge_factory/DOCS.md)
+3. **Relaxation controls** — optional transforms that make the public challenge safer:
    - Rename internal column names to generic ones
    - Inject noise into scale hints
    - **Domain obfuscation** — reframe an industry-specific problem as a neutral scenario (e.g. food-delivery checkout → equipment locker rental) so students can't guess the sponsor
-3. **Release preview** — edit the public title, success criteria, company profile, and evaluation focus before publish
-4. **Lock reward** — required checklist step before publish (payment is stubbed in the demo — see [disclaimer](#whats-implemented-vs-whats-demo-theater))
-5. **Approve & publish** — scope guard blocks oversized challenges; `demo-007` is a hardcoded always-fail demo prop
+4. **Release preview** — edit the public title, success criteria, **challenge blueprint** (archetype, stack hints), company profile, and evaluation focus before publish
+5. **Lock reward** — required checklist step before publish (payment is stubbed in the demo — see [disclaimer](#whats-implemented-vs-whats-demo-theater))
+6. **Approve & publish** — scope guard blocks oversized challenges; non-demo items require a valid Preview package; `demo-007` is a hardcoded always-fail demo prop
 
 ### 3. Blind audition
 
@@ -349,7 +372,7 @@ The dashboard opens on **7 pre-seeded backlog items** (`demo-001` … `demo-007`
 
 ### Not built
 
-Auth, multi-tenant startups, persistent database (backlog is in-memory), real escrow/KYC, startup paste/upload UI (use API or seeds).
+Auth, multi-tenant startups, persistent database (backlog is in-memory), real escrow/KYC.
 
 **Practical demo tip:** show **implemented** flows on `demo-003` or `demo-005` (publish + student submit + live Match Radar). Show **demo shortcuts** explicitly: try publishing `demo-007` (422 scope rejection), open leaderboard (seed data), mention reward lock is a gate not a payment.
 
@@ -405,9 +428,11 @@ Key entry points only. Full contract: **http://localhost:8000/docs** · module d
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| `POST` | `/api/v1/proxy/sanitize` | Ingest: raw text → metadata |
+| `POST` | `/api/v1/proxy/sanitize` | Ingest: raw text → metadata (local) |
 | `POST` | `/api/v1/triage/score` | Ingest: metadata → backlog item |
-| `POST` | `/api/v1/triage/intake` | Ingest: founder problem brief → local sanitize → backlog item |
+| `POST` | `/api/v1/triage/intake` | Ingest: founder brief → sanitize + score (one call) |
+| `POST` | `/api/v1/triage/relax/{id}` | Preview: Micro-PRD + challenge factory package |
+| `POST` | `/api/v1/triage/regenerate/{id}` | Re-run factory after draft/blueprint edits |
 | `POST` | `/api/v1/triage/publish/{id}` | Publish challenge |
 | `GET` | `/api/v1/sandbox/challenges` | Student: list public challenges |
 | `POST` | `/api/v1/sandbox/challenges/{id}/submit` | Student: submit → scorecard |
@@ -432,8 +457,10 @@ All hackathon MVP features passing (`feature_list.json`):
 | `rank-001` | Three rank surfaces (student / sponsor / enterprise) |
 | `assessor-001` | Dual-layer assessor (Docker platform + LLM sponsor fit) |
 | `llm-local-001` | Local vLLM routing + LLM domain obfuscation (OpenAI fallback) |
+| `factory-001` | Dynamic challenge factory — blueprint-driven starters at Preview (Phase 1) |
+| `intake-001` | Founder ingest — `/triage/intake` + `/startup/upload` UI |
 
-**Deferred post-MVP:** auth, multi-tenant isolation, real Stripe escrow, sponsor KYC, startup ingest UI, live global leaderboard aggregation.
+**Deferred post-MVP:** auth, multi-tenant isolation, real Stripe escrow, sponsor KYC, live global leaderboard aggregation, factory Phase 2–3 (per-challenge secret tests, product factory UI panel).
 
 ---
 

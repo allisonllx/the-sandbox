@@ -8,7 +8,7 @@ Next.js 14 student, startup, and enterprise UIs for The Sandbox. Proxies `/api/*
 
 | Path | Role |
 |---|---|
-| `app/startup/` | CTO dashboard — triage backlog, quick intake, link to upload |
+| `app/startup/` | CTO dashboard — triage backlog, quick intake (`FounderIntakePanel`), link to upload |
 | `app/startup/upload/` | Founder upload — task description or log file → sanitize → score |
 | `app/startup/upload/loading/` | Processing UI (`/proxy/sanitize` then `/triage/score`) |
 | `app/startup/matches/[challengeId]/` | Sponsor Match Radar (per-challenge performers) |
@@ -21,8 +21,10 @@ Next.js 14 student, startup, and enterprise UIs for The Sandbox. Proxies `/api/*
 | `components/ProductWorkspace.tsx` | Product track prototype editor + DESIGN.md |
 | `components/PublishDraftEditor.tsx` | Founder-editable release preview before publish |
 | `components/CompanyProfilePanel.tsx` | Blind-audition Company Tech Profile preview |
+| `components/FounderIntakePanel.tsx` | Sidebar quick intake → `POST /triage/intake` |
 | `components/` | Shared UI (BacklogCard, RelaxationPanel, ChallengeCard, MicroPRDView, ScorecardView) |
-| `lib/api.ts` | Typed API client (draft, validate, run, submit, rank endpoints) |
+| `lib/api.ts` | Typed API client — `sanitize`, `scoreMetadata`, `intake`, draft, validate, run, submit |
+| `lib/uploadSession.ts` | sessionStorage between `/startup/upload` and loading page |
 | `lib/draftStorage.ts` | IndexedDB draft cache |
 | `lib/types.ts` | TypeScript interfaces mirroring backend models |
 
@@ -30,7 +32,7 @@ Next.js 14 student, startup, and enterprise UIs for The Sandbox. Proxies `/api/*
 
 `next.config.mjs` rewrites `/api/*` → `http://localhost:8000/api/*`.
 
-- Startup founders publish at `/startup`; post-publish links to `/startup/matches/{id}`
+- Startup founders ingest at `/startup/upload` or sidebar intake; publish at `/startup`
 - Students work at `/student/challenges/[id]`; global rank at `/student/leaderboard`
 - Enterprise demo at `/enterprise/radar`
 

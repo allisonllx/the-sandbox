@@ -1,6 +1,6 @@
 {
   "project": "the-sandbox",
-  "last_updated": "2026-06-21T14:30+08:00",
+  "last_updated": "2026-06-21T18:00+08:00",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -395,11 +395,33 @@
       ],
       "evidence": [
         "python -m pytest backend/tests/test_challenge_factory.py -v → 10 passed (2026-06-21)",
-        "python -m pytest backend/tests/ -q → 136 passed (2026-06-21)",
+        "python -m pytest backend/tests/ -q → 139 passed (2026-06-21)",
         "backend/challenge_factory/ — blueprint_planner, scaffold_technical, validator, builder",
         "POST /triage/regenerate/{id} + RelaxResponse.challenge_package"
       ],
-      "notes": "Phase 1 complete. MVP grading Python+pytest only. reference_solution stripped from API JSON. Phase 2: sqlite/json fixtures + docker_runner per-challenge secret tests."
+      "notes": "Phase 1 complete. MVP grading Python+pytest only. reference_solution stripped from API JSON. README/edit_targets synced in finalize_starter_package. Phase 2: sqlite/json fixtures + docker_runner per-challenge secret tests."
+    },
+    {
+      "id": "intake-001",
+      "priority": 13.5,
+      "area": "ai-pm-dashboard",
+      "title": "Founder ingest — problem brief & upload UI",
+      "user_visible_behavior": "Founders add backlog items without log files: paste a task description or upload logs at /startup/upload (sanitize → score loading UI), or use quick intake on /startup or POST /triage/intake.",
+      "status": "passing",
+      "verification": [
+        "POST /triage/intake with problem_statement returns item_id + sensitivity scores",
+        "POST /triage/intake strips PII from brief (email not in metadata)",
+        "/startup/upload → /startup/upload/loading → /startup?select={id}",
+        "python -m pytest backend/tests/test_intake.py -v passes"
+      ],
+      "evidence": [
+        "python -m pytest backend/tests/test_intake.py -v → 3 passed (2026-06-21)",
+        "python -m pytest backend/tests/ -q → 139 passed (2026-06-21)",
+        "POST /api/v1/triage/intake in triage_routes.py",
+        "frontend/app/startup/upload/ + FounderIntakePanel",
+        "scripts/factory_intake.sh"
+      ],
+      "notes": "Upload loading page calls sanitize + score explicitly (two steps). Sidebar intake uses one-call /intake. Both satisfy zero-trust boundary."
     }
   ]
 }

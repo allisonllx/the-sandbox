@@ -6,7 +6,7 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `python -m pytest backend/tests/ -v`
 - Current highest-priority unfinished feature: `factory-001` Phase 2 (optional data plane + per-challenge secret tests)
-- Latest passing: factory-001 Phase 1 — Dynamic Challenge Factory (blueprint + Preview generation); **136 tests**
+- Latest passing: `intake-001` — founder upload UI + `/triage/intake`; **139 tests**
 - Current blocker: None
 
 ## Session Log
@@ -233,3 +233,17 @@
 - Docs: `backend/challenge_factory/DOCS.md`, `backend/api/DOCS.md`, `docs/documentation-sync.md`, `frontend/lib/types.ts`
 - Commits: none
 - Next best step: factory-001 Phase 2 — schema/fixture agents + per-challenge secret tests
+
+### Session 017
+
+- Date: 2026-06-21
+- Goal: Founder ingest (Option 1) + upload UI + documentation sync
+- Completed:
+  - `POST /triage/intake` — local sanitize + score for problem briefs
+  - `/startup/upload` + `/startup/upload/loading` — logs or task description
+  - `scripts/factory_intake.sh`, blueprint/README sync fix in challenge_factory
+  - Docs: README, ARCHITECTURE, PRODUCT, api/DOCS, ai_pm/DOCS, scripts/README, feature_list intake-001
+- Verification run: `python -m pytest backend/tests/ -q` → **139 passed**
+- Docs: full documentation-sync pass for intake + factory + upload flows
+- Commits: none
+- Next best step: factory-001 Phase 2

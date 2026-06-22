@@ -45,3 +45,15 @@ Generates per-challenge starter files from Micro-PRD + **ChallengeBlueprint** at
 - `edit_targets` (optional override)
 
 `reference_solution` is stored on `BacklogItem.challenge_package` but stripped from API JSON responses.
+
+## Upstream: founder ingest
+
+Backlog items reach the factory after:
+
+| Path | Endpoint / UI |
+|---|---|
+| Upload UI | `/startup/upload` → `POST /proxy/sanitize` + `POST /triage/score` |
+| Quick intake | `POST /triage/intake` or sidebar on `/startup` |
+| Scripts | `./scripts/factory_intake.sh` / `factory_pipeline.sh` |
+
+See [`../ai_pm/DOCS.md`](../ai_pm/DOCS.md) and [`../../scripts/README.md`](../../scripts/README.md).

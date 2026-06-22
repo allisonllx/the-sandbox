@@ -25,6 +25,7 @@ the_sandbox/
 │   │   ├── domain_obfuscator.py
 │   │   ├── public_sanitize.py
 │   │   └── publish_draft.py
+│   ├── challenge_factory/    # Blueprint-driven starter generation at Preview
 │   ├── assessor/             # Dual-layer platform signal + sponsor fit
 │   ├── sandbox/              # Datasets, submissions, rank stubs
 │   │   ├── leaderboard.py          # Student global rank (demo)
@@ -33,9 +34,10 @@ the_sandbox/
 │   ├── api/                  # REST route definitions
 │   └── tests/
 ├── frontend/
-│   ├── app/startup/          # CTO dashboard + /startup/matches/[id]
+│   ├── app/startup/          # CTO dashboard, /startup/upload, /startup/matches/[id]
 │   ├── app/student/          # Innovation Hub, workspace, leaderboard, trust
 │   └── app/enterprise/radar/ # Enterprise subscription view (demo)
+├── scripts/                  # factory_intake.sh, factory_pipeline.sh
 ├── docs/
 ├── feature_list.json
 ├── claude-progress.md
@@ -62,8 +64,12 @@ the_sandbox/
 ### 1. Startup Ingest → Public Challenge
 
 ```
-[Startup local process]
-Raw log / feedback text
+[Startup — three ingest surfaces]
+  /startup/upload          → sanitize → score → backlog (loading UI shows each step)
+  /startup sidebar intake  → POST /triage/intake (sanitize + score in one call)
+  API / scripts            → POST /proxy/sanitize + POST /triage/score
+
+Raw log / feedback / founder brief text
   │
   ▼
 privacy_proxy/sanitizer.py  →  SanitizedMetadata (PII stripped locally)

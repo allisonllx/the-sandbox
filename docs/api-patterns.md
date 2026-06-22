@@ -249,3 +249,43 @@ Submit responses include nested `platform` and `sponsor` layers:
 - `execution_points` = `round(platform.score * 1.2)` — global rank only
 - `sponsor_fit_score` = `sponsor.score` — Match Radar sort key
 - Top-level `dimensions` aliases `platform.dimensions` for backward compatibility
+
+---
+
+## 10. Reference: Founder Ingest
+
+Three equivalent ways to create a backlog item from raw founder input. **Raw text never persists** — only sanitized metadata is stored.
+
+| Path | Steps | UI / script |
+|---|---|---|
+| One-call intake | `POST /triage/intake` | `/startup` sidebar, `factory_intake.sh` |
+| Two-step upload | `POST /proxy/sanitize` → `POST /triage/score` | `/startup/upload/loading`, `factory_pipeline.sh` |
+
+### `POST /api/v1/triage/intake`
+
+Request:
+
+```json
+{
+  "problem_statement": "Our payment retry queue drops tasks under load...",
+  "source_label": "founder-brief"
+}
+```
+
+Response (domain-specific keys — established route):
+
+```json
+{
+  "item_id": "item-abc123",
+  "metadata": { "title": "...", "schema": [], "..." : "..." },
+  "sensitivity": { "overall": 0.42, "..." : "..." }
+}
+```
+
+Operational rules:
+
+- PII scrubbing runs locally in `privacy_proxy.sanitize()` before scoring
+- Empty `problem_statement` → HTTP 422 with structured error
+- Created item appears in `GET /api/v1/triage/backlog` like any scored item
+
+See [`backend/ai_pm/DOCS.md`](../backend/ai_pm/DOCS.md) and [`scripts/README.md`](../scripts/README.md).

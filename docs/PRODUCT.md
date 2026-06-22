@@ -14,9 +14,9 @@ Technically capable but locked out of top roles by the absence of a pedigreed ne
 
 ## Core User Flows
 
-1. **Startup: Ingest & sanitize** — Paste or upload raw logs/feedback into the local client. The privacy proxy scrubs PII and extracts structural metadata without sending any content externally.
+1. **Startup: Ingest & sanitize** — Three paths: **Upload UI** at `/startup/upload` (task description or log file → loading page runs sanitize then score), **quick intake** on `/startup` (`POST /triage/intake`), or API/scripts. The privacy proxy scrubs PII locally and extracts structural metadata; sensitivity scoring runs on metadata only.
 
-2. **Startup: Triage & de-risk** — The AI PM ranks the backlog by Severity, Friction, and Sensitivity, suggests an **innovation track** (Technical or Product Feature for MVP), and applies Relaxation Controls. Founders see internal `brand_proxy`; students receive a **Company Tech Profile** only (blind audition). **Preview Changes** returns a `PublishDraft` — founders edit title, context, success criteria, evaluation focus, and company profile in the release preview before **Approve & Publish**.
+2. **Startup: Triage & de-risk** — The AI PM ranks the backlog by Severity, Friction, and Sensitivity, suggests an **innovation track** (Technical or Product Feature for MVP), and applies Relaxation Controls. **Preview Changes** runs the **Challenge Factory** for non-demo technical items (blueprint-driven starter files + validation). Founders see internal `brand_proxy`; students receive a **Company Tech Profile** only (blind audition). Preview returns `PublishDraft` + `challenge_package` — founders edit title, context, blueprint, success criteria, and company profile before **Approve & Publish**.
 
 3. **Student: Discover & set up** — Browse the Innovation Hub with track filter tabs. Each challenge shows stage, team size range, and tech stack — never the sponsor name. Technical challenges include a synthetic SQLite dataset; Product Feature challenges include a frontend starter scaffold and required `DESIGN.md` template.
 
@@ -53,6 +53,7 @@ Demo backlog profiles (CTO-only labels): **StealthCo** (`demo-005`), **NovaPay**
 ## Roadmap / Known Gaps
 
 - **Hackathon MVP scope:** Two active tracks — **Technical** + **Product Feature**; Automation / AI Governance / Strategy registered as taxonomy with "Coming soon" UI.
+- **Shipped (hackathon):** Founder upload UI (`/startup/upload`), `POST /triage/intake`, dynamic challenge factory Phase 1 (blueprint-driven starters at Preview).
 - **Not yet built:** User authentication, billing, persistent user profiles, multi-tenant startup isolation, production-grade code runner scaling, real Stripe escrow, sponsor KYC.
 - **Shipped (hackathon):** Blind audition Company Tech Profile on all public challenges; auth + multi-tenant deferred to post-MVP.
 - **Open decision:** Cloud deployment target (AWS, GCP, Fly.io) and whether the privacy proxy ships as a standalone CLI binary or an Electron app.

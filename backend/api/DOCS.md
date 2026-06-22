@@ -9,7 +9,7 @@ HTTP layer for the backend. Thin route handlers that delegate to domain modules 
 | File | Prefix | Endpoints |
 |---|---|---|
 | `routes.py` | `/api/v1/proxy` | `POST /sanitize`, `GET /health` |
-| `triage_routes.py` | `/api/v1/triage` | Backlog, scope, matches, score, relax, publish |
+| `triage_routes.py` | `/api/v1/triage` | Backlog, scope, matches, score, **intake**, relax, regenerate, publish |
 | `sandbox_routes.py` | `/api/v1/sandbox` | Challenges, starter, workspace/draft, validate, run jobs, submit, scorecard, leaderboard, enterprise radar |
 
 Routers are mounted in `main.py`. OpenAPI docs at `/docs`.
@@ -22,8 +22,8 @@ Routers are mounted in `main.py`. OpenAPI docs at `/docs`.
 | `GET` | `/backlog/{id}` | Single backlog item |
 | `GET` | `/backlog/{id}/scope` | Scope estimate + union-rep breakdown |
 | `GET` | `/backlog/{id}/matches` | **Sponsor Match Radar** — performers for this challenge only |
-| `POST` | `/score` | Score a `SanitizedMetadata` blob |
-| `POST` | `/intake` | Founder brief: local sanitize → score → backlog item |
+| `POST` | `/intake` | Founder brief: local `sanitize()` → `_create_backlog_item()` — raw prose never stored |
+| `POST` | `/score` | Score a `SanitizedMetadata` blob (used by `/startup/upload/loading`) |
 | `POST` | `/relax/{id}` | Relaxation preview + **dynamic factory** (`challenge_package`, `challenge_blueprint`); returns `challenge_draft` |
 | `POST` | `/regenerate/{id}` | Re-run factory after draft/blueprint edits |
 | `POST` | `/publish/{id}` | Publish challenge; non-legacy items require valid non-stale `challenge_package` from Preview |
