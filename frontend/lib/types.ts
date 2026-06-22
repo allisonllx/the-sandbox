@@ -68,6 +68,18 @@ export interface IntakeResponse {
   processing_notes: string[];
 }
 
+export interface SanitizeResponse {
+  ok: boolean;
+  metadata: SanitizedMetadata;
+  error?: string | null;
+}
+
+export interface ScoreResponse {
+  item_id: string;
+  scores: TechScores;
+  tag: SensitivityTag;
+}
+
 export interface RelaxationConfig {
   abstract_logic: boolean;
   synthesize_variables: boolean;

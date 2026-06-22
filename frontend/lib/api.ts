@@ -9,7 +9,11 @@ import type {
   SponsorMatchesResponse,
   PublishedChallenge,
   IntakeResponse,
+  InputFormat,
   PublishDraft,
+  SanitizeResponse,
+  SanitizedMetadata,
+  ScoreResponse,
   RelaxationConfig,
   RelaxResponse,
   PublishResponse,
@@ -41,14 +45,32 @@ export const api = {
   getItem: (id: string): Promise<BacklogItem> =>
     request(`/triage/backlog/${id}`),
 
-  intake: (problemStatement: string, sourceLabel = "Founder brief"): Promise<IntakeResponse> =>
+  intake: (
+    problemStatement: string,
+    sourceLabel = "Founder brief",
+    format: InputFormat = "text"
+  ): Promise<IntakeResponse> =>
     request("/triage/intake", {
       method: "POST",
       body: JSON.stringify({
         problem_statement: problemStatement,
         source_label: sourceLabel,
-        format: "text",
+        format,
       }),
+    }),
+
+  /** Step 1 — local privacy scrub (raw content never stored in response). */
+  sanitize: (content: string, format: InputFormat = "auto"): Promise<SanitizeResponse> =>
+    request("/proxy/sanitize", {
+      method: "POST",
+      body: JSON.stringify({ content, format }),
+    }),
+
+  /** Step 2 — sensitivity pass on sanitized metadata only. */
+  scoreMetadata: (metadata: SanitizedMetadata, sourceLabel: string): Promise<ScoreResponse> =>
+    request("/triage/score", {
+      method: "POST",
+      body: JSON.stringify({ metadata, source_label: sourceLabel }),
     }),
 
   relax: (

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { BacklogItem, IntakeResponse } from "@/lib/types";
 import { api } from "@/lib/api";
@@ -51,6 +52,12 @@ export function FounderIntakePanel({ onIntake }: Props) {
           <p className="text-[10px] text-slate-500 leading-relaxed">
             Paste an internal problem brief. Sanitized locally before scoring — raw text never leaves this process.
           </p>
+          <Link
+            href="/startup/upload"
+            className="inline-block text-[10px] text-accent/90 hover:text-accent"
+          >
+            Upload logs or longer brief →
+          </Link>
           <input
             type="text"
             value={label}

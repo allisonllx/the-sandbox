@@ -1,14 +1,18 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import type { BacklogItem } from "@/lib/types";
 import { api } from "@/lib/api";
 import { BacklogCard } from "@/components/BacklogCard";
 import { FounderIntakePanel } from "@/components/FounderIntakePanel";
 import { RelaxationPanel } from "@/components/RelaxationPanel";
 
-export default function StartupDashboard() {
+function StartupDashboardInner() {
+  const searchParams = useSearchParams();
+  const selectFromUrl = searchParams.get("select");
+
   const [items, setItems] = useState<BacklogItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -16,23 +20,27 @@ export default function StartupDashboard() {
 
   const selectedItem = items.find((i) => i.id === selectedId) ?? null;
 
-  const loadBacklog = useCallback(async () => {
+  const loadBacklog = useCallback(async (preferId?: string | null) => {
     try {
       const data = await api.getBacklog();
       setItems(data);
-      if (data.length > 0 && !selectedId) {
-        setSelectedId(data[0].id);
-      }
+      const pick =
+        preferId && data.some((i) => i.id === preferId)
+          ? preferId
+          : data.length > 0
+            ? data[0].id
+            : null;
+      setSelectedId((prev) => pick ?? prev);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load backlog");
     } finally {
       setLoading(false);
     }
-  }, [selectedId]);
+  }, []);
 
   useEffect(() => {
-    loadBacklog();
-  }, []);
+    void loadBacklog(selectFromUrl);
+  }, [loadBacklog, selectFromUrl]);
 
   function handleIntake(item: BacklogItem) {
     setItems((prev) => {
@@ -59,6 +67,12 @@ export default function StartupDashboard() {
             <span className="text-slate-400 text-xs uppercase tracking-widest">CTO Dashboard</span>
           </div>
           <div className="flex items-center gap-4 text-[11px] text-slate-500">
+            <Link
+              href="/startup/upload"
+              className="text-accent/90 hover:text-accent"
+            >
+              + Upload
+            </Link>
             <span>{items.length} items in backlog</span>
             {selectedItem?.status === "published" && (
               <Link
@@ -131,5 +145,19 @@ export default function StartupDashboard() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function StartupDashboard() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-surface flex items-center justify-center text-slate-600 text-sm">
+          Loading backlog…
+        </div>
+      }
+    >
+      <StartupDashboardInner />
+    </Suspense>
   );
 }

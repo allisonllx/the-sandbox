@@ -8,7 +8,9 @@ Next.js 14 student, startup, and enterprise UIs for The Sandbox. Proxies `/api/*
 
 | Path | Role |
 |---|---|
-| `app/startup/` | CTO dashboard — triage backlog, **founder problem intake**, relaxation controls |
+| `app/startup/` | CTO dashboard — triage backlog, quick intake, link to upload |
+| `app/startup/upload/` | Founder upload — task description or log file → sanitize → score |
+| `app/startup/upload/loading/` | Processing UI (`/proxy/sanitize` then `/triage/score`) |
 | `app/startup/matches/[challengeId]/` | Sponsor Match Radar (per-challenge performers) |
 | `app/student/` | Innovation Hub challenge browser + track tabs |
 | `app/student/challenges/[id]/` | Micro-PRD + workspace (technical or product track) |
