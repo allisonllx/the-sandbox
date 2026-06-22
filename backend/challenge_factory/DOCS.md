@@ -56,4 +56,4 @@ Backlog items reach the factory after:
 | Quick intake | `POST /triage/intake` or sidebar on `/startup` |
 | Scripts | `./scripts/factory_intake.sh` / `factory_pipeline.sh` |
 
-See [`../ai_pm/DOCS.md`](../ai_pm/DOCS.md) and [`../../scripts/README.md`](../../scripts/README.md).
+See [`../ai_pm/DOCS.md`](../ai_pm/DOCS.md) and [`../../scripts/DOCS.md`](../../scripts/DOCS.md).

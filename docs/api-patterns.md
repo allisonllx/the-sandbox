@@ -288,4 +288,4 @@ Operational rules:
 - Empty `problem_statement` → HTTP 422 with structured error
 - Created item appears in `GET /api/v1/triage/backlog` like any scored item
 
-See [`backend/ai_pm/DOCS.md`](../backend/ai_pm/DOCS.md) and [`scripts/README.md`](../scripts/README.md).
+See [`backend/ai_pm/DOCS.md`](../backend/ai_pm/DOCS.md) and [`scripts/DOCS.md`](../scripts/DOCS.md).

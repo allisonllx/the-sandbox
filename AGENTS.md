@@ -40,11 +40,11 @@ When you change code, update related documentation in the same session — do no
 leave docs stale for the next session.
 
 1. **Module doc** — check `<folder>/DOCS.md` for every code folder you edited
-   (e.g. `backend/api/` → `backend/api/DOCS.md`)
+   (e.g. `backend/api/` → `backend/api/DOCS.md`; `scripts/` → `scripts/DOCS.md`)
 2. **Topic docs** — if behavior, API contracts, architecture, or user flows
    changed, check the relevant files in `docs/` (see `docs/documentation-sync.md`)
-3. **README.md** — update when Quickstart, project structure, or the API reference
-   table changes
+3. **Root `README.md`** — update when Quickstart, project structure, or the API reference
+   table changes (the only repo-level `README.md`)
 
 If no doc updates were needed, record `"Docs: no update required — <reason>"` in
 `claude-progress.md`. Do not skip the check silently.

@@ -247,3 +247,17 @@
 - Docs: full documentation-sync pass for intake + factory + upload flows
 - Commits: none
 - Next best step: factory-001 Phase 2
+
+### Session 018
+
+- Date: 2026-06-21
+- Goal: Standardise module documentation naming to `DOCS.md`
+- Completed:
+  - Renamed `scripts/README.md` → `scripts/DOCS.md`
+  - Renamed `samples/demo_solutions/README.md` → `samples/demo_solutions/DOCS.md`
+  - Updated links in README, api-patterns, challenge_factory/DOCS, documentation-sync, AGENTS.md
+  - Documented convention: root `README.md` only; code folders use `DOCS.md`; challenge starter `README.md` unchanged
+- Verification run: none (docs-only)
+- Docs: documentation-sync.md naming section + full module list
+- Commits: none
+- Next best step: factory-001 Phase 2

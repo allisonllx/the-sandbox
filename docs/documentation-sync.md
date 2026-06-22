@@ -24,7 +24,8 @@ Use this file as a lookup: find the code path you touched, check every doc in th
 | `backend/assessor/` | `backend/assessor/DOCS.md` | **ARCHITECTURE.md** — scorecard pipeline; **PRODUCT.md** — EP vs sponsor fit; **api-patterns.md** — scorecard shape |
 | `backend/sandbox/` | `backend/sandbox/DOCS.md` | **ARCHITECTURE.md** — student flow; **PRODUCT.md** — student UX; **api-patterns.md** — sandbox endpoints |
 | `backend/challenge_factory/` | `backend/challenge_factory/DOCS.md` | **ARCHITECTURE.md** — Preview→Publish factory pipeline; **api-patterns.md** — relax/regenerate response fields |
-| `scripts/` | `scripts/README.md` | **README.md** — factory_intake.sh / factory_pipeline.sh quickstart |
+| `scripts/` | `scripts/DOCS.md` | **README.md** (root) — factory script quickstart in main onboarding |
+| `samples/demo_solutions/` | `samples/demo_solutions/DOCS.md` | **README.md** (root) — sample publish/submit quickstart |
 | `backend/api/` | `backend/api/DOCS.md` | **api-patterns.md** — any new/changed endpoint (required); **README.md** — API reference table; **ARCHITECTURE.md** — new external integration |
 | `backend/tests/` | `backend/tests/DOCS.md` | Usually no `docs/` update unless verification rules or API contracts changed |
 | `backend/main.py`, `backend/requirements.txt` | `backend/DOCS.md` | **README.md** — startup commands, dependencies, or project structure |
@@ -49,7 +50,11 @@ Use this file as a lookup: find the code path you touched, check every doc in th
 
 ## Module `DOCS.md` — when to update
 
-Each backend subfolder has a `DOCS.md`. Update it when:
+Each code folder uses **`DOCS.md`** for module-local agent docs (not `README.md`). The repo root keeps **`README.md`** for human onboarding, quickstart, and the API reference table.
+
+**Exception:** student challenge starters and sample submissions still use `README.md` inside published file trees — that name is part of the challenge contract, not repo documentation.
+
+Update a folder's `DOCS.md` when:
 
 - Files are added, removed, or renamed
 - Module purpose or invariants change
@@ -59,14 +64,19 @@ Each backend subfolder has a `DOCS.md`. Update it when:
 Current module docs:
 
 ```
+README.md                    # root onboarding only
 backend/DOCS.md
 backend/privacy_proxy/DOCS.md
 backend/ai_pm/DOCS.md
 backend/assessor/DOCS.md
 backend/api/DOCS.md
+backend/challenge_factory/DOCS.md
+backend/prompts/DOCS.md
 backend/sandbox/DOCS.md
 backend/tests/DOCS.md
 frontend/DOCS.md
+scripts/DOCS.md
+samples/demo_solutions/DOCS.md
 ```
 
 ---

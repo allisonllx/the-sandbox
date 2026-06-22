@@ -35,4 +35,4 @@ ARCHETYPE=integration ./scripts/factory_pipeline.sh
 - **Upload:** http://localhost:3000/startup/upload — same sanitize → score flow with loading page
 - **Dashboard:** http://localhost:3000/startup — Preview / Publish after item appears in backlog
 
-See [`samples/demo_solutions/`](../samples/demo_solutions/) for `demo-*` publish → submit flows.
+See [`samples/demo_solutions/DOCS.md`](../samples/demo_solutions/DOCS.md) for `demo-*` publish → submit flows.

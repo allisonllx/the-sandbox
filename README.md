@@ -105,7 +105,7 @@ curl -s -X POST http://localhost:8000/api/v1/triage/score \
 ./scripts/factory_pipeline.sh  # log sanitize → score → relax → publish
 ```
 
-See [`samples/demo_solutions/README.md`](samples/demo_solutions/README.md) for publish → submit demos on `demo-*` items.
+See [`samples/demo_solutions/DOCS.md`](samples/demo_solutions/DOCS.md) for publish → submit demos on `demo-*` items.
 
 ### 2. De-risk & publish (startup)
 
@@ -278,7 +278,7 @@ Or run everything via `./init.sh`.
 
 ### Sample solutions (testing)
 
-Ready-to-submit reference projects for `demo-003`, `demo-004`, and `demo-005` live in [`samples/demo_solutions/`](samples/demo_solutions/README.md). One-liner after the backend is running:
+Ready-to-submit reference projects for `demo-003`, `demo-004`, and `demo-005` live in [`samples/demo_solutions/`](samples/demo_solutions/DOCS.md). One-liner after the backend is running:
 
 ```bash
 ./samples/demo_solutions/test_sample.sh demo-003
