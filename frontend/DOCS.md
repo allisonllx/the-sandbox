@@ -17,7 +17,7 @@ Next.js 14 student, startup, and enterprise UIs for The Sandbox. Proxies `/api/*
 | `app/student/leaderboard/` | Global Execution Points (student motivation) |
 | `app/student/trust/` | Sponsor verification protocol narrative (stub) |
 | `app/enterprise/radar/` | Platform-wide top-tier candidates (enterprise demo) |
-| `components/ChallengeWorkspace.tsx` | Multi-file Monaco editor, autosave, run/submit |
+| `components/ChallengeWorkspace.tsx` | Multi-file Monaco editor, autosave, run/submit, **draggable terminal height** |
 | `components/ProductWorkspace.tsx` | Product track prototype editor + DESIGN.md |
 | `components/PublishDraftEditor.tsx` | Founder-editable release preview (raw markdown textarea) |
 | `components/MicroPRDView.tsx` | Student brief sections — delegates to `BriefSectionBody` |
