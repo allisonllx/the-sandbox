@@ -63,3 +63,5 @@ Translates HTTP requests into calls to `privacy_proxy/`, `ai_pm/`, and `sandbox/
 - CORS allows `http://localhost:3000` only — update for production deployment
 - `POST /relax/{id}` and `POST /publish/{id}` share `RelaxRequest` body (`config`, optional `track`, optional `draft`, optional `blueprint` for archetype override)
 - `RelaxResponse.challenge_spec` is the canonical technical definition when present; Micro-PRD is projected from it on the dynamic path
+- Student `GET /sandbox/challenges/{id}` keeps spec-projected Micro-PRD (skips legacy `microprd_enrich` when `challenge_spec` is set)
+- `MicroPRD.context` is markdown; student UI renders via `frontend/components/BriefMarkdown.tsx`

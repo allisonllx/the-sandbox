@@ -3,15 +3,104 @@
 from __future__ import annotations
 
 from ..ai_pm.models import ChallengeTrack, MicroPRD
+from ..privacy_proxy.models import SanitizedMetadata
 from ..sandbox.starter_scaffold import format_edit_targets, platform_sandbox_instructions
 from .models import ChallengeBlueprint, DataPlane, TechnicalArchetype
 from .spec_models import TechnicalChallengeSpec
 
 
+def _field_summary(metadata: SanitizedMetadata | None, limit: int = 6) -> str:
+    if not metadata or not metadata.fields:
+        return ""
+    return ", ".join(f"`{field.name}`" for field in metadata.fields[:limit])
+
+
+def format_spec_examples(spec: TechnicalChallengeSpec) -> str:
+    """Render typed I/O examples for the student brief."""
+    if not spec.examples:
+        return ""
+
+    lines = ["**Examples:**"]
+    for example in spec.examples[:4]:
+        lines.append(f"- **{example.label.strip()}** — `{example.signature.strip()}`")
+        if example.input_sample.strip():
+            lines.append(f"  - Input: {example.input_sample.strip()}")
+        if example.output_sample.strip():
+            lines.append(f"  - Output: {example.output_sample.strip()}")
+        if example.notes.strip():
+            lines.append(f"  - Note: {example.notes.strip()}")
+    return "\n".join(lines)
+
+
+def format_spec_context(
+    spec: TechnicalChallengeSpec,
+    *,
+    metadata: SanitizedMetadata | None = None,
+) -> str:
+    """Assignment-style brief: scenario, background, constraints, examples, and task."""
+    parts: list[str] = [f"**Scenario:** {spec.scenario.strip()}"]
+
+    pain = spec.startup_pain_point.strip()
+    if pain and pain.lower() not in spec.scenario.lower():
+        parts.extend(["", f"**Background:** {pain}"])
+
+    fields = _field_summary(metadata)
+    if fields:
+        parts.extend(["", f"**Signals in the intake:** {fields}."])
+
+    if spec.interface_contract.invariants:
+        inv = "; ".join(spec.interface_contract.invariants[:4])
+        parts.extend(["", f"**Constraints:** {inv}"])
+
+    examples_block = format_spec_examples(spec)
+    if examples_block:
+        parts.extend(["", examples_block])
+
+    if spec.definition_of_done:
+        task = ". ".join(item.strip().rstrip(".") for item in spec.definition_of_done[:4])
+    else:
+        module = spec.interface_contract.primary_module
+        task = f"Implement the required behaviour in `{module}` and pass all public tests"
+    parts.extend(["", f"**Your task:** {task}."])
+
+    return "\n".join(parts)
+
+
+def spec_success_criteria(
+    spec: TechnicalChallengeSpec,
+    *,
+    edit_targets: list[str] | None = None,
+) -> list[str]:
+    """Archetype-specific success criteria plus minimal platform checks."""
+    targets = edit_targets or list(spec.starter_layout.edit_targets) or [
+        spec.interface_contract.primary_module
+    ]
+    criteria: list[str] = []
+    seen: set[str] = set()
+
+    def add(line: str) -> None:
+        key = line.strip().lower()
+        if key and key not in seen:
+            seen.add(key)
+            criteria.append(line.strip())
+
+    for item in spec.definition_of_done:
+        add(item)
+    for inv in spec.interface_contract.invariants:
+        add(inv)
+
+    add(f"Implement the required behaviour in {format_edit_targets(targets)}.")
+    add("All public tests pass via Run Public Tests in the browser workspace.")
+    return criteria
+
+
 def spec_to_blueprint(spec: TechnicalChallengeSpec) -> ChallengeBlueprint:
     """Deterministic blueprint adapter — no LLM."""
     targets = list(spec.starter_layout.edit_targets) or [spec.interface_contract.primary_module]
-    focus = spec.definition_of_done[0] if spec.definition_of_done else spec.startup_pain_point
+    if spec.definition_of_done:
+        focus = ". ".join(spec.definition_of_done[:2])
+    else:
+        focus = spec.startup_pain_point or spec.scenario
     return ChallengeBlueprint(
         archetype=spec.classification.archetype,
         primary_focus=focus[:500],
@@ -28,6 +117,15 @@ def spec_to_spec_md(spec: TechnicalChallengeSpec) -> str:
     )
     invariants = "\n".join(f"- {inv}" for inv in spec.interface_contract.invariants)
     dod = "\n".join(f"- {item}" for item in spec.definition_of_done)
+    example_lines: list[str] = []
+    for example in spec.examples:
+        example_lines.append(f"### {example.label}")
+        example_lines.append(f"- Signature: `{example.signature}`")
+        example_lines.append(f"- Input: {example.input_sample}")
+        example_lines.append(f"- Output: {example.output_sample}")
+        if example.notes.strip():
+            example_lines.append(f"- Note: {example.notes}")
+    examples_md = "\n\n".join(example_lines) if example_lines else "_No examples provided._"
     return f"""# Interface specification
 
 ## Scenario
@@ -37,6 +135,10 @@ def spec_to_spec_md(spec: TechnicalChallengeSpec) -> str:
 ## Pain point
 
 {spec.startup_pain_point}
+
+## Examples
+
+{examples_md}
 
 ## Primary module
 
@@ -98,6 +200,7 @@ def spec_to_microprd(
     *,
     challenge_id: str,
     brand_proxy: str = "DataStream",
+    metadata: SanitizedMetadata | None = None,
 ) -> MicroPRD:
     """Deterministic Micro-PRD projection from spec."""
     targets = list(spec.starter_layout.edit_targets) or [spec.interface_contract.primary_module]
@@ -111,8 +214,8 @@ def spec_to_microprd(
         title=spec.title,
         track=ChallengeTrack.technical,
         brand_proxy=brand_proxy,
-        context=spec.scenario,
-        definition_of_success=list(spec.definition_of_done),
+        context=format_spec_context(spec, metadata=metadata),
+        definition_of_success=spec_success_criteria(spec, edit_targets=targets),
         structural_constraints=constraints,
         stack_guidance=list(spec.stack_guidance),
         sandbox_instructions=platform_sandbox_instructions(

@@ -28,35 +28,64 @@ repo contains interface spec + public tests + minimal stubs.
 
 Never choose algorithm for webhook/payment/retry log signals.
 
-Output ONE JSON object with classification + full spec. public_api signatures must be valid Python.
-primary_module path under src/. Include realistic definition_of_done and assessor_signals.
+## Brief quality rules
+
+- `scenario` explains the product problem in plain language (no source labels).
+- `examples` is **required**: 2–4 concrete cases students can copy into mental models.
+- Every example MUST include:
+  - `signature` — full Python def line with **typed parameters and return** (PEP 484)
+  - `input_sample` — literal values plus a short type note, e.g. `lines: list[str] = ['{{"a": 1}}', ...]`
+  - `output_sample` — literal expected return plus type, e.g. `[{{"a": 1}}]  # list[dict]`
+  - `notes` — edge case or invariant when relevant (empty input, malformed row, duplicate key)
+- For stream/line parsers: show what a **line** looks like (one JSON object per line, not a JSON array).
+- Do not use real PII, company names, or raw log payloads — synthetic values only.
+
+Output ONE JSON object with classification + full spec. public_api signatures must be valid Python
+with type hints matching `examples[].signature`. primary_module path under src/.
+Include realistic definition_of_done and assessor_signals.
 
 {JSON_ONLY}
 {{
   "classification": {{
-    "archetype": "webhook_handler",
+    "archetype": "stream_parser",
     "confidence": 0.9,
-    "trigger_signals": ["..."],
+    "trigger_signals": ["file_size_bytes", "oom"],
     "recommended_data_plane": "none"
   }},
-  "title": "...",
-  "startup_pain_point": "...",
-  "scenario": "...",
+  "title": "Memory-bounded JSONL upload parser",
+  "startup_pain_point": "Multi-gigabyte JSONL uploads OOM the worker.",
+  "scenario": "Refactor parse_lines so uploads stream line-by-line without materializing the file.",
   "ingest_kind": "behavioral_log",
   "interface_contract": {{
-    "primary_module": "src/webhook_engine.py",
+    "primary_module": "src/stream_parser.py",
     "support_modules": [],
     "entrypoint": "main.py",
-    "public_api": [{{"name": "process_event", "signature": "def process_event(payload: dict, headers: dict) -> dict"}}],
-    "invariants": ["..."]
+    "public_api": [{{"name": "parse_lines", "signature": "def parse_lines(lines: Iterable[str]) -> list[dict]"}}],
+    "invariants": ["Memory bounded — process one line at a time"]
   }},
+  "examples": [
+    {{
+      "label": "Valid JSONL lines",
+      "signature": "def parse_lines(lines: Iterable[str]) -> list[dict]",
+      "input_sample": "lines = ['{{\"event_id\": 1, \"amount_cents\": 100}}', '{{\"event_id\": 2}}']  # each str is one JSON object",
+      "output_sample": "[{{\"event_id\": 1, \"amount_cents\": 100}}, {{\"event_id\": 2}}]  # list[dict]",
+      "notes": "Preserve order; do not join lines into one blob before parsing."
+    }},
+    {{
+      "label": "Malformed line skipped",
+      "signature": "def parse_lines(lines: Iterable[str]) -> list[dict]",
+      "input_sample": "lines = ['{{\"event_id\": 1}}', 'not-valid-json', '{{\"event_id\": 3}}']",
+      "output_sample": "[{{\"event_id\": 1}}, {{\"event_id\": 3}}]  # list[dict]",
+      "notes": "json.JSONDecodeError on one line must not abort the rest of the stream."
+    }}
+  ],
   "definition_of_done": ["..."],
   "assessor_signals": ["..."],
   "data_plane": "none",
   "fixtures": {{}},
   "starter_layout": {{
     "required_paths": ["README.md", "docs/SPEC.md", "main.py", "tests/test_public.py"],
-    "edit_targets": ["src/webhook_engine.py"],
+    "edit_targets": ["src/stream_parser.py"],
     "student_may_add": ["src/helpers/*.py"]
   }},
   "onboarding_budget_minutes": 30,

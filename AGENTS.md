@@ -46,9 +46,10 @@ time without mutating seeds.
 | Spec | `challenge_spec.interface_contract` + `starter_layout.edit_targets` |
 | Interface doc | `docs/SPEC.md` in starter package |
 | Tests | `tests/test_public.py` imports from `interface_contract.public_api` |
-| Micro-PRD | `structural_constraints`, `sandbox_instructions` (from spec projection) |
+| Micro-PRD | `context` (markdown brief), `definition_of_success`, `structural_constraints`, `sandbox_instructions` (from spec projection) |
+| Spec examples | `challenge_spec.examples[]` — typed signatures + literal I/O; projected into brief + `docs/SPEC.md` |
 | Starter README | `README.md` inside the package |
-| Student API | `GET /api/v1/sandbox/challenges/{id}` → `microprd` + `starter` file tree |
+| Student API | `GET /api/v1/sandbox/challenges/{id}` → `microprd` + `starter` file tree; frontend renders brief markdown |
 | Legacy demos | `starter_scaffold.py` — only path that legitimately uses `src/queries.py` |
 
 **When you change** archetypes, scaffolds, or student-facing copy:

@@ -11,6 +11,7 @@ from .spec_models import (
     InterfaceContract,
     PublicAPIEntry,
     SpecClassification,
+    SpecExample,
     StarterLayout,
     TechnicalChallengeSpec,
 )
@@ -25,6 +26,137 @@ _STREAM_HINTS = frozenset({"file_size_bytes", "chunk_count", "oom", "memory_mb"}
 _CLI_HINTS = frozenset({"latency_ms", "token_count", "command", "cli_duration_ms"})
 _ADAPTER_HINTS = frozenset({"source_system", "target_schema", "connector", "sync_status"})
 _CIRCUIT_HINTS = frozenset({"timeout_ms", "failure_rate", "circuit_state", "downstream_status"})
+
+
+def _brief_examples_for(archetype: TechnicalArchetype) -> list[SpecExample]:
+    """Typed I/O samples for heuristic specs — mirrored in challenge_spec.py prompt."""
+    archetype = normalize_archetype(archetype)
+    catalog: dict[TechnicalArchetype, list[SpecExample]] = {
+        TechnicalArchetype.stream_parser: [
+            SpecExample(
+                label="Valid JSONL lines",
+                signature="def parse_lines(lines: Iterable[str]) -> list[dict]",
+                input_sample=(
+                    "lines = ['{\"event_id\": 1, \"amount_cents\": 100}', "
+                    "'{\"event_id\": 2, \"amount_cents\": 50}']  "
+                    "# Iterable[str] — one JSON object per line, no wrapping array"
+                ),
+                output_sample=(
+                    "[{\"event_id\": 1, \"amount_cents\": 100}, "
+                    "{\"event_id\": 2, \"amount_cents\": 50}]  # list[dict]"
+                ),
+                notes="Process line-by-line; never materialize the full upload as a single string.",
+            ),
+            SpecExample(
+                label="Malformed line skipped",
+                signature="def parse_lines(lines: Iterable[str]) -> list[dict]",
+                input_sample=(
+                    "lines = ['{\"event_id\": 1}', 'not-valid-json', '{\"event_id\": 3}']  # Iterable[str]"
+                ),
+                output_sample='[{"event_id": 1}, {"event_id": 3}]  # list[dict] — middle line dropped',
+                notes="json.JSONDecodeError on one line must not abort the rest of the stream.",
+            ),
+        ],
+        TechnicalArchetype.idempotency_engine: [
+            SpecExample(
+                label="First delivery",
+                signature="def process_once(idempotency_key: str, payload: dict) -> dict",
+                input_sample='idempotency_key="pay-7f3a", payload={"amount_cents": 2500, "currency": "USD"}  # dict',
+                output_sample='{"status": "processed", "amount": 2500}  # dict',
+                notes="Persist outcome keyed by idempotency_key (str).",
+            ),
+            SpecExample(
+                label="Duplicate retry",
+                signature="def process_once(idempotency_key: str, payload: dict) -> dict",
+                input_sample='idempotency_key="pay-7f3a", payload={"amount_cents": 9999}  # same str key, different dict',
+                output_sample='{"status": "processed", "amount": 2500}  # dict — cached first result',
+                notes="Same idempotency_key must not re-run side effects or change stored amount.",
+            ),
+        ],
+        TechnicalArchetype.webhook_handler: [
+            SpecExample(
+                label="Valid webhook",
+                signature="def process_event(payload: dict, headers: dict) -> dict",
+                input_sample='payload={"event_id": "evt_1", "amount_cents": 100}, headers={"X-Signature": "abc"}',
+                output_sample='{"status": "ok", "attempts": 1}  # dict',
+            ),
+            SpecExample(
+                label="Transient 502 retry",
+                signature="def process_event(payload: dict, headers: dict) -> dict",
+                input_sample='payload={"event_id": "evt_2"}, headers={"X-Simulate-502": "1"}  # dict flags retry',
+                output_sample='{"status": "ok", "attempts": 2}  # dict — retried once then succeeded',
+                notes="Bounded retries; surface exhaustion when limit exceeded.",
+            ),
+        ],
+        TechnicalArchetype.data_core: [
+            SpecExample(
+                label="Batch session lookup",
+                signature="def batch_session_lookup(session_ids: list[str]) -> list[dict]",
+                input_sample='session_ids=["sess_a", "sess_b", "sess_c"]  # list[str]',
+                output_sample='[{"session_id": "sess_a", "event_count": 12}, ...]  # list[dict], same length as input',
+                notes="One round-trip for the batch — avoid N+1 queries per id.",
+            ),
+        ],
+        TechnicalArchetype.rls_proxy: [
+            SpecExample(
+                label="Tenant filter",
+                signature="def filter_rows(rows: list[dict], tenant_id: str) -> list[dict]",
+                input_sample='rows=[{"tenant_id": "t1", "v": 1}, {"tenant_id": "t2", "v": 2}], tenant_id="t1"',
+                output_sample='[{"tenant_id": "t1", "v": 1}]  # list[dict]',
+                notes="Never return rows whose tenant_id (str) differs from the argument.",
+            ),
+        ],
+        TechnicalArchetype.data_masking: [
+            SpecExample(
+                label="Mask PII fields",
+                signature="def mask_record(record: dict) -> dict",
+                input_sample='record={"user_id": "u-42", "email": "dev@example.com", "score": 91}  # dict',
+                output_sample='record={"user_id": "<token>", "email": "***@redacted", "score": 91}  # dict — same keys',
+                notes="Preserve non-PII types (int stays int); replace identifiers deterministically.",
+            ),
+        ],
+        TechnicalArchetype.circuit_breaker: [
+            SpecExample(
+                label="Closed — call succeeds",
+                signature="def call_with_breaker(fn: Callable[[], dict], failure_threshold: int) -> dict",
+                input_sample="fn returns {'ok': True}; failure_threshold: int = 3",
+                output_sample="{'ok': True}  # dict — breaker stays closed",
+            ),
+            SpecExample(
+                label="Open after threshold",
+                signature="def call_with_breaker(fn: Callable[[], dict], failure_threshold: int) -> dict",
+                input_sample="fn raises TimeoutError three times; failure_threshold: int = 3",
+                output_sample="raises CircuitOpenError  # fail fast while open",
+                notes="failure_threshold must be int; do not call fn while breaker is open.",
+            ),
+        ],
+        TechnicalArchetype.cli_instrumentation: [
+            SpecExample(
+                label="Record command latency",
+                signature="def record_command(name: str, duration_ms: float) -> None",
+                input_sample='name="deploy", duration_ms=842.5  # str, float',
+                output_sample="None",
+                notes="duration_ms is float milliseconds; name is the CLI subcommand label.",
+            ),
+        ],
+        TechnicalArchetype.data_adapter: [
+            SpecExample(
+                label="Map source row",
+                signature="def map_row(source: dict, schema: dict) -> dict",
+                input_sample='source={"id": "1", "full_name": "Ada"}, schema={"id": "user_id", "full_name": "name"}',
+                output_sample='{"user_id": "1", "name": "Ada"}  # dict keyed by target schema',
+            ),
+        ],
+        TechnicalArchetype.algorithm: [
+            SpecExample(
+                label="Clamp in range",
+                signature="def clamp_values(values: list[int], low: int, high: int) -> list[int]",
+                input_sample="values=[-1, 5, 99], low=0, high=10  # list[int], int, int",
+                output_sample="[0, 5, 10]  # list[int] — same length as values",
+            ),
+        ],
+    }
+    return list(catalog.get(archetype, []))
 
 
 @dataclass(frozen=True)
@@ -519,21 +651,33 @@ def test_masks_email():
         TechnicalArchetype.stream_parser: ArchetypeDefaults(
             primary_module="src/stream_parser.py",
             public_api=[
-                PublicAPIEntry(name="parse_lines", signature="def parse_lines(lines) -> list[dict]"),
+                PublicAPIEntry(
+                    name="parse_lines",
+                    signature="def parse_lines(lines: Iterable[str]) -> list[dict]",
+                ),
             ],
             invariants=["Memory bounded — no full materialization"],
-            pain_point="Large log uploads OOM the parser.",
-            scenario_template="Implement memory-bounded parse_lines in src/stream_parser.py for streaming JSONL.",
-            definition_of_done=["Parses valid lines", "Skips malformed lines"],
+            pain_point="Large JSONL log uploads OOM the parser because it materializes the entire file in memory.",
+            scenario_template=(
+                "Your upload worker rejects multi-gigabyte JSONL files: parse_lines loads every line "
+                "into memory at once. Refactor src/stream_parser.py so parsing is memory-bounded and "
+                "tolerates malformed lines without aborting the stream."
+            ),
+            definition_of_done=[
+                "parse_lines streams input without materializing the full file",
+                "Valid JSONL lines are parsed into dicts in order",
+                "Malformed lines are skipped without aborting the stream",
+            ],
             assessor_signals=["handles empty iterator"],
             stub_body='''"""Stream parser stub."""
 
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 
 
-def parse_lines(lines) -> list[dict]:
+def parse_lines(lines: Iterable[str]) -> list[dict]:
     """TODO: loads all at once — stream safely."""
     return [json.loads(line) for line in lines]
 ''',
@@ -542,9 +686,10 @@ def parse_lines(lines) -> list[dict]:
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 
 
-def parse_lines(lines) -> list[dict]:
+def parse_lines(lines: Iterable[str]) -> list[dict]:
     out: list[dict] = []
     for line in lines:
         line = line.strip()
@@ -657,6 +802,7 @@ def build_heuristic_spec(
         scenario=defaults.scenario_template,
         ingest_kind=ingest_kind,
         interface_contract=contract,
+        examples=_brief_examples_for(archetype),
         definition_of_done=list(defaults.definition_of_done),
         assessor_signals=list(defaults.assessor_signals),
         data_plane=data_plane,

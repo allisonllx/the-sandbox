@@ -28,7 +28,7 @@ the_sandbox/
 │   ├── challenge_factory/    # TechnicalChallengeSpec → dynamic starter at Preview
 │   │   ├── challenge_spec.py       # Single-pass spec inference
 │   │   ├── scaffold_interpolate.py # Stubs/tests from interface_contract
-│   │   └── spec_projection.py      # spec_to_microprd, spec_to_blueprint
+│   │   └── spec_projection.py      # spec_to_microprd, format_spec_context, SpecExample projection
 │   ├── assessor/             # Dual-layer platform signal + sponsor fit
 │   ├── sandbox/              # Datasets, submissions, rank stubs
 │   │   ├── leaderboard.py          # Student global rank (demo)
@@ -39,6 +39,7 @@ the_sandbox/
 ├── frontend/
 │   ├── app/startup/          # CTO dashboard, /startup/upload, /startup/matches/[id]
 │   ├── app/student/          # Innovation Hub, workspace, leaderboard, trust
+│   ├── components/           # BriefMarkdown, BriefSectionBody (student brief rendering)
 │   └── app/enterprise/radar/ # Enterprise subscription view (demo)
 ├── scripts/                  # factory_*.sh + samples/run_archetype.sh (per-archetype smokes)
 ├── docs/
@@ -90,8 +91,9 @@ POST /triage/relax/{id}
   ├─ Returns relaxed field preview + challenge_draft (PublishDraft)
   ├─ Non-demo technical:
   │    generate_spec() (one LLM call or heuristic)
-  │    → build_package(challenge_spec=…)
-  │    → spec_to_microprd() before persist
+  │    → spec_to_microprd() (markdown brief + typed examples)
+  │    → build PublishDraft baseline from projected Micro-PRD
+  │    → build_package(challenge_spec=…, draft=challenge_draft)
   │    → challenge_package + validation + optional challenge_spec
   ├─ Product track / demo-*: no dynamic package (legacy scaffolds at publish)
   └─ Founder may override archetype via RelaxRequest.blueprint (e.g. algorithm)
@@ -111,6 +113,8 @@ POST /triage/publish/{id}  (requires locked reward + scope guard pass)
   │
   ▼
 GET /sandbox/challenges/{id}  →  public_sanitize.build_public_challenge()
+  └─ sandbox_routes._student_microprd(): spec-driven items skip legacy microprd_enrich
+  └─ frontend MicroPRDView + BriefMarkdown render microprd.context as HTML (subset markdown)
 ```
 
 ### 2. Student Submission → Scorecard

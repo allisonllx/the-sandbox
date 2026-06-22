@@ -6,7 +6,7 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `python -m pytest backend/tests/ -v`
 - Current highest-priority unfinished feature: `factory-001` Phase 2 (optional data plane + per-challenge secret tests)
-- Latest passing: TechnicalChallengeSpec redesign; **160 tests**
+- Latest passing: Spec-driven briefs + frontend markdown render; **166 tests**
 - Current blocker: None
 
 ## Session Log
@@ -285,6 +285,49 @@
 - Goal: Documentation sync — TechnicalChallengeSpec, archetype samples, product vs technical factory paths
 - Completed: Updated AGENTS.md, README.md, ARCHITECTURE.md, PRODUCT.md, api-patterns.md, documentation-sync.md, all touched module DOCS (ai_pm, api, prompts, tests, scripts, samples)
 - Verification run: n/a (docs-only)
+- Docs: full pass per documentation-sync.md
+- Commits: none
+- Next best step: factory-001 Phase 2
+
+### Session 021
+
+- Date: 2026-06-21
+- Goal: Fix generic stream_parser (and spec-driven) student briefs
+- Completed:
+  - `format_spec_context` + `spec_success_criteria` in `spec_projection.py` — assignment-style context/DoD from spec
+  - Relax builds `PublishDraft` after spec projection (fixes stale package hash + generic draft)
+  - Publish applies founder `PublishDraft` on top of spec-projected Micro-PRD
+  - Student sandbox API skips legacy `microprd_enrich` when `challenge_spec` is set
+  - Richer `stream_parser` heuristic defaults in `archetype_catalog.py`
+  - Tests: `test_spec_projection.py`, `test_stream_parser_brief_is_specific_end_to_end`
+- Verification run: `python -m pytest backend/tests/ -q` → **165 passed**
+- Docs: `backend/challenge_factory/DOCS.md`, `backend/api/DOCS.md`, `backend/tests/DOCS.md`
+- Commits: none
+- Next best step: factory-001 Phase 2
+
+### Session 022
+
+- Date: 2026-06-21
+- Goal: Add typed I/O examples to challenge briefs (incl. what a "line" looks like)
+- Completed:
+  - `SpecExample` model + `examples` on `TechnicalChallengeSpec`
+  - `challenge_spec.py` prompt requires 2–4 typed examples (PEP 484 signatures, literal I/O)
+  - `format_spec_examples()` in student brief + `docs/SPEC.md` projection
+  - `_brief_examples_for()` heuristic catalog per archetype; `parse_lines` → `Iterable[str]`
+  - Tests: `test_stream_parser_brief_includes_typed_examples`
+- Verification run: spec + factory tests → **15 passed**
+- Docs: `backend/prompts/DOCS.md`, `backend/challenge_factory/DOCS.md`
+- Commits: none
+- Next best step: factory-001 Phase 2
+
+### Session 023
+
+- Date: 2026-06-21
+- Goal: Frontend markdown brief rendering + documentation sync
+- Completed:
+  - `BriefMarkdown`, `BriefMarkdownInline`, `BriefSectionBody`, `BriefAsideSection` — student left panel renders markdown (all Micro-PRD sections + anomalies/evaluation focus)
+  - Full doc sync: `frontend/DOCS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `docs/api-patterns.md`, `docs/documentation-sync.md`, `AGENTS.md`, `README.md`, `backend/challenge_factory/DOCS.md`, `backend/ai_pm/DOCS.md`, `backend/api/DOCS.md`
+- Verification run: `npm run typecheck` (frontend) → pass
 - Docs: full pass per documentation-sync.md
 - Commits: none
 - Next best step: factory-001 Phase 2

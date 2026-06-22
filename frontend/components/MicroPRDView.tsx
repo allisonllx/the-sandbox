@@ -1,4 +1,5 @@
 import type { CompanyTechProfile, MicroPRD } from "@/lib/types";
+import { BriefSectionBody } from "./BriefSectionBody";
 import { CompanyProfilePanel } from "./CompanyProfilePanel";
 
 const BASE_SECTIONS = [
@@ -92,18 +93,7 @@ export function MicroPRDView({
             <h3 className="text-[11px] uppercase tracking-widest text-slate-500 font-semibold">
               {label}
             </h3>
-            {list ? (
-              <ul className="space-y-2">
-                {(content as string[]).map((item, i) => (
-                  <li key={i} className="text-sm text-slate-300 flex gap-2">
-                    <span className="text-accent flex-shrink-0">›</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">{content as string}</p>
-            )}
+            <BriefSectionBody content={content} list={list} />
           </section>
         );
       })}

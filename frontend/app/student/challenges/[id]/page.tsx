@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import type { PublishedChallenge, SubmitResponse } from "@/lib/types";
 import { MicroPRDView } from "@/components/MicroPRDView";
+import { BriefAsideSection, BriefSectionBody } from "@/components/BriefSectionBody";
 import { RewardBadges } from "@/components/CompanyProfilePanel";
 import { ChallengeWorkspace } from "@/components/ChallengeWorkspace";
 import { ProductWorkspace } from "@/components/ProductWorkspace";
@@ -149,34 +150,28 @@ export default function ChallengeWorkspacePage() {
             <RewardBadges reward={challenge.reward} escrowLabel={challenge.reward_escrow_label} />
           </div>
           {!isProduct && challenge.dataset_anomalies.length > 0 && (
-            <div className="mt-8 pt-6 border-t border-surface-border space-y-2">
-              <h3 className="text-[11px] uppercase tracking-widest text-slate-500 font-semibold">
-                Injected Anomalies
-              </h3>
-              <ul className="space-y-1">
-                {challenge.dataset_anomalies.map((a, i) => (
-                  <li key={i} className="text-xs text-amber-400/90 flex gap-2">
-                    <span>⚠</span>
-                    {a}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <BriefAsideSection label="Injected Anomalies">
+              <BriefSectionBody
+                content={challenge.dataset_anomalies}
+                list
+                listMarker="⚠"
+                listMarkerClassName="text-amber-400/90 flex-shrink-0"
+                itemClassName="text-xs text-amber-400/90 flex gap-2 leading-relaxed"
+                inlineClassName="text-xs text-amber-400/90 leading-relaxed"
+              />
+            </BriefAsideSection>
           )}
           {isProduct && challenge.evaluation_focus && challenge.evaluation_focus.length > 0 && (
-            <div className="mt-8 pt-6 border-t border-surface-border space-y-2">
-              <h3 className="text-[11px] uppercase tracking-widest text-slate-500 font-semibold">
-                Evaluation Focus
-              </h3>
-              <ul className="space-y-1">
-                {challenge.evaluation_focus.map((focus) => (
-                  <li key={focus} className="text-xs text-purple-400/90 flex gap-2">
-                    <span>◎</span>
-                    {focus}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <BriefAsideSection label="Evaluation Focus">
+              <BriefSectionBody
+                content={challenge.evaluation_focus}
+                list
+                listMarker="◎"
+                listMarkerClassName="text-purple-400/90 flex-shrink-0"
+                itemClassName="text-xs text-purple-400/90 flex gap-2 leading-relaxed"
+                inlineClassName="text-xs text-purple-400/90 leading-relaxed"
+              />
+            </BriefAsideSection>
           )}
         </aside>
 
