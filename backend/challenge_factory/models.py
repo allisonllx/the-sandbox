@@ -10,11 +10,40 @@ from pydantic import BaseModel, Field
 
 
 class TechnicalArchetype(str, Enum):
+    # Legacy aliases (kept for API compat — normalize via normalize_archetype())
     data_adjacent = "data_adjacent"
     data_core = "data_core"
     service_module = "service_module"
-    algorithm = "algorithm"
     integration = "integration"
+    # Sweet-spot system modules (Phase 1)
+    data_adapter = "data_adapter"
+    cli_instrumentation = "cli_instrumentation"
+    webhook_handler = "webhook_handler"
+    data_masking = "data_masking"
+    circuit_breaker = "circuit_breaker"
+    idempotency_engine = "idempotency_engine"
+    stream_parser = "stream_parser"
+    rls_proxy = "rls_proxy"
+    # Explicit override only
+    algorithm = "algorithm"
+
+
+def normalize_archetype(
+    archetype: TechnicalArchetype,
+    *,
+    field_names: set[str] | None = None,
+) -> TechnicalArchetype:
+    """Map legacy enum values to Phase-1 archetypes."""
+    if archetype == TechnicalArchetype.integration:
+        names = field_names or set()
+        if "idempotency_key" in names or "duplicate" in " ".join(names).lower():
+            return TechnicalArchetype.idempotency_engine
+        return TechnicalArchetype.webhook_handler
+    if archetype == TechnicalArchetype.service_module:
+        return TechnicalArchetype.webhook_handler
+    if archetype == TechnicalArchetype.data_adjacent:
+        return TechnicalArchetype.data_adapter
+    return archetype
 
 
 class DataPlane(str, Enum):

@@ -1,0 +1,6 @@
+Developers cannot see which CLI commands are slow in our internal tooling.
+
+Sample CLI metrics:
+command=lint latency_ms=890 token_count=12000 cli_duration_ms=905
+
+Build lightweight in-process CLI instrumentation (record + summary).

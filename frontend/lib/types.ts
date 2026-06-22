@@ -247,6 +247,7 @@ export interface PublishedChallenge {
   deliverable_types?: DeliverableType[];
   evaluation_focus?: string[];
   microprd: MicroPRD;
+  uses_dataset?: boolean;
   dataset_ready: boolean;
   starter_ready?: boolean;
   dataset_anomalies: string[];

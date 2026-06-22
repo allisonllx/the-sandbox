@@ -27,6 +27,7 @@ class PublishedChallenge(BaseModel):
     evaluation_focus: list[str] = Field(default_factory=list)
     microprd: MicroPRD
     dataset_ready: bool
+    uses_dataset: bool = False
     starter_ready: bool = False
     dataset_anomalies: list[str] = Field(default_factory=list)
     reward: ChallengeReward | None = None

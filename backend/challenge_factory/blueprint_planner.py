@@ -9,7 +9,7 @@ from ..ai_pm.llm_client import LLMClientProtocol, LLMTier, LLMUnavailableError, 
 from ..ai_pm.models import MicroPRD, PublishDraft, RelaxedPreview
 from ..privacy_proxy.models import SanitizedMetadata
 from backend.prompts.blueprint_planner import BLUEPRINT_SYSTEM_PROMPT
-from .models import ChallengeBlueprint, DataPlane, TechnicalArchetype
+from .models import ChallengeBlueprint, DataPlane, TechnicalArchetype, normalize_archetype
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +80,12 @@ def infer_blueprint_heuristic(
     )
 
 
+def default_data_plane(archetype: TechnicalArchetype) -> DataPlane:
+    if archetype == TechnicalArchetype.data_core:
+        return DataPlane.sqlite
+    return DataPlane.none
+
+
 def default_edit_targets(archetype: TechnicalArchetype) -> list[str]:
     mapping = {
         TechnicalArchetype.algorithm: ["src/solution.py"],
@@ -87,8 +93,17 @@ def default_edit_targets(archetype: TechnicalArchetype) -> list[str]:
         TechnicalArchetype.integration: ["src/handler.py", "src/idempotency.py"],
         TechnicalArchetype.data_core: ["src/queries.py"],
         TechnicalArchetype.data_adjacent: ["src/service.py"],
+        TechnicalArchetype.idempotency_engine: ["src/idempotency_store.py"],
+        TechnicalArchetype.webhook_handler: ["src/webhook_engine.py"],
+        TechnicalArchetype.data_adapter: ["src/adapter.py"],
+        TechnicalArchetype.cli_instrumentation: ["src/cli_metrics.py"],
+        TechnicalArchetype.data_masking: ["src/masker.py"],
+        TechnicalArchetype.circuit_breaker: ["src/circuit_breaker.py"],
+        TechnicalArchetype.stream_parser: ["src/stream_parser.py"],
+        TechnicalArchetype.rls_proxy: ["src/tenant_proxy.py"],
     }
-    return list(mapping.get(archetype, ["src/service.py"]))
+    normalized = normalize_archetype(archetype)
+    return list(mapping.get(normalized, mapping.get(archetype, ["src/service.py"])))
 
 
 def _merge_founder_blueprint(
@@ -101,10 +116,11 @@ def _merge_founder_blueprint(
     overrides = founder.model_dump(exclude_unset=True)
     if "archetype" in overrides:
         new_archetype = TechnicalArchetype(overrides["archetype"])
-        if new_archetype != inferred.archetype and (
-            "edit_targets" not in overrides or not overrides["edit_targets"]
-        ):
-            overrides["edit_targets"] = default_edit_targets(new_archetype)
+        if new_archetype != inferred.archetype:
+            if "edit_targets" not in overrides or not overrides["edit_targets"]:
+                overrides["edit_targets"] = default_edit_targets(new_archetype)
+            if "data_plane" not in overrides:
+                overrides["data_plane"] = default_data_plane(new_archetype).value
     data.update(overrides)
     return ChallengeBlueprint.model_validate(data)
 

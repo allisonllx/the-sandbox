@@ -18,6 +18,15 @@ def check_browser_workspace_sufficiency(
     errors: list[str] = []
     test_blob = starter_files.get("tests/test_public.py", "")
 
+    if "docs/SPEC.md" not in starter_files and blueprint.data_plane != DataPlane.sqlite:
+        # Spec-driven packages require interface doc; legacy sqlite path uses DATA.md instead.
+        if any(p.startswith("docs/") for p in starter_files):
+            pass  # has docs folder — may be legacy
+        elif "docs/SPEC.md" not in starter_files and "README.md" in starter_files:
+            readme = starter_files.get("README.md", "")
+            if "docs/SPEC.md" in readme and "docs/SPEC.md" not in starter_files:
+                errors.append("starter missing docs/SPEC.md referenced in README")
+
     if blueprint.data_plane == DataPlane.sqlite:
         if not any(path in starter_files for path in _DATA_DOC_PATHS):
             errors.append(

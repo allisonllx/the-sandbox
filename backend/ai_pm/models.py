@@ -8,6 +8,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_serializer
 
 from ..challenge_factory.models import ChallengeBlueprint, ChallengePackage, ChallengePackagePreview
+from ..challenge_factory.spec_models import TechnicalChallengeSpec
 from ..privacy_proxy.models import SanitizedMetadata
 
 
@@ -231,6 +232,10 @@ class BacklogItem(BaseModel):
         default=None,
         description="Founder-editable technical challenge shape for factory generation",
     )
+    challenge_spec: TechnicalChallengeSpec | None = Field(
+        default=None,
+        description="Canonical technical challenge spec from single-pass inference",
+    )
     challenge_package: ChallengePackage | None = Field(
         default=None,
         description="Generated starter package from Preview — required for dynamic publish",
@@ -322,6 +327,7 @@ class RelaxResponse(BaseModel):
     challenge_draft: PublishDraft | None = None
     scope_check: ScopeCheckResponse | None = None
     challenge_blueprint: ChallengeBlueprint | None = None
+    challenge_spec: TechnicalChallengeSpec | None = None
     challenge_package: ChallengePackagePreview | None = None
 
 

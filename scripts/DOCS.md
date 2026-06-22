@@ -5,20 +5,29 @@ Operational scripts for end-to-end pipeline verification. Require backend on `ht
 | Script | Purpose |
 |---|---|
 | [`factory_intake.sh`](factory_intake.sh) | Founder brief → `POST /triage/intake` → relax → publish → verify starter |
-| [`factory_pipeline.sh`](factory_pipeline.sh) | Log sanitize → score → relax → publish → verify (legacy two-step ingest) |
+| [`factory_pipeline.sh`](factory_pipeline.sh) | Log sanitize → score → relax → publish → verify |
+| [`factory_common.sh`](factory_common.sh) | Shared helpers (sourced by factory scripts) |
+| [`samples/run_archetype.sh`](samples/run_archetype.sh) | **Per-archetype samples** — log or intake mode |
+| [`samples/run_all_previews.sh`](samples/run_all_previews.sh) | Preview-only smoke for all 10 archetypes |
+
+Full archetype catalog: [`samples/DOCS.md`](samples/DOCS.md).
 
 ## Usage
 
 ```bash
-# Founder problem statement (default payment-retry brief)
-./scripts/factory_intake.sh
-
-# Custom brief + archetype
-PROBLEM="Our queue workers drop tasks under load..." ARCHETYPE=service_module ./scripts/factory_intake.sh
-
-# Log-based ingest (sanitize + score explicitly)
+# Default payment-retry log (auto → idempotency_engine)
 ./scripts/factory_pipeline.sh
-ARCHETYPE=integration ./scripts/factory_pipeline.sh
+
+# Per-archetype samples
+./scripts/samples/run_archetype.sh webhook_handler
+./scripts/samples/run_archetype.sh data_core intake
+PREVIEW_ONLY=1 ./scripts/samples/run_all_previews.sh
+
+# Custom log line
+LOG_CONTENT='ERROR tenant_id=t1 org_id=o1' ./scripts/factory_pipeline.sh
+
+# Custom founder brief
+PROBLEM="..." ./scripts/factory_intake.sh
 ```
 
 ## Environment variables
@@ -26,9 +35,11 @@ ARCHETYPE=integration ./scripts/factory_pipeline.sh
 | Variable | Scripts | Default |
 |---|---|---|
 | `BASE_URL` | positional arg `[base_url]` | `http://localhost:8000` |
+| `LOG_CONTENT` | `factory_pipeline.sh` | Payment-retry log line |
 | `PROBLEM` | `factory_intake.sh` | Payment retry brief |
-| `SOURCE_LABEL` | both | Script-specific default |
-| `ARCHETYPE` | both | `integration` / `algorithm` |
+| `SOURCE_LABEL` | all | Script-specific default |
+| `ARCHETYPE` | all | `auto` (`algorithm` sample forces `algorithm`) |
+| `PREVIEW_ONLY` | all | `0` — set `1` to skip publish |
 
 ## Related UI
 

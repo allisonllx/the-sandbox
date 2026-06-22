@@ -101,17 +101,30 @@ def _platform_instructions_for(item) -> list[str]:
 
 def _student_microprd(item):
     """Student-facing PRD — sandbox steps and edit targets match the starter package."""
-    from ..ai_pm import microprd as microprd_module
+    from ..ai_pm.microprd_enrich import enrich_from_blueprint
 
     microprd = item.microprd
     blueprint = getattr(item, "challenge_blueprint", None)
     if blueprint and blueprint.edit_targets:
-        microprd = microprd_module.sync_with_blueprint(microprd, blueprint)
+        microprd = enrich_from_blueprint(
+            microprd,
+            blueprint,
+            item.metadata,
+            source_label=item.source_label,
+            dataset_anomalies=item.dataset_anomalies,
+        )
     else:
         microprd = microprd.model_copy(
             update={"sandbox_instructions": _platform_instructions_for(item)}
         )
     return microprd
+
+
+def _uses_dataset(item) -> bool:
+    blueprint = getattr(item, "challenge_blueprint", None)
+    if blueprint is not None:
+        return blueprint.data_plane.value == "sqlite"
+    return bool(item.dataset_path)
 
 
 def _to_public(item) -> PublishedChallenge:
@@ -126,7 +139,7 @@ def _to_public(item) -> PublishedChallenge:
 
     return build_public_challenge(
         item_id=item.id,
-        title=item.microprd.title,
+        title=microprd.title,
         status=item.status.value,
         track=track,
         company_profile=profile,
@@ -134,6 +147,7 @@ def _to_public(item) -> PublishedChallenge:
         evaluation_focus=item.evaluation_focus or [],
         microprd=microprd,
         dataset_ready=item.dataset_path is not None and Path(item.dataset_path).exists(),
+        uses_dataset=_uses_dataset(item),
         starter_ready=bool(item.starter_files) or item.status == BacklogStatus.published,
         dataset_anomalies=item.dataset_anomalies,
         reward=item.reward,

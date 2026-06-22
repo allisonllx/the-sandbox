@@ -1,0 +1,6 @@
+Large JSONL uploads OOM our parser — we need memory-bounded streaming.
+
+Sample upload failures:
+file_size_bytes=5368709120 chunk_count=0 memory_mb=512 oom=true
+
+Build a streaming line parser that never materializes the full file.

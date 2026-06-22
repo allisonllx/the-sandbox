@@ -29,8 +29,11 @@ from ..ai_pm.models import (
     SensitivityTag,
 )
 from ..challenge_factory.builder import build_package, is_package_stale
+from ..challenge_factory.challenge_spec import generate_spec
 from ..challenge_factory.legacy_router import use_legacy_factory
 from ..challenge_factory.models import ChallengeBlueprint, ChallengePackage, ChallengePackagePreview
+from ..challenge_factory.spec_models import IngestKind
+from ..challenge_factory.spec_projection import spec_to_microprd
 from ..privacy_proxy.models import InputFormat
 from ..privacy_proxy.sanitizer import sanitize
 from ..sandbox.product_starter_scaffold import generate_product_starter_files
@@ -269,6 +272,22 @@ def _generate_challenge_package(
         return None, None, None
 
     founder_blueprint = _resolve_blueprint(item, request)
+    founder_override = founder_blueprint.archetype if founder_blueprint else None
+
+    challenge_spec = generate_spec(
+        item.metadata,
+        source_label=item.source_label,
+        suggested_title=item.scores.suggested_title if item.scores else prepared.get("title", ""),
+        ingest_kind=IngestKind.behavioral_log,
+        founder_archetype_override=founder_override,
+    )
+    prepared["challenge_spec"] = challenge_spec
+    prepared["prd"] = spec_to_microprd(
+        challenge_spec,
+        challenge_id=item_id,
+        brand_proxy=prepared["brand_proxy"],
+    )
+
     package = build_package(
         item_id,
         prepared["prd"],
@@ -276,19 +295,35 @@ def _generate_challenge_package(
         item.metadata,
         draft=challenge_draft,
         founder_blueprint=founder_blueprint,
+        challenge_spec=challenge_spec,
     )
     blueprint = package.blueprint
-    stale = is_package_stale(package, challenge_draft, blueprint)
+    stale = is_package_stale(package, challenge_draft, blueprint, challenge_spec)
     preview = ChallengePackagePreview.from_package(package, stale=stale)
     return blueprint, package, preview
 
 
-def _sync_prd_with_blueprint(prepared: dict, blueprint: ChallengeBlueprint | None) -> dict:
-    """Keep Micro-PRD edit-target copy aligned with the generated challenge package."""
+def _sync_prd_with_blueprint(
+    prepared: dict,
+    blueprint: ChallengeBlueprint | None,
+    *,
+    metadata=None,
+    source_label: str | None = None,
+    dataset_anomalies: list[str] | None = None,
+) -> dict:
+    """Keep Micro-PRD aligned with blueprint, starter files, and founder source."""
     if blueprint is None or not blueprint.edit_targets:
         return prepared
+    from ..ai_pm.microprd_enrich import enrich_from_blueprint
+
     prepared = dict(prepared)
-    prepared["prd"] = microprd_module.sync_with_blueprint(prepared["prd"], blueprint)
+    prepared["prd"] = enrich_from_blueprint(
+        prepared["prd"],
+        blueprint,
+        metadata or prepared.get("metadata"),
+        source_label=source_label,
+        dataset_anomalies=dataset_anomalies,
+    )
     return prepared
 
 
@@ -299,11 +334,13 @@ def _package_preview_response(
     package_preview: ChallengePackagePreview | None,
 ) -> tuple[ChallengeBlueprint | None, ChallengePackagePreview | None]:
     if package_preview is None and item.challenge_package is not None:
-        stale = is_package_stale(item.challenge_package, challenge_draft, blueprint or item.challenge_blueprint)
+        stale = is_package_stale(
+            item.challenge_package,
+            challenge_draft,
+            blueprint or item.challenge_blueprint,
+            item.challenge_spec,
+        )
         package_preview = ChallengePackagePreview.from_package(item.challenge_package, stale=stale)
-    return blueprint, package_preview
-
-
     return blueprint, package_preview
 
 
@@ -399,7 +436,20 @@ def relax_item(item_id: str, request: RelaxRequest) -> RelaxResponse:
     blueprint, package, package_preview = _generate_challenge_package(
         item, item_id, prepared, challenge_draft, request
     )
-    prepared = _sync_prd_with_blueprint(prepared, blueprint)
+    if prepared.get("challenge_spec") is not None:
+        prepared["prd"] = spec_to_microprd(
+            prepared["challenge_spec"],
+            challenge_id=item_id,
+            brand_proxy=prepared["brand_proxy"],
+        )
+    elif blueprint is not None:
+        prepared = _sync_prd_with_blueprint(
+            prepared,
+            blueprint,
+            metadata=item.metadata,
+            source_label=item.source_label,
+            dataset_anomalies=package.dataset_anomalies if package else None,
+        )
 
     item.relaxation_config = request.config
     item.relaxed_preview = prepared["preview"]
@@ -414,6 +464,8 @@ def relax_item(item_id: str, request: RelaxRequest) -> RelaxResponse:
         item.reward = request.reward
     if blueprint is not None:
         item.challenge_blueprint = blueprint
+    if prepared.get("challenge_spec") is not None:
+        item.challenge_spec = prepared["challenge_spec"]
     if package is not None:
         item.challenge_package = package
     store.upsert_item(item)
@@ -430,6 +482,7 @@ def relax_item(item_id: str, request: RelaxRequest) -> RelaxResponse:
         challenge_draft=challenge_draft,
         scope_check=_scope_response(item),
         challenge_blueprint=blueprint,
+        challenge_spec=prepared.get("challenge_spec"),
         challenge_package=package_preview,
     )
 
@@ -512,7 +565,7 @@ def publish_item(item_id: str, request: RelaxRequest) -> PublishResponse:
                     "message": "Run Preview to generate a challenge package before publish.",
                 },
             )
-        if is_package_stale(package, draft, blueprint):
+        if is_package_stale(package, draft, blueprint, item.challenge_spec):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail={
@@ -530,10 +583,27 @@ def publish_item(item_id: str, request: RelaxRequest) -> PublishResponse:
                 },
             )
         if blueprint is not None:
-            prd = microprd_module.sync_with_blueprint(prd, blueprint)
+            if item.challenge_spec is not None:
+                prd = spec_to_microprd(
+                    item.challenge_spec,
+                    challenge_id=item_id,
+                    brand_proxy=brand_proxy,
+                )
+            else:
+                from ..ai_pm.microprd_enrich import enrich_from_blueprint
+
+                prd = enrich_from_blueprint(
+                    prd,
+                    blueprint,
+                    item.metadata,
+                    source_label=item.source_label,
+                    dataset_anomalies=package.dataset_anomalies,
+                )
         starter_files = package.starter_files
         db_path = package.dataset_path
         anomalies = package.dataset_anomalies
+        if blueprint is not None:
+            item.challenge_blueprint = blueprint
     elif track == ChallengeTrack.product_feature:
         starter_files = generate_product_starter_files(
             item_id, prd.title, brand_proxy, domain_proxy=domain_transform.domain_proxy if domain_transform else None
@@ -541,9 +611,26 @@ def publish_item(item_id: str, request: RelaxRequest) -> PublishResponse:
         db_path = None
         anomalies = []
     else:
+        from ..ai_pm.microprd_enrich import enrich_from_blueprint
+        from ..challenge_factory.models import ChallengeBlueprint, DataPlane, TechnicalArchetype
+
         db_path, anomalies = generate_dataset(item_id, preview, item.metadata)
         starter_files = generate_starter_files(item_id, prd.title, anomalies=anomalies)
         db_path = str(db_path)
+        legacy_blueprint = ChallengeBlueprint(
+            archetype=TechnicalArchetype.data_core,
+            primary_focus="Optimize session/event query lookups against the SQLite dataset",
+            data_plane=DataPlane.sqlite,
+            edit_targets=["src/queries.py"],
+        )
+        prd = enrich_from_blueprint(
+            prd,
+            legacy_blueprint,
+            item.metadata,
+            source_label=item.source_label,
+            dataset_anomalies=anomalies,
+        )
+        item.challenge_blueprint = legacy_blueprint
 
     item.relaxation_config = request.config
     item.relaxed_preview = preview
