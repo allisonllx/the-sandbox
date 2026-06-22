@@ -24,7 +24,13 @@ Public challenge layer for students (Innovation Hub). Serves track-aware publish
 
 ## How It Fits In
 
-Publishing from `POST /api/v1/triage/publish/{id}` branches by track. Routes in `api/sandbox_routes.py` expose list/filter by track, starter, workspace, submit (with assessor), scorecard, and three rank surfaces:
+Publishing from `POST /api/v1/triage/publish/{id}` branches by track:
+
+- **Technical (dynamic factory):** `BacklogItem.starter_files` from `challenge_factory` — includes `docs/SPEC.md`, interpolated `src/*` stubs, `tests/test_public.py`
+- **Technical (legacy demo-*):** `starter_scaffold.py` + synthesizer SQLite
+- **Product track:** `product_starter_scaffold.py` (HTML/CSS/JS + DESIGN.md)
+
+Routes in `api/sandbox_routes.py` expose list/filter by track, starter, workspace, submit (with assessor), scorecard, and three rank surfaces:
 
 | Module | API | Frontend |
 |---|---|---|
@@ -37,6 +43,7 @@ Frontend: `/student` track tabs; `/student/challenges/[id]` routes to `Challenge
 ## Notes for the Next Session
 
 - Product track: no dataset download; submit requires DESIGN.md for strong assessor scores
+- Dynamic factory starters include `docs/SPEC.md` — students should read it before editing `src/*`
 - `GET /sandbox/challenges?track=product_feature` filters published challenges
 - Sponsor matches scope to **one challenge** — startups never see cross-company performers
 - After code changes, check `docs/documentation-sync.md`

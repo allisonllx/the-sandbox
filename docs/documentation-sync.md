@@ -24,9 +24,10 @@ Use this file as a lookup: find the code path you touched, check every doc in th
 | `backend/assessor/` | `backend/assessor/DOCS.md` | **ARCHITECTURE.md** — scorecard pipeline; **PRODUCT.md** — EP vs sponsor fit; **api-patterns.md** — scorecard shape |
 | `backend/sandbox/` | `backend/sandbox/DOCS.md` | **ARCHITECTURE.md** — student flow; **PRODUCT.md** — student UX; **api-patterns.md** — sandbox endpoints |
 | `backend/challenge_factory/` | `backend/challenge_factory/DOCS.md` | **ARCHITECTURE.md** — Preview→Publish factory pipeline; **api-patterns.md** — relax/regenerate response fields |
-| `scripts/` | `scripts/DOCS.md` | **README.md** (root) — factory script quickstart in main onboarding |
+| `scripts/` | `scripts/DOCS.md`, `scripts/samples/DOCS.md` | **README.md** (root) — factory script quickstart in main onboarding |
 | `samples/demo_solutions/` | `samples/demo_solutions/DOCS.md` | **README.md** (root) — sample publish/submit quickstart |
 | `backend/api/` | `backend/api/DOCS.md` | **api-patterns.md** — any new/changed endpoint (required); **README.md** — API reference table; **ARCHITECTURE.md** — new external integration |
+| `backend/prompts/` | `backend/prompts/DOCS.md` | When prompt contracts change (e.g. new `challenge_spec` fields) |
 | `backend/tests/` | `backend/tests/DOCS.md` | Usually no `docs/` update unless verification rules or API contracts changed |
 | `backend/main.py`, `backend/requirements.txt` | `backend/DOCS.md` | **README.md** — startup commands, dependencies, or project structure |
 | `frontend/app/`, `frontend/components/`, `frontend/lib/` | `frontend/DOCS.md` | **PRODUCT.md** — user-facing flow or UX intent; **ARCHITECTURE.md** — new pages or client-server boundaries |
@@ -76,6 +77,7 @@ backend/sandbox/DOCS.md
 backend/tests/DOCS.md
 frontend/DOCS.md
 scripts/DOCS.md
+scripts/samples/DOCS.md
 samples/demo_solutions/DOCS.md
 ```
 
@@ -90,7 +92,8 @@ samples/demo_solutions/DOCS.md
 | New `ner.status` enum value | `backend/privacy_proxy/DOCS.md`, `docs/api-patterns.md`, `frontend/lib/types.ts` |
 | Renamed relaxation toggle behavior | `backend/ai_pm/DOCS.md`, `docs/PRODUCT.md` (if user-visible) |
 | Refactored tests only, same behavior | `claude-progress.md`: "Docs: no update required" |
-| New archetype, scaffold, or Micro-PRD copy | `backend/challenge_factory/DOCS.md`, `backend/ai_pm/DOCS.md`, **AGENTS.md** consistency check; add/extend `test_challenge_factory.py` |
+| New archetype, scaffold, or spec field | `backend/challenge_factory/DOCS.md`, `backend/prompts/DOCS.md`, `scripts/samples/`, **AGENTS.md**; extend `test_scaffold_interpolate.py` + sample log/brief |
+| New archetype sample script | `scripts/samples/DOCS.md`, `scripts/DOCS.md`, **README.md** quickstart |
 
 ---
 
@@ -100,22 +103,25 @@ Some bugs span multiple modules — the doc map alone is not enough.
 
 ### Challenge brief ↔ starter files
 
-If you touch `challenge_factory/`, `ai_pm/microprd.py`, `starter_scaffold.py`,
-or student-facing sandbox routes, verify **edit targets agree** across Micro-PRD,
-starter README, and the file tree. Do not leave legacy `src/queries.py` copy in
-dynamic/factory paths.
+If you touch `challenge_factory/`, `spec_projection.py`, `scaffold_interpolate.py`,
+or student-facing sandbox routes, verify **spec ↔ SPEC.md ↔ tests ↔ Micro-PRD**
+agree on edit targets and public API symbols. Do not leave legacy `src/queries.py`
+copy in dynamic/factory paths.
 
-**Smoke check:** relax with a non-default archetype (e.g. `algorithm`) → publish →
-`GET /api/v1/sandbox/challenges/{id}` — `structural_constraints` and
-`sandbox_instructions` must reference the same `src/*` files as `starter.files`.
+**Smoke check (technical):** `./scripts/samples/run_archetype.sh idempotency_engine` →
+publish → `GET /api/v1/sandbox/challenges/{id}` — `structural_constraints` must
+reference the same `src/*` files as `starter.files`.
 
-**Regression test:** `TestDynamicPreviewPublish::test_founder_blueprint_algorithm_archetype`
+**Product track:** expect `challenge_package: null` at Preview — HTML starter at publish.
+
+**Regression tests:** `test_challenge_factory.py`, `test_scaffold_interpolate.py`
 
 ### Browser workspace sufficiency
 
 Generated packages must be workable in the in-browser editor without opaque local
-downloads. Sqlite challenges need `docs/DATA.md`; **Run Public Tests** mounts the
-dataset server-side. See `workspace_sufficiency.py` and `AGENTS.md`.
+downloads. Spec-driven packages need `docs/SPEC.md`; sqlite archetypes also need
+`docs/DATA.md`. **Run Public Tests** mounts the dataset server-side.
+See `workspace_sufficiency.py` and `AGENTS.md`.
 
 ---
 

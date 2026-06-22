@@ -99,12 +99,21 @@ curl -s -X POST http://localhost:8000/api/v1/triage/score \
   -d "$(jq '{metadata: .metadata, source_label: "Slack #bugs"}' /tmp/meta.json)"
 ```
 
-**End-to-end scripts** (non-demo item → Preview → Publish):
+**End-to-end scripts** (non-demo **technical** item → Preview → Publish):
 
 ```bash
-./scripts/factory_intake.sh    # founder brief via /triage/intake
-./scripts/factory_pipeline.sh  # log sanitize → score → relax → publish
+./scripts/factory_pipeline.sh              # log sanitize → score → relax → publish (ARCHETYPE=auto)
+./scripts/factory_intake.sh                # founder brief via /triage/intake
+
+# Per-archetype samples (10 archetypes — log or intake mode)
+./scripts/samples/run_archetype.sh idempotency_engine
+./scripts/samples/run_archetype.sh webhook_handler intake
+PREVIEW_ONLY=1 ./scripts/samples/run_all_previews.sh   # preview only, no publish
 ```
+
+See [`scripts/samples/DOCS.md`](scripts/samples/DOCS.md) for the full archetype catalog.
+
+**Note:** Product-track items (e.g. merchant-discovery briefs, `demo-004`) skip the dynamic factory — Preview returns a product Micro-PRD and HTML starter at publish, not a Python `challenge_package`.
 
 See [`samples/demo_solutions/DOCS.md`](samples/demo_solutions/DOCS.md) for publish → submit demos on `demo-*` items.
 
@@ -115,7 +124,7 @@ See [`samples/demo_solutions/DOCS.md`](samples/demo_solutions/DOCS.md) for publi
 On `/startup`, for each backlog item:
 
 1. **Review scores** — Severity / Friction / Sensitivity and the Red / Yellow / Green shield
-2. **Preview Changes** — generates Micro-PRD + **challenge package** (starter files + validation) for non-demo technical items via the [Challenge Factory](backend/challenge_factory/DOCS.md)
+2. **Preview Changes** — for **non-demo technical** items, runs the [Challenge Factory](backend/challenge_factory/DOCS.md): single-pass **TechnicalChallengeSpec** → starter files + `docs/SPEC.md` + validation. **Product track** items get a product Micro-PRD only (frontend starter at publish).
 3. **Relaxation controls** — optional transforms that make the public challenge safer:
    - Rename internal column names to generic ones
    - Inject noise into scale hints
@@ -142,7 +151,7 @@ Students can read `/student/trust` for the trust narrative (marketing copy in th
 
 | Track | What you do | What you submit |
 |---|---|---|
-| **Technical** | Multi-file **Monaco** editor (same engine as VS Code), run public tests, autosave | Python starter + synthetic SQLite dataset |
+| **Technical** | Multi-file **Monaco** editor (same engine as VS Code), run public tests, autosave | Python starter + `docs/SPEC.md` (+ synthetic SQLite for `data_core` archetype) |
 | **Product Feature** | Prototype editor | HTML/CSS/JS + **DESIGN.md** |
 
 After submit, the student sees a **scorecard** with two sections (see next).
@@ -432,7 +441,7 @@ Key entry points only. Full contract: **http://localhost:8000/docs** · module d
 | `POST` | `/api/v1/proxy/sanitize` | Ingest: raw text → metadata (local) |
 | `POST` | `/api/v1/triage/score` | Ingest: metadata → backlog item |
 | `POST` | `/api/v1/triage/intake` | Ingest: founder brief → sanitize + score (one call) |
-| `POST` | `/api/v1/triage/relax/{id}` | Preview: Micro-PRD + challenge factory package |
+| `POST` | `/api/v1/triage/relax/{id}` | Preview: Micro-PRD + challenge factory package (+ optional `challenge_spec`) |
 | `POST` | `/api/v1/triage/regenerate/{id}` | Re-run factory after draft/blueprint edits |
 | `POST` | `/api/v1/triage/publish/{id}` | Publish challenge |
 | `GET` | `/api/v1/sandbox/challenges` | Student: list public challenges |
@@ -458,7 +467,7 @@ All hackathon MVP features passing (`feature_list.json`):
 | `rank-001` | Three rank surfaces (student / sponsor / enterprise) |
 | `assessor-001` | Dual-layer assessor (Docker platform + LLM sponsor fit) |
 | `llm-local-001` | Local vLLM routing + LLM domain obfuscation (OpenAI fallback) |
-| `factory-001` | Dynamic challenge factory — blueprint-driven starters at Preview (Phase 1) |
+| `factory-001` | Dynamic challenge factory — TechnicalChallengeSpec + system-module archetypes at Preview (Phase 1) |
 | `intake-001` | Founder ingest — `/triage/intake` + `/startup/upload` UI |
 
 **Deferred post-MVP:** auth, multi-tenant isolation, real Stripe escrow, sponsor KYC, live global leaderboard aggregation, factory Phase 2–3 (per-challenge secret tests, product factory UI panel).

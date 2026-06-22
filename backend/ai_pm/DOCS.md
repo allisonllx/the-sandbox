@@ -2,7 +2,7 @@
 
 ## Purpose
 
-AI Product Manager layer. Scores anonymized backlog items, routes innovation tracks, applies founder-controlled relaxation (de-risking + brand abstraction), and generates track-aware public Micro-PRDs. LLM calls receive **structural metadata only** — never raw startup content.
+AI Product Manager layer. Scores anonymized backlog items, routes innovation tracks, applies founder-controlled relaxation (de-risking + brand abstraction), and produces track-aware public Micro-PRDs. LLM calls receive **structural metadata only** — never raw startup content.
 
 ## Contents
 
@@ -16,10 +16,11 @@ AI Product Manager layer. Scores anonymized backlog items, routes innovation tra
 | `company_profile.py` | Blind-audition Company Tech Profile generator (sensitivity-aware) |
 | `public_sanitize.py` | Student API boundary — strips brand, sanitizes evaluation_focus/Micro-PRD |
 | `publish_draft.py` | Founder-editable `PublishDraft` build/apply before release |
-| `microprd.py` | Track-aware LLM Micro-PRD generator (template fallback if no LLM) |
+| `microprd.py` | Product track LLM Micro-PRD; technical fallback when spec path unavailable |
+| `microprd_enrich.py` | Legacy blueprint enrichment — superseded by `spec_to_microprd` on dynamic path |
 | `llm_client.py` | `RoutingLLMClient`: local vLLM → OpenAI per tier; mockable in tests |
 | `store.py` | In-memory backlog pre-seeded with demo items |
-| `models.py` | `ChallengeTrack`, `BacklogItem`, `IntakeRequest`, `MicroPRD`, etc. |
+| `models.py` | `ChallengeTrack`, `BacklogItem`, `IntakeRequest`, `MicroPRD`, `challenge_spec`, etc. |
 
 Founder ingest is implemented in `api/triage_routes.py`:
 
@@ -32,7 +33,7 @@ Dynamic starter generation: see [`../challenge_factory/DOCS.md`](../challenge_fa
 
 | Tier | Default chain | Use |
 |---|---|---|
-| `sensitive` | local vLLM only | Triage scoring, domain obfuscation, Micro-PRD, sponsor fit |
+| `sensitive` | local vLLM only | Triage scoring, domain obfuscation, challenge spec, sponsor fit |
 | `standard` | local vLLM → OpenAI | Non-sensitive future paths (e.g. Keep on Bay copy) |
 
 Env:
@@ -46,15 +47,16 @@ Env:
 Consumes `SanitizedMetadata` from the privacy proxy. Exposed via `api/triage_routes.py`.
 
 - **Ingest:** `/intake`, `/score`, or `/proxy/sanitize` + `/score`
-- **Preview:** `/relax` runs Micro-PRD + `challenge_factory.build_package()` for non-demo technical items; `microprd_enrich.enrich_from_blueprint()` replaces generic fallback copy with archetype-specific briefs aligned to starter files
-- **Publish:** legacy `demo-*` / product track use hardcoded scaffolds; dynamic items require valid `challenge_package` from Preview
+- **Preview (technical, non-demo):** `/relax` → `generate_spec()` → `build_package(challenge_spec=…)` → `spec_to_microprd()` before persist; stores optional `BacklogItem.challenge_spec`
+- **Preview (product / demo-*):** `/relax` → track-aware Micro-PRD only; `challenge_package` is null; legacy scaffolds at publish
+- **Publish:** dynamic items require valid non-stale `challenge_package` from Preview; product/demo use hardcoded scaffolds
 
 ## Notes for the Next Session
 
 - Heuristic scorer runs when no LLM backend is configured — demo works offline
-- `demo-004` is the Product Feature seed (EatsHub merchant discovery)
+- `demo-004` is the Product Feature seed (EatsHub merchant discovery) — **no dynamic factory package**
+- `demo-006` resolves a runtime spec via `legacy_spec_adapter` but still uses legacy publish scaffolds
 - Relaxation is deterministic: same `challenge_seed` + config → same synthesized field names
-- When `obfuscate_domain` is enabled, `domain_obfuscator.build_field_map` remaps column names (e.g. `restaurant_id` → `locker_id`) in the relaxed preview before publish
-- Yellow/Red sensitivity on **generic** domains triggers `llm_domain_obfuscator` when `LLM_DOMAIN_OBFUSCATE=1`
+- When `obfuscate_domain` is enabled, `domain_obfuscator.build_field_map` remaps column names in the relaxed preview before publish
 - Public student API never returns `brand_proxy` — only `CompanyTechProfile` via `public_sanitize.build_public_challenge`
 - `store.py` is in-memory only — replace with DB for production

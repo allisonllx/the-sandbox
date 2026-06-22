@@ -25,7 +25,10 @@ the_sandbox/
 │   │   ├── domain_obfuscator.py
 │   │   ├── public_sanitize.py
 │   │   └── publish_draft.py
-│   ├── challenge_factory/    # Blueprint-driven starter generation at Preview
+│   ├── challenge_factory/    # TechnicalChallengeSpec → dynamic starter at Preview
+│   │   ├── challenge_spec.py       # Single-pass spec inference
+│   │   ├── scaffold_interpolate.py # Stubs/tests from interface_contract
+│   │   └── spec_projection.py      # spec_to_microprd, spec_to_blueprint
 │   ├── assessor/             # Dual-layer platform signal + sponsor fit
 │   ├── sandbox/              # Datasets, submissions, rank stubs
 │   │   ├── leaderboard.py          # Student global rank (demo)
@@ -37,7 +40,7 @@ the_sandbox/
 │   ├── app/startup/          # CTO dashboard, /startup/upload, /startup/matches/[id]
 │   ├── app/student/          # Innovation Hub, workspace, leaderboard, trust
 │   └── app/enterprise/radar/ # Enterprise subscription view (demo)
-├── scripts/                  # factory_intake.sh, factory_pipeline.sh
+├── scripts/                  # factory_*.sh + samples/run_archetype.sh (per-archetype smokes)
 ├── docs/
 ├── feature_list.json
 ├── claude-progress.md
@@ -85,12 +88,17 @@ ai_pm/relaxation.py + domain_obfuscator.py (optional)
   ▼
 POST /triage/relax/{id}
   ├─ Returns relaxed field preview + challenge_draft (PublishDraft)
-  ├─ Non-demo technical: challenge_factory.build_package() → challenge_package + validation
-  └─ Founder edits title, context, blueprint (archetype, stack hints), company profile in UI
+  ├─ Non-demo technical:
+  │    generate_spec() (one LLM call or heuristic)
+  │    → build_package(challenge_spec=…)
+  │    → spec_to_microprd() before persist
+  │    → challenge_package + validation + optional challenge_spec
+  ├─ Product track / demo-*: no dynamic package (legacy scaffolds at publish)
+  └─ Founder may override archetype via RelaxRequest.blueprint (e.g. algorithm)
   │
   ▼
 POST /triage/regenerate/{id}  (optional — after draft/blueprint edits)
-  └─ Re-runs challenge_factory; marks stale until validation passes
+  └─ Re-runs spec + factory; marks stale until validation passes
   │
   ▼
 POST /triage/publish/{id}  (requires locked reward + scope guard pass)

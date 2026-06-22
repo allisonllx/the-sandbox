@@ -274,7 +274,17 @@
   - Scripts: `ARCHETYPE=auto` default; omit blueprint when auto
   - Tests: `test_challenge_spec.py`, `test_scaffold_interpolate.py`, `test_legacy_spec_adapter.py`; factory payment-retry assertions updated
 - Verification run: `python -m pytest backend/tests/ -q` → **160 passed**
-- Docs: `backend/challenge_factory/DOCS.md` updated; `docs/PRODUCT.md` / `AGENTS.md` — no update required (factory DOCS covers new flow)
+- Docs: `backend/challenge_factory/DOCS.md` (Session 019); full sync in Session 020
 - Commits: none
 - Known risk: LLM stub still returns scorer JSON — heuristic path is hot path when LLM unavailable; physical `.tpl` files deferred (Python catalog drives interpolation)
 - Next best step: factory-001 Phase 2 — per-challenge secret tests + optional fixture LLM pass
+
+### Session 020
+
+- Date: 2026-06-21
+- Goal: Documentation sync — TechnicalChallengeSpec, archetype samples, product vs technical factory paths
+- Completed: Updated AGENTS.md, README.md, ARCHITECTURE.md, PRODUCT.md, api-patterns.md, documentation-sync.md, all touched module DOCS (ai_pm, api, prompts, tests, scripts, samples)
+- Verification run: n/a (docs-only)
+- Docs: full pass per documentation-sync.md
+- Commits: none
+- Next best step: factory-001 Phase 2

@@ -2,7 +2,13 @@
 
 ## What It Does
 
-The Sandbox is an **Innovation Hub** — a talent platform that turns a startup's messy internal backlog into structured, safe-to-share challenges across multiple innovation tracks. **Technical** challenges focus on debugging and optimization; **Product Feature** challenges focus on UX reasoning, prototype delivery, and design trade-offs documented in `DESIGN.md`. A local privacy filter automatically strips sensitive data before anything leaves the company, so founders can outsource real problems without risking IP leaks.
+The Sandbox is an **Innovation Hub** — a talent platform that turns a startup's messy internal backlog into structured, safe-to-share challenges across multiple innovation tracks.
+
+**Technical** challenges are **greenfield system-module sprints** (webhook handlers, idempotency stores, stream parsers, etc.) — not LeetCode drills and not legacy OSS contributions. Students get an interface spec (`docs/SPEC.md`), public tests, and minimal stubs; typical onboarding is under 30 minutes.
+
+**Product Feature** challenges focus on UX reasoning, prototype delivery, and design trade-offs documented in `DESIGN.md`.
+
+A local privacy filter automatically strips sensitive data before anything leaves the company, so founders can outsource real problems without risking IP leaks.
 
 ## Target Users
 
@@ -16,7 +22,9 @@ Technically capable but locked out of top roles by the absence of a pedigreed ne
 
 1. **Startup: Ingest & sanitize** — Three paths: **Upload UI** at `/startup/upload` (task description or log file → loading page runs sanitize then score), **quick intake** on `/startup` (`POST /triage/intake`), or API/scripts. The privacy proxy scrubs PII locally and extracts structural metadata; sensitivity scoring runs on metadata only.
 
-2. **Startup: Triage & de-risk** — The AI PM ranks the backlog by Severity, Friction, and Sensitivity, suggests an **innovation track** (Technical or Product Feature for MVP), and applies Relaxation Controls. **Preview Changes** runs the **Challenge Factory** for non-demo technical items (blueprint-driven starter files + validation). Founders see internal `brand_proxy`; students receive a **Company Tech Profile** only (blind audition). Preview returns `PublishDraft` + `challenge_package` — founders edit title, context, blueprint, success criteria, and company profile before **Approve & Publish**.
+2. **Startup: Triage & de-risk** — The AI PM ranks the backlog by Severity, Friction, and Sensitivity, suggests an **innovation track** (Technical or Product Feature for MVP), and applies Relaxation Controls. **Preview Changes** runs the **Challenge Factory** for non-demo technical items: a single-pass **TechnicalChallengeSpec** (archetype + interface contract) drives starter generation and validation; Micro-PRD is projected from the spec. Founders see internal `brand_proxy`; students receive a **Company Tech Profile** only (blind audition). Preview returns `PublishDraft` + `challenge_package` (+ optional `challenge_spec`) — founders edit title, context, blueprint override, success criteria, and company profile before **Approve & Publish**.
+
+   **Product track** items (e.g. `demo-004`, merchant-discovery briefs) skip the dynamic factory at Preview — they receive the hardcoded frontend starter at publish.
 
 3. **Student: Discover & set up** — Browse the Innovation Hub with track filter tabs. Each challenge shows stage, team size range, and tech stack — never the sponsor name. Technical challenges include a synthetic SQLite dataset; Product Feature challenges include a frontend starter scaffold and required `DESIGN.md` template.
 
@@ -53,7 +61,7 @@ Demo backlog profiles (CTO-only labels): **StealthCo** (`demo-005`), **NovaPay**
 ## Roadmap / Known Gaps
 
 - **Hackathon MVP scope:** Two active tracks — **Technical** + **Product Feature**; Automation / AI Governance / Strategy registered as taxonomy with "Coming soon" UI.
-- **Shipped (hackathon):** Founder upload UI (`/startup/upload`), `POST /triage/intake`, dynamic challenge factory Phase 1 (blueprint-driven starters at Preview).
+- **Shipped (hackathon):** Founder upload UI (`/startup/upload`), `POST /triage/intake`, dynamic challenge factory (TechnicalChallengeSpec + 8 system-module archetypes at Preview).
 - **Not yet built:** User authentication, billing, persistent user profiles, multi-tenant startup isolation, production-grade code runner scaling, real Stripe escrow, sponsor KYC.
 - **Shipped (hackathon):** Blind audition Company Tech Profile on all public challenges; auth + multi-tenant deferred to post-MVP.
 - **Open decision:** Cloud deployment target (AWS, GCP, Fly.io) and whether the privacy proxy ships as a standalone CLI binary or an Electron app.
