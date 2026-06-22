@@ -100,12 +100,25 @@ def _platform_instructions_for(item) -> list[str]:
 
 
 def _student_microprd(item):
-    """Student-facing PRD — sandbox steps and edit targets match the starter package."""
-    from ..ai_pm.microprd_enrich import enrich_from_blueprint
-
+    """Student-facing PRD — spec-driven items keep projected copy; legacy uses blueprint enrich."""
     microprd = item.microprd
     blueprint = getattr(item, "challenge_blueprint", None)
-    if blueprint and blueprint.edit_targets:
+
+    if getattr(item, "challenge_spec", None) is not None and microprd is not None:
+        if blueprint and blueprint.edit_targets:
+            microprd = microprd.model_copy(
+                update={
+                    "sandbox_instructions": platform_sandbox_instructions(
+                        list(blueprint.edit_targets),
+                        data_plane=_data_plane_for(item),
+                    )
+                }
+            )
+        return microprd
+
+    from ..ai_pm.microprd_enrich import enrich_from_blueprint
+
+    if blueprint and blueprint.edit_targets and microprd is not None:
         microprd = enrich_from_blueprint(
             microprd,
             blueprint,
@@ -113,7 +126,7 @@ def _student_microprd(item):
             source_label=item.source_label,
             dataset_anomalies=item.dataset_anomalies,
         )
-    else:
+    elif microprd is not None:
         microprd = microprd.model_copy(
             update={"sandbox_instructions": _platform_instructions_for(item)}
         )

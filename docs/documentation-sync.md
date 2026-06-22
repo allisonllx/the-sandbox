@@ -94,6 +94,7 @@ samples/demo_solutions/DOCS.md
 | Refactored tests only, same behavior | `claude-progress.md`: "Docs: no update required" |
 | New archetype, scaffold, or spec field | `backend/challenge_factory/DOCS.md`, `backend/prompts/DOCS.md`, `scripts/samples/`, **AGENTS.md**; extend `test_scaffold_interpolate.py` + sample log/brief |
 | New archetype sample script | `scripts/samples/DOCS.md`, `scripts/DOCS.md`, **README.md** quickstart |
+| Student brief markdown / examples / frontend render | `backend/challenge_factory/DOCS.md`, `frontend/DOCS.md`, **docs/PRODUCT.md**, **docs/ARCHITECTURE.md**, **docs/api-patterns.md** |
 
 ---
 
@@ -104,8 +105,9 @@ Some bugs span multiple modules — the doc map alone is not enough.
 ### Challenge brief ↔ starter files
 
 If you touch `challenge_factory/`, `spec_projection.py`, `scaffold_interpolate.py`,
-or student-facing sandbox routes, verify **spec ↔ SPEC.md ↔ tests ↔ Micro-PRD**
-agree on edit targets and public API symbols. Do not leave legacy `src/queries.py`
+student-facing sandbox routes, or `frontend/components/BriefMarkdown.tsx` / `MicroPRDView.tsx`,
+verify **spec ↔ SPEC.md ↔ tests ↔ Micro-PRD ↔ rendered student brief** agree on edit
+targets, public API symbols, and typed examples. Do not leave legacy `src/queries.py`
 copy in dynamic/factory paths.
 
 **Smoke check (technical):** `./scripts/samples/run_archetype.sh idempotency_engine` →

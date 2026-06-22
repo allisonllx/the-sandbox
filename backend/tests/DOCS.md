@@ -13,6 +13,7 @@ pytest suite verifying the privacy proxy, AI PM triage layer, challenge factory,
 | `test_sandbox.py` | Publish flow, starter scaffold, workspace/draft, validate, submit, ZIP guard |
 | `test_challenge_factory.py` | Dynamic Preview/Publish, archetype override, package staleness |
 | `test_challenge_spec.py` | Heuristic archetype inference + spec shape |
+| `test_spec_projection.py` | Spec → Micro-PRD brief formatting, typed examples, non-generic student copy |
 | `test_scaffold_interpolate.py` | Dynamic stubs/tests + per-archetype validation smokes |
 | `test_legacy_spec_adapter.py` | Runtime spec for `demo-*` without store mutation |
 | `test_microprd_enrich.py` | Legacy blueprint enrichment (demo/legacy paths) |

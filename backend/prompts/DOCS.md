@@ -27,10 +27,13 @@ Call sites import constants only — user payload builders and response parsers 
 ```
 ingest metadata → challenge_spec.py prompt → TechnicalChallengeSpec
   → scaffold_interpolate (no LLM for signatures)
-  → spec_projection.spec_to_microprd (deterministic brief)
+  → spec_projection.spec_to_microprd (deterministic brief + typed examples)
 ```
 
-Heuristic fallback in `challenge_factory/archetype_catalog.py` mirrors the prompt's trigger matrix when LLM is unavailable.
+Heuristic fallback in `archetype_catalog.py` mirrors the prompt's trigger matrix when LLM is unavailable.
+
+- `examples` is **required** in LLM output (2–4 typed I/O cases); heuristic path uses `_brief_examples_for()` in `archetype_catalog.py`
+- Student `microprd.context` is markdown; frontend `BriefMarkdown` renders the subset (see `frontend/DOCS.md`)
 
 ## Notes for the Next Session
 

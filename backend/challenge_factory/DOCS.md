@@ -6,7 +6,7 @@ Generates per-challenge starter files from **TechnicalChallengeSpec** (single-pa
 
 1. Ingest → sanitize → score
 2. `POST /triage/relax/{id}` — `generate_spec()` (one LLM call or heuristic) → `build_package(challenge_spec=…)`
-3. `spec_to_microprd()` projects student brief **before** persist (spec is source of truth)
+3. `spec_to_microprd()` projects assignment-style student brief (scenario, background, task, DoD) **before** persist (spec is source of truth)
 4. `generate_scaffold_from_spec()` interpolates stubs/tests from `interface_contract.public_api`
 5. Founder reviews `challenge_package` + optional `challenge_spec` in response
 6. `POST /triage/publish/{id}` — activates pre-validated package
@@ -34,11 +34,11 @@ flowchart LR
 | File | Role |
 |---|---|
 | `models.py` | `TechnicalArchetype`, `ChallengeBlueprint`, `ChallengePackage` |
-| `spec_models.py` | `TechnicalChallengeSpec`, `InterfaceContract` |
+| `spec_models.py` | `TechnicalChallengeSpec`, `InterfaceContract`, `SpecExample` |
 | `challenge_spec.py` | Single-pass `generate_spec()` + heuristic fallback |
 | `archetype_catalog.py` | Per-archetype defaults, reference bodies, trigger inference |
 | `scaffold_interpolate.py` | Dynamic stubs/tests from spec signatures |
-| `spec_projection.py` | `spec_to_microprd`, `spec_to_blueprint`, `spec_to_readme` |
+| `spec_projection.py` | `format_spec_context`, `format_spec_examples`, `spec_success_criteria`, `spec_to_microprd`, … |
 | `legacy_spec_adapter.py` | `resolve_challenge_spec()` for demo-* without store mutation |
 | `legacy_router.py` | `use_legacy_factory()` |
 | `blueprint_planner.py` | Legacy LLM blueprint (fallback when no spec) |
@@ -66,6 +66,22 @@ Explicit / legacy:
 Omit blueprint (or `ARCHETYPE=auto` in scripts) to let ingest signals choose the archetype.
 
 `BacklogItem.challenge_spec` is optional — persisted after Preview for dynamic items.
+
+## Student brief format (Micro-PRD projection)
+
+Dynamic technical items project `TechnicalChallengeSpec` → `MicroPRD` via `spec_to_microprd()`:
+
+| Field | Source |
+|---|---|
+| `context` | Markdown: **Scenario**, **Background**, **Signals**, **Constraints**, **Examples** (typed I/O), **Your task** |
+| `definition_of_success` | Spec `definition_of_done` + invariants + edit-target / public-test checks |
+| `examples` (spec only) | `SpecExample`: `label`, `signature` (PEP 484), `input_sample`, `output_sample`, `notes` |
+
+Heuristic path: `_brief_examples_for()` in `archetype_catalog.py`. LLM path: `backend/prompts/challenge_spec.py` requires 2–4 examples.
+
+**Do not** route spec-driven student briefs through `microprd_enrich` — `sandbox_routes._student_microprd()` skips enrich when `challenge_spec` is set.
+
+**Relax ordering:** spec → `spec_to_microprd()` → `PublishDraft` baseline → `build_package(draft=…)` so draft copy and staleness hash match projected brief.
 
 ## Consistency rule
 

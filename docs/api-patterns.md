@@ -214,12 +214,14 @@ Founders edit student-facing copy before publish via `PublishDraft`:
 - For **non-demo technical** items, the same response includes:
   - `challenge_package` — starter tree + validation (no `reference_solution` in JSON)
   - `challenge_blueprint` — deterministic projection from spec
-  - `challenge_spec` — optional full `TechnicalChallengeSpec` (classification, interface contract, definition of done)
+  - `challenge_spec` — optional full `TechnicalChallengeSpec` (classification, interface contract, **`examples`** with typed signatures + literal I/O, definition of done)
 - **Product track** and **demo-*** items may return `challenge_package: null` — factory runs at publish via legacy scaffolds
 - Founder edits in `PublishDraftEditor`; publish sends optional `draft` in the same `RelaxRequest` body as `config`
-- `POST /api/v1/triage/publish/{id}` applies draft overrides before Micro-PRD generation and public sanitization
+- `POST /api/v1/triage/publish/{id}` applies draft overrides on top of spec-projected Micro-PRD before public sanitization
 
-Key `PublishDraft` fields: `title`, `context`, `definition_of_success`, `evaluation_focus`, `company_profile` (blind audition).
+Key `PublishDraft` fields: `title`, `context` (markdown brief body), `definition_of_success`, `evaluation_focus`, `company_profile` (blind audition).
+
+**Student Micro-PRD:** `GET /api/v1/sandbox/challenges/{id}` returns `microprd.context` as markdown (headings via `**Label:**`, lists, inline `` `code` ``). The frontend renders this subset — founders still edit raw markdown in `PublishDraftEditor`.
 
 Optional `RelaxRequest.blueprint.archetype` forces classification (e.g. `algorithm` override). Omit blueprint or set `ARCHETYPE=auto` in scripts to auto-classify from ingest signals.
 

@@ -42,6 +42,18 @@ class StarterLayout(BaseModel):
     student_may_add: list[str] = Field(default_factory=lambda: ["src/helpers/*.py"])
 
 
+class SpecExample(BaseModel):
+    """Concrete input/output sample for the student brief — includes typed signatures."""
+
+    label: str = Field(description="Short case name, e.g. 'Valid JSONL lines'")
+    signature: str = Field(
+        description="Typed API surface, e.g. def parse_lines(lines: Iterable[str]) -> list[dict]"
+    )
+    input_sample: str = Field(description="Literal input with inline type notes")
+    output_sample: str = Field(description="Expected return value with inline type notes")
+    notes: str = Field(default="", description="Edge case, invariant, or type constraint")
+
+
 class TechnicalChallengeSpec(BaseModel):
     classification: SpecClassification
     title: str
@@ -49,6 +61,10 @@ class TechnicalChallengeSpec(BaseModel):
     scenario: str
     ingest_kind: IngestKind = IngestKind.behavioral_log
     interface_contract: InterfaceContract
+    examples: list[SpecExample] = Field(
+        default_factory=list,
+        description="2–4 typed I/O examples shown in the student brief",
+    )
     definition_of_done: list[str] = Field(default_factory=list)
     assessor_signals: list[str] = Field(default_factory=list)
     data_plane: DataPlane = DataPlane.none

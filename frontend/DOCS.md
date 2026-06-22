@@ -13,20 +13,37 @@ Next.js 14 student, startup, and enterprise UIs for The Sandbox. Proxies `/api/*
 | `app/startup/upload/loading/` | Processing UI (`/proxy/sanitize` then `/triage/score`) |
 | `app/startup/matches/[challengeId]/` | Sponsor Match Radar (per-challenge performers) |
 | `app/student/` | Innovation Hub challenge browser + track tabs |
-| `app/student/challenges/[id]/` | Micro-PRD + workspace (technical or product track) |
+| `app/student/challenges/[id]/` | Micro-PRD left panel + workspace (technical or product track) |
 | `app/student/leaderboard/` | Global Execution Points (student motivation) |
 | `app/student/trust/` | Sponsor verification protocol narrative (stub) |
 | `app/enterprise/radar/` | Platform-wide top-tier candidates (enterprise demo) |
 | `components/ChallengeWorkspace.tsx` | Multi-file Monaco editor, autosave, run/submit |
 | `components/ProductWorkspace.tsx` | Product track prototype editor + DESIGN.md |
-| `components/PublishDraftEditor.tsx` | Founder-editable release preview before publish |
+| `components/PublishDraftEditor.tsx` | Founder-editable release preview (raw markdown textarea) |
+| `components/MicroPRDView.tsx` | Student brief sections — delegates to `BriefSectionBody` |
+| `components/BriefMarkdown.tsx` | Subset markdown renderer (**bold**, `` `code` ``, nested lists); inherits JetBrains Mono |
+| `components/BriefSectionBody.tsx` | Prose vs bullet sections; `BriefAsideSection` for anomalies / evaluation focus |
 | `components/CompanyProfilePanel.tsx` | Blind-audition Company Tech Profile preview |
 | `components/FounderIntakePanel.tsx` | Sidebar quick intake → `POST /triage/intake` |
-| `components/` | Shared UI (BacklogCard, RelaxationPanel, ChallengeCard, MicroPRDView, ScorecardView) |
+| `components/ScorecardView.tsx` | Dual-layer platform + sponsor scorecard |
 | `lib/api.ts` | Typed API client — `sanitize`, `scoreMetadata`, `intake`, draft, validate, run, submit |
 | `lib/uploadSession.ts` | sessionStorage between `/startup/upload` and loading page |
 | `lib/draftStorage.ts` | IndexedDB draft cache |
 | `lib/types.ts` | TypeScript interfaces mirroring backend models |
+
+## Student brief rendering
+
+The workspace left panel (`/student/challenges/[id]`) shows the public Micro-PRD:
+
+| Section | Component | Markdown |
+|---|---|---|
+| Context, User Persona, Problem Framing | `BriefMarkdown` | Full block (headings, examples lists) |
+| Definition of Success, Constraints, Sandbox Instructions | `BriefSectionBody` list mode | Inline `` `code` `` / **bold** per bullet |
+| Injected Anomalies, Evaluation Focus | `BriefAsideSection` + `BriefSectionBody` | Same inline rendering |
+
+**Founder vs student:** `PublishDraftEditor` keeps raw markdown for editing; students see rendered output only. No extra npm dependency — custom parser in `BriefMarkdown.tsx` matches the backend brief subset.
+
+Backend brief source: `spec_to_microprd()` → `format_spec_context()` + `format_spec_examples()` (see `backend/challenge_factory/spec_projection.py`).
 
 ## How It Fits In
 

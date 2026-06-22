@@ -47,7 +47,8 @@ Env:
 Consumes `SanitizedMetadata` from the privacy proxy. Exposed via `api/triage_routes.py`.
 
 - **Ingest:** `/intake`, `/score`, or `/proxy/sanitize` + `/score`
-- **Preview (technical, non-demo):** `/relax` → `generate_spec()` → `build_package(challenge_spec=…)` → `spec_to_microprd()` before persist; stores optional `BacklogItem.challenge_spec`
+- **Preview (technical, non-demo):** `/relax` → `generate_spec()` → `spec_to_microprd()` → `PublishDraft` → `build_package(challenge_spec=…)`; stores optional `BacklogItem.challenge_spec`
+- **Student brief:** spec-projected `MicroPRD.context` is markdown (scenario + typed examples); frontend `BriefMarkdown` renders it — legacy `microprd_enrich` is **not** applied when `challenge_spec` exists
 - **Preview (product / demo-*):** `/relax` → track-aware Micro-PRD only; `challenge_package` is null; legacy scaffolds at publish
 - **Publish:** dynamic items require valid non-stale `challenge_package` from Preview; product/demo use hardcoded scaffolds
 

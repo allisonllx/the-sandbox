@@ -260,16 +260,15 @@ def _resolve_blueprint(item: BacklogItem, request: RelaxRequest) -> ChallengeBlu
     return item.challenge_blueprint
 
 
-def _generate_challenge_package(
+def _prepare_spec_prd(
     item: BacklogItem,
     item_id: str,
     prepared: dict,
-    challenge_draft,
     request: RelaxRequest,
-) -> tuple[ChallengeBlueprint | None, ChallengePackage | None, ChallengePackagePreview | None]:
-    track = prepared["track"]
-    if use_legacy_factory(item_id, track):
-        return None, None, None
+) -> None:
+    """Infer TechnicalChallengeSpec and project Micro-PRD for the dynamic factory path."""
+    if use_legacy_factory(item_id, prepared["track"]):
+        return
 
     founder_blueprint = _resolve_blueprint(item, request)
     founder_override = founder_blueprint.archetype if founder_blueprint else None
@@ -286,7 +285,27 @@ def _generate_challenge_package(
         challenge_spec,
         challenge_id=item_id,
         brand_proxy=prepared["brand_proxy"],
+        metadata=item.metadata,
     )
+
+
+def _generate_challenge_package(
+    item: BacklogItem,
+    item_id: str,
+    prepared: dict,
+    challenge_draft,
+    request: RelaxRequest,
+) -> tuple[ChallengeBlueprint | None, ChallengePackage | None, ChallengePackagePreview | None]:
+    track = prepared["track"]
+    if use_legacy_factory(item_id, track):
+        return None, None, None
+
+    challenge_spec = prepared.get("challenge_spec")
+    if challenge_spec is None:
+        _prepare_spec_prd(item, item_id, prepared, request)
+        challenge_spec = prepared["challenge_spec"]
+
+    founder_blueprint = _resolve_blueprint(item, request)
 
     package = build_package(
         item_id,
@@ -432,17 +451,20 @@ def relax_item(item_id: str, request: RelaxRequest) -> RelaxResponse:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
 
     prepared = _prepare_generation(item, item_id, request)
-    challenge_draft = _resolve_challenge_draft(prepared, request)
+    if use_legacy_factory(item_id, prepared["track"]):
+        challenge_draft = _resolve_challenge_draft(prepared, request)
+    else:
+        _prepare_spec_prd(item, item_id, prepared, request)
+        challenge_draft = request.draft or publish_draft_module.build_publish_draft(
+            prepared["prd"],
+            company_profile=prepared["profile"],
+            evaluation_focus=prepared["evaluation_focus"],
+        )
+
     blueprint, package, package_preview = _generate_challenge_package(
         item, item_id, prepared, challenge_draft, request
     )
-    if prepared.get("challenge_spec") is not None:
-        prepared["prd"] = spec_to_microprd(
-            prepared["challenge_spec"],
-            challenge_id=item_id,
-            brand_proxy=prepared["brand_proxy"],
-        )
-    elif blueprint is not None:
+    if prepared.get("challenge_spec") is None and blueprint is not None:
         prepared = _sync_prd_with_blueprint(
             prepared,
             blueprint,
@@ -450,6 +472,12 @@ def relax_item(item_id: str, request: RelaxRequest) -> RelaxResponse:
             source_label=item.source_label,
             dataset_anomalies=package.dataset_anomalies if package else None,
         )
+        if request.draft is None:
+            challenge_draft = publish_draft_module.build_publish_draft(
+                prepared["prd"],
+                company_profile=prepared["profile"],
+                evaluation_focus=prepared["evaluation_focus"],
+            )
 
     item.relaxation_config = request.config
     item.relaxed_preview = prepared["preview"]
@@ -588,7 +616,9 @@ def publish_item(item_id: str, request: RelaxRequest) -> PublishResponse:
                     item.challenge_spec,
                     challenge_id=item_id,
                     brand_proxy=brand_proxy,
+                    metadata=item.metadata,
                 )
+                prd = publish_draft_module.apply_publish_draft(prd, draft)
             else:
                 from ..ai_pm.microprd_enrich import enrich_from_blueprint
 

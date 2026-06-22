@@ -140,7 +140,7 @@ On `/startup`, for each backlog item:
 | What the startup sees (internal) | What the student sees (public) |
 |---|---|
 | Real source label, internal codenames | Anonymous **Company Tech Profile** (stage, team size, stack) |
-| Before/after domain masking preview | Sanitized **Micro-PRD** (the challenge brief) |
+| Before/after domain masking preview | Sanitized **Micro-PRD** (markdown brief — scenario, typed examples, success criteria) |
 | Industry-specific field names | Renamed / abstract column names |
 
 Students can read `/student/trust` for the trust narrative (marketing copy in the demo; no live KYC backend).
@@ -415,6 +415,7 @@ Terms above in plain English: this is the click-by-click path for judges.
 **Student path**
 
 1. Open `/student` — pick a challenge
+2. Read the brief in the left panel (rendered markdown + typed examples) and anonymous company profile
 2. Note: no company name, only anonymous company profile
 3. Technical track: code in Monaco, run tests, submit → scorecard with two score sections
 4. Product track (`demo-004`): submit prototype + DESIGN.md

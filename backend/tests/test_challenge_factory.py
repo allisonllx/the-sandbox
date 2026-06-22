@@ -239,6 +239,41 @@ class TestDynamicPreviewPublish:
         starter = client.get(f"/api/v1/sandbox/challenges/{item_id}/starter").json()
         assert "src/solution.py" in starter["files"]
 
+    def test_stream_parser_brief_is_specific_end_to_end(self):
+        metadata = _make_metadata(
+            ["file_size_bytes", "chunk_count", "oom", "memory_mb"],
+            row_scale=4,
+        )
+        item_id = client.post(
+            "/api/v1/triage/score",
+            json={"metadata": metadata.model_dump(), "source_label": "Sample — stream_parser (intake)"},
+        ).json()["item_id"]
+
+        relax = client.post(
+            f"/api/v1/triage/relax/{item_id}",
+            json={"config": _relax_config(), "reward": _reward_payload()},
+        )
+        assert relax.status_code == 200, relax.text
+        draft = relax.json()["challenge_draft"]
+        assert draft is not None
+        assert "sample — stream_parser" not in draft["context"].lower()
+        assert "jsonl" in draft["context"].lower() or "memory" in draft["context"].lower()
+        assert "Iterable[str]" in draft["context"] or "list[dict]" in draft["context"]
+
+        pub = client.post(
+            f"/api/v1/triage/publish/{item_id}",
+            json={"config": _relax_config(), "reward": _reward_payload()},
+        )
+        assert pub.status_code == 200, pub.text
+
+        detail = client.get(f"/api/v1/sandbox/challenges/{item_id}").json()
+        ctx = detail["microprd"]["context"].lower()
+        assert "sample — stream_parser" not in ctx
+        assert "preserve existing function signatures" not in " ".join(
+            detail["microprd"]["definition_of_success"]
+        ).lower()
+        assert "jsonl" in ctx or "memory" in ctx or "stream" in ctx
+
 
 class TestStaleness:
     def test_package_stale_when_draft_changes(self):
