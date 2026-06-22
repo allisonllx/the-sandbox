@@ -76,12 +76,42 @@ def _starter_files_for(item) -> dict[str, str]:
     return files
 
 
+def _data_plane_for(item) -> str:
+    blueprint = getattr(item, "challenge_blueprint", None)
+    if blueprint is not None:
+        return blueprint.data_plane.value
+    if item.dataset_path:
+        return "sqlite"
+    return "none"
+
+
 def _platform_instructions_for(item) -> list[str]:
     track = item.track or ChallengeTrack.technical
     if track == ChallengeTrack.product_feature:
         equipment = item.domain_proxy == "hyperlocal_equipment"
         return product_platform_instructions(equipment_mode=equipment)
-    return platform_sandbox_instructions()
+    blueprint = getattr(item, "challenge_blueprint", None)
+    if blueprint and blueprint.edit_targets:
+        return platform_sandbox_instructions(
+            list(blueprint.edit_targets),
+            data_plane=_data_plane_for(item),
+        )
+    return platform_sandbox_instructions(data_plane=_data_plane_for(item))
+
+
+def _student_microprd(item):
+    """Student-facing PRD — sandbox steps and edit targets match the starter package."""
+    from ..ai_pm import microprd as microprd_module
+
+    microprd = item.microprd
+    blueprint = getattr(item, "challenge_blueprint", None)
+    if blueprint and blueprint.edit_targets:
+        microprd = microprd_module.sync_with_blueprint(microprd, blueprint)
+    else:
+        microprd = microprd.model_copy(
+            update={"sandbox_instructions": _platform_instructions_for(item)}
+        )
+    return microprd
 
 
 def _to_public(item) -> PublishedChallenge:
@@ -92,9 +122,7 @@ def _to_public(item) -> PublishedChallenge:
         )
     track = item.track or ChallengeTrack.technical
     profile = item.company_profile or company_profile_module.generate_profile(item, reward=item.reward)
-    microprd = item.microprd.model_copy(
-        update={"sandbox_instructions": _platform_instructions_for(item)}
-    )
+    microprd = _student_microprd(item)
 
     return build_public_challenge(
         item_id=item.id,
@@ -336,14 +364,16 @@ def run_public_tests(
     body: RunJobRequest,
     request: Request,
 ) -> RunJobResponse:
-    _get_published_item(challenge_id)
+    item = _get_published_item(challenge_id)
     workspace_id = read_workspace_id(request)
+    dataset_path = item.dataset_path if item.dataset_path else None
 
     try:
         result = run_jobs.enqueue_run(
             challenge_id=challenge_id,
             files=body.files,
             workspace_id=workspace_id,
+            dataset_path=dataset_path,
         )
     except RunAlreadyActiveError as exc:
         raise HTTPException(

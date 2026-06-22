@@ -46,6 +46,24 @@ Generates per-challenge starter files from Micro-PRD + **ChallengeBlueprint** at
 
 `reference_solution` is stored on `BacklogItem.challenge_package` but stripped from API JSON responses.
 
+## PRD ↔ starter sync
+
+- `finalize_starter_package()` aligns README + blueprint `edit_targets` with generated files.
+- `ai_pm.microprd.sync_with_blueprint()` updates Micro-PRD `structural_constraints` and `sandbox_instructions` to match — runs at Preview/Publish and in the student challenge API.
+
+## Browser workspace sufficiency
+
+Students use the in-browser editor — they must not need opaque local downloads to
+understand data or run public tests.
+
+| `data_plane` | Required in starter | Run Public Tests |
+|---|---|---|
+| `none` | Self-contained tests (no sqlite skip fixtures) | Student files only |
+| `sqlite` | `docs/DATA.md` schema reference | Platform mounts `sandbox.sqlite` |
+
+Validator: `workspace_sufficiency.check_browser_workspace_sufficiency()`.
+Run jobs: `run_jobs.enqueue_run(..., dataset_path=...)` copies DB into temp workspace.
+
 ## Upstream: founder ingest
 
 Backlog items reach the factory after:

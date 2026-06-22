@@ -1,6 +1,6 @@
 # The Sandbox
 
-Startups turn internal bugs and backlog items into **public coding challenges**. Students solve them to prove skill — without a traditional job application and without seeing which company wrote the problem.
+Startups turn internal bugs and backlog items into **public coding challenges**. Students solve them to prove skill: without a traditional job application and without seeing which company wrote the problem.
 
 **Zero-trust** here means: sensitive data (log lines, emails, internal product names) is cleaned up **on the startup's machine first**. Only a safe, abstract summary crosses into the rest of the platform.
 
@@ -19,7 +19,7 @@ Startups turn internal bugs and backlog items into **public coding challenges**.
 Three things to know up front:
 
 - Students **never** see the real company name on a challenge (see [Blind audition](#3-blind-audition)).
-- Startups **only** see submitters for **their own** challenge — not other companies' candidates.
+- Startups **only** see submitters for **their own** challenge, not other companies' candidates.
 - "How good are they in general?" and "How well did they solve *my* problem?" are **two different scores** (see [Grading & rankings](#5-grading--rankings)).
 
 ---
@@ -30,7 +30,8 @@ Plain-language view of the full loop. Technical terms are defined in the section
 
 ```
   ┌────────────────────── STARTUP ──────────────────────┐
-  │  1. Paste logs, upload a file, or write a problem brief (cleaned locally) │
+  │  1. Paste logs, upload a file, or write a problem   │
+  │     brief (cleaned locally)                         │
   │  2. See how urgent & risky the issue is             │
   │  3. Tweak the public brief, set bounty, publish     │
   │  4. Review who submitted — ranked for this challenge│
@@ -52,7 +53,7 @@ Plain-language view of the full loop. Technical terms are defined in the section
   └─────────────────────────────────────────────────────┘
 ```
 
-**Privacy rule:** Raw corporate text never leaves the local sanitization step. External AI (if enabled) sees field names and counts — not full log lines, emails, or internal codenames.
+**Privacy rule:** Raw corporate text never leaves the local sanitization step. External AI (if enabled) sees field names and counts, not full log lines, emails, or internal codenames.
 
 ---
 
@@ -62,7 +63,7 @@ The sections below map to the journey above. Skim the headings first; drill in w
 
 ### 1. Ingest & triage (startup)
 
-**Goal:** Get a messy internal signal (Slack thread, log export, ticket, or founder-written brief) into a ranked backlog item — without leaking PII.
+**Goal:** Get a messy internal signal (Slack thread, log export, ticket, or founder-written brief) into a ranked backlog item without leaking PII.
 
 Three equivalent ingest paths (all run **sanitize → score** locally before triage):
 
@@ -72,7 +73,7 @@ Three equivalent ingest paths (all run **sanitize → score** locally before tri
 | **Quick intake** | Sidebar on `/startup` | `POST /triage/intake` (wraps sanitize + score) |
 | **API / scripts** | curl or `./scripts/factory_*.sh` | same as above |
 
-1. **Privacy proxy** — runs locally. Strips emails, tokens, names, etc. Output is *structural metadata* (column names, event counts, row scale) — not the original text.
+1. **Privacy proxy** — runs locally. Strips emails, tokens, names, etc. Output is *structural metadata* (column names, event counts, row scale), not the original text.
 2. **AI triage** — scores each item on three axes (0–100):
    - **Severity** — how badly it hurts the system
    - **Friction** — how often users hit it
@@ -133,7 +134,7 @@ On `/startup`, for each backlog item:
 | Before/after domain masking preview | Sanitized **Micro-PRD** (the challenge brief) |
 | Industry-specific field names | Renamed / abstract column names |
 
-Students can read `/student/trust` for the trust narrative (marketing copy in the demo — no live KYC backend).
+Students can read `/student/trust` for the trust narrative (marketing copy in the demo; no live KYC backend).
 
 ### 4. Solve & submit (student)
 
@@ -333,7 +334,7 @@ vllm serve Qwen/Qwen2.5-7B-Instruct --port 8000
 
 ## What's Implemented vs What's Demo Theater
 
-Read this before the judge script — it labels what is real pipeline code vs hackathon shortcuts.
+Read this before the judge script: it labels what is real pipeline code vs hackathon shortcuts.
 
 The README uses three labels:
 
@@ -380,7 +381,7 @@ Auth, multi-tenant startups, persistent database (backlog is in-memory), real es
 
 ## Judge demo script
 
-Terms above in plain English — this is the click-by-click path for judges.
+Terms above in plain English: this is the click-by-click path for judges.
 
 1. **Blind audition** — `/startup` → `demo-005` → toggle *Obfuscate Industry Domain* → Preview → Lock reward → Publish → open `/student/challenges/demo-005` — students see stage/team/stack only, not StealthCo or food/merchant tokens
 2. **Editable release preview** — Preview Changes → edit title, success criteria, company profile → Publish with draft

@@ -114,9 +114,15 @@ class TestSandboxAPI:
         steps = detail["microprd"]["sandbox_instructions"]
         joined = " ".join(steps)
         assert "Submit Project" in joined
-        assert "src/queries.py" in joined
+        assert "docs/DATA.md" in joined
+        assert "Run Public Tests" in joined
         assert "solution.py" not in joined
-        assert "benchmark.py" not in joined
+
+    def test_starter_includes_schema_doc(self):
+        _publish_demo_item("demo-003")
+        res = client.get("/api/v1/sandbox/challenges/demo-003/starter")
+        assert res.status_code == 200
+        assert "docs/DATA.md" in res.json()["files"]
 
     def test_download_starter_zip(self):
         _publish_demo_item("demo-003")

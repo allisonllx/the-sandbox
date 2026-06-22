@@ -41,8 +41,6 @@ def _apply_brand(text: str, brand_proxy: str, *, enabled: bool = True) -> str:
 
 
 def _fallback_technical(challenge_id: str, title: str, brand_proxy: str) -> MicroPRD:
-    from ..sandbox.starter_scaffold import platform_sandbox_instructions
-
     return MicroPRD(
         challenge_id=challenge_id,
         title=_apply_brand(title, brand_proxy),
@@ -65,7 +63,7 @@ def _fallback_technical(challenge_id: str, title: str, brand_proxy: str) -> Micr
             "Maximum memory usage: 512 MB during processing",
             "No new external dependencies without justification",
         ],
-        sandbox_instructions=platform_sandbox_instructions(),
+        sandbox_instructions=[],  # filled by _finalize_platform_instructions
     )
 
 
@@ -231,6 +229,47 @@ def generate(
     return _finalize_platform_instructions(prd)
 
 
+def _edit_target_constraint(edit_targets: list[str]) -> str:
+    from ..sandbox.starter_scaffold import format_edit_targets
+
+    return f"Edit the provided starter files only (main target: {format_edit_targets(edit_targets)})"
+
+
+def sync_with_blueprint(prd: MicroPRD, blueprint: "ChallengeBlueprint") -> MicroPRD:
+    """Align student-facing PRD copy with generated starter edit targets."""
+    from ..challenge_factory.models import DataPlane
+    from ..sandbox.starter_scaffold import platform_sandbox_instructions
+
+    targets = list(blueprint.edit_targets or ["src/service.py"])
+    new_constraint = _edit_target_constraint(targets)
+
+    constraints: list[str] = []
+    replaced = False
+    for line in prd.structural_constraints:
+        lower = line.lower()
+        if "main target:" in lower or "edit the provided starter" in lower:
+            if not replaced:
+                constraints.append(new_constraint)
+                replaced = True
+            continue
+        if "`src/queries.py`" in line and "src/queries.py" not in targets:
+            continue
+        constraints.append(line)
+    if not replaced:
+        constraints.append(new_constraint)
+
+    include_dataset = blueprint.data_plane == DataPlane.sqlite
+    return prd.model_copy(
+        update={
+            "structural_constraints": constraints,
+            "sandbox_instructions": platform_sandbox_instructions(
+                targets,
+                data_plane=blueprint.data_plane.value,
+            ),
+        }
+    )
+
+
 def _finalize_platform_instructions(prd: MicroPRD) -> MicroPRD:
     if prd.track == ChallengeTrack.product_feature:
         from ..sandbox.product_starter_scaffold import product_platform_instructions
@@ -241,4 +280,4 @@ def _finalize_platform_instructions(prd: MicroPRD) -> MicroPRD:
         )
     from ..sandbox.starter_scaffold import platform_sandbox_instructions
 
-    return prd.model_copy(update={"sandbox_instructions": platform_sandbox_instructions()})
+    return prd.model_copy(update={"sandbox_instructions": platform_sandbox_instructions(data_plane="none")})

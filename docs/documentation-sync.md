@@ -90,6 +90,32 @@ samples/demo_solutions/DOCS.md
 | New `ner.status` enum value | `backend/privacy_proxy/DOCS.md`, `docs/api-patterns.md`, `frontend/lib/types.ts` |
 | Renamed relaxation toggle behavior | `backend/ai_pm/DOCS.md`, `docs/PRODUCT.md` (if user-visible) |
 | Refactored tests only, same behavior | `claude-progress.md`: "Docs: no update required" |
+| New archetype, scaffold, or Micro-PRD copy | `backend/challenge_factory/DOCS.md`, `backend/ai_pm/DOCS.md`, **AGENTS.md** consistency check; add/extend `test_challenge_factory.py` |
+
+---
+
+## Cross-cutting invariants
+
+Some bugs span multiple modules — the doc map alone is not enough.
+
+### Challenge brief ↔ starter files
+
+If you touch `challenge_factory/`, `ai_pm/microprd.py`, `starter_scaffold.py`,
+or student-facing sandbox routes, verify **edit targets agree** across Micro-PRD,
+starter README, and the file tree. Do not leave legacy `src/queries.py` copy in
+dynamic/factory paths.
+
+**Smoke check:** relax with a non-default archetype (e.g. `algorithm`) → publish →
+`GET /api/v1/sandbox/challenges/{id}` — `structural_constraints` and
+`sandbox_instructions` must reference the same `src/*` files as `starter.files`.
+
+**Regression test:** `TestDynamicPreviewPublish::test_founder_blueprint_algorithm_archetype`
+
+### Browser workspace sufficiency
+
+Generated packages must be workable in the in-browser editor without opaque local
+downloads. Sqlite challenges need `docs/DATA.md`; **Run Public Tests** mounts the
+dataset server-side. See `workspace_sufficiency.py` and `AGENTS.md`.
 
 ---
 
@@ -100,4 +126,5 @@ Documentation is in sync when:
 - [ ] Module `DOCS.md` checked for every edited code folder
 - [ ] Relevant `docs/` files updated if behavior, contracts, or architecture changed
 - [ ] `README.md` updated if startup path or API reference changed
+- [ ] Challenge brief ↔ starter edit targets checked if factory / Micro-PRD / scaffold code changed (`AGENTS.md`)
 - [ ] Stale references removed (old paths, renamed fields, removed endpoints)

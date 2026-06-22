@@ -283,6 +283,15 @@ def _generate_challenge_package(
     return blueprint, package, preview
 
 
+def _sync_prd_with_blueprint(prepared: dict, blueprint: ChallengeBlueprint | None) -> dict:
+    """Keep Micro-PRD edit-target copy aligned with the generated challenge package."""
+    if blueprint is None or not blueprint.edit_targets:
+        return prepared
+    prepared = dict(prepared)
+    prepared["prd"] = microprd_module.sync_with_blueprint(prepared["prd"], blueprint)
+    return prepared
+
+
 def _package_preview_response(
     item: BacklogItem,
     challenge_draft,
@@ -390,6 +399,7 @@ def relax_item(item_id: str, request: RelaxRequest) -> RelaxResponse:
     blueprint, package, package_preview = _generate_challenge_package(
         item, item_id, prepared, challenge_draft, request
     )
+    prepared = _sync_prd_with_blueprint(prepared, blueprint)
 
     item.relaxation_config = request.config
     item.relaxed_preview = prepared["preview"]
@@ -519,6 +529,8 @@ def publish_item(item_id: str, request: RelaxRequest) -> PublishResponse:
                     "errors": package.validation.errors,
                 },
             )
+        if blueprint is not None:
+            prd = microprd_module.sync_with_blueprint(prd, blueprint)
         starter_files = package.starter_files
         db_path = package.dataset_path
         anomalies = package.dataset_anomalies
@@ -530,7 +542,7 @@ def publish_item(item_id: str, request: RelaxRequest) -> PublishResponse:
         anomalies = []
     else:
         db_path, anomalies = generate_dataset(item_id, preview, item.metadata)
-        starter_files = generate_starter_files(item_id, prd.title)
+        starter_files = generate_starter_files(item_id, prd.title, anomalies=anomalies)
         db_path = str(db_path)
 
     item.relaxation_config = request.config

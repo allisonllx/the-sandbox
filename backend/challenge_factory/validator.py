@@ -14,6 +14,7 @@ from ..assessor.security_scan import scan_submission
 from ..sandbox.validate import validate_python
 from .models import ChallengeBlueprint, DataPlane, ValidationReport
 from .scaffold_technical import starter_has_forbidden_patterns
+from .workspace_sufficiency import check_browser_workspace_sufficiency
 
 
 def _parse_pytest_summary(output: str) -> tuple[int, int, int]:
@@ -81,6 +82,8 @@ def validate_package(
     forbidden = starter_has_forbidden_patterns(starter_files)
     if forbidden:
         errors.extend(f"starter forbidden pattern: {v}" for v in forbidden)
+
+    errors.extend(check_browser_workspace_sufficiency(starter_files, blueprint))
 
     syntax_errors = _syntax_check(starter_files)
     errors.extend(syntax_errors)

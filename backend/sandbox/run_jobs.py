@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -65,7 +66,7 @@ def _run_pytest(workspace_dir: Path) -> tuple[int, str, str]:
     return proc.returncode, proc.stdout, proc.stderr
 
 
-def _execute_job(job_id: str, files: dict[str, str]) -> None:
+def _execute_job(job_id: str, files: dict[str, str], *, dataset_path: str | None = None) -> None:
     global _active_count
     meta = _read_meta(job_id)
     if not meta:
@@ -87,6 +88,11 @@ def _execute_job(job_id: str, files: dict[str, str]) -> None:
                 target = work / rel
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_text(content, encoding="utf-8")
+
+            if dataset_path:
+                db_src = Path(dataset_path)
+                if db_src.exists():
+                    shutil.copy(db_src, work / "sandbox.sqlite")
 
             exit_code, stdout, stderr = _run_pytest(work)
             meta["exit_code"] = exit_code
@@ -120,6 +126,8 @@ def enqueue_run(
     challenge_id: str,
     files: dict[str, str],
     workspace_id: str | None = None,
+    *,
+    dataset_path: str | None = None,
 ) -> dict:
     global _active_count
 
@@ -151,6 +159,7 @@ def enqueue_run(
     thread = threading.Thread(
         target=_execute_job,
         args=(job_id, files),
+        kwargs={"dataset_path": dataset_path},
         daemon=True,
     )
     thread.start()

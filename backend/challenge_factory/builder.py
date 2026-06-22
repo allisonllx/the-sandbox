@@ -14,6 +14,7 @@ from .legacy_router import use_legacy_factory
 from .models import ChallengeBlueprint, ChallengePackage, DataPlane, ValidationReport
 from .scaffold_technical import finalize_starter_package, generate_scaffold
 from .validator import validate_package
+from .workspace_sufficiency import check_browser_workspace_sufficiency
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,17 @@ def build_package(
         if blueprint.data_plane == DataPlane.sqlite:
             db_path, anomalies = generate_dataset(item_id, preview, metadata)
             dataset_path = str(db_path)
+            from ..sandbox.synthesizer import sqlite_data_doc
+
+            starter_files["docs/DATA.md"] = sqlite_data_doc(anomalies=anomalies)
+
+        sufficiency_errors = check_browser_workspace_sufficiency(starter_files, blueprint)
+        if sufficiency_errors:
+            validation = ValidationReport(passed=False, errors=sufficiency_errors)
+            logger.warning("Browser workspace insufficient: %s", sufficiency_errors)
+            if attempt >= max_retries:
+                break
+            continue
 
         validation = validate_package(
             starter_files,

@@ -46,7 +46,7 @@ Env:
 Consumes `SanitizedMetadata` from the privacy proxy. Exposed via `api/triage_routes.py`.
 
 - **Ingest:** `/intake`, `/score`, or `/proxy/sanitize` + `/score`
-- **Preview:** `/relax` runs Micro-PRD + `challenge_factory.build_package()` for non-demo technical items
+- **Preview:** `/relax` runs Micro-PRD + `challenge_factory.build_package()` for non-demo technical items; `sync_with_blueprint()` aligns PRD edit-target copy with generated starter files
 - **Publish:** legacy `demo-*` / product track use hardcoded scaffolds; dynamic items require valid `challenge_package` from Preview
 
 ## Notes for the Next Session

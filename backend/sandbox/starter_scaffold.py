@@ -4,6 +4,7 @@ from __future__ import annotations
 
 STARTER_PATHS = (
     "README.md",
+    "docs/DATA.md",
     "src/db.py",
     "src/queries.py",
     "src/main.py",
@@ -11,25 +12,65 @@ STARTER_PATHS = (
 )
 
 
-def platform_sandbox_instructions() -> list[str]:
-    """Steps shown in the Micro-PRD — matches the in-browser workspace (workspace-002)."""
-    return [
+def format_edit_targets(edit_targets: list[str]) -> str:
+    """Human-readable backtick list for PRD / README copy."""
+    if not edit_targets:
+        return "`src/`"
+    if len(edit_targets) == 1:
+        return f"`{edit_targets[0]}`"
+    return ", ".join(f"`{t}`" for t in edit_targets)
+
+
+def platform_sandbox_instructions(
+    edit_targets: list[str] | None = None,
+    *,
+    data_plane: str = "none",
+) -> list[str]:
+    """Steps shown in the Micro-PRD — browser-first; local download is optional."""
+    targets = edit_targets or ["src/queries.py"]
+    focus = format_edit_targets(targets)
+    uses_sqlite = data_plane == "sqlite"
+
+    steps = [
         "Read the Context and Success criteria in the left panel.",
         "The starter project loads automatically in the editor (see the file tree). "
-        "Focus your changes on `src/queries.py`.",
-        "Download **Dataset (.sqlite)** from the header if you want to run tests locally; "
-        "in the browser, use **Run Public Tests** (no local setup required).",
-        "Edit existing starter files only — you cannot add new files in the browser workspace.",
-        "Click **Run Public Tests** to check your work; output appears in the terminal panel below the editor.",
-        "When ready, click **Submit Project** to send your edited files for grading.",
-        "Optional: download **Starter ZIP** to work locally, then use **Submit ZIP** to upload your project.",
+        f"Focus your changes on {focus}.",
     ]
+    if uses_sqlite:
+        steps.extend(
+            [
+                "Open **docs/DATA.md** in the file tree for table columns, relationships, "
+                "and known anomalies — you do not need to download the database to start.",
+                "Click **Run Public Tests** — the platform mounts the challenge dataset automatically.",
+                "Optional: download **Dataset (.sqlite)** from the header only if you prefer a local IDE.",
+            ]
+        )
+    else:
+        steps.append(
+            "Click **Run Public Tests** — starter files and tests are self-contained in the browser."
+        )
+    steps.extend(
+        [
+            "Edit existing starter files only — you cannot add new files in the browser workspace.",
+            "When ready, click **Submit Project** to send your edited files for grading.",
+            "Optional: download **Starter ZIP** to work locally, then use **Submit ZIP** to upload your project.",
+        ]
+    )
+    return steps
 
 
-def generate_starter_files(challenge_id: str, title: str) -> dict[str, str]:
+def generate_starter_files(
+    challenge_id: str,
+    title: str,
+    *,
+    anomalies: list[str] | None = None,
+) -> dict[str, str]:
     """Return a bounded multi-file starter scaffold for *challenge_id*."""
+    from .synthesizer import sqlite_data_doc
+
     return {
         "README.md": _readme(challenge_id, title),
+        "docs/DATA.md": sqlite_data_doc(anomalies=anomalies),
         "src/db.py": _db_py(),
         "src/queries.py": _queries_py(),
         "src/main.py": _main_py(),
@@ -42,16 +83,16 @@ def _readme(challenge_id: str, title: str) -> str:
 
 Challenge ID: `{challenge_id}`
 
-## Setup
+## Setup (browser-first)
 
-1. Download the synthetic dataset from the challenge page.
-2. Place it at `./sandbox.sqlite` in this project root (or set `SANDBOX_DB`).
-3. Run public tests: `pytest tests/test_public.py -v`
-4. Edit `src/queries.py` to improve session/event lookup performance.
-5. Submit your project from the browser workspace or upload a ZIP.
+1. Read **docs/DATA.md** for schema and anomalies (visible in the file tree).
+2. Edit `src/queries.py` to improve session/event lookup performance.
+3. Click **Run Public Tests** in the platform — the dataset is mounted for you.
+4. Optional local run: download **Dataset (.sqlite)**, place at `./sandbox.sqlite`, then `pytest tests/test_public.py -v`.
 
 ## Project layout
 
+- `docs/DATA.md` — table schema and anomaly notes (read this first)
 - `src/db.py` — SQLite connection helper
 - `src/queries.py` — query layer (main edit target)
 - `src/main.py` — local smoke entrypoint

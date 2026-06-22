@@ -205,6 +205,30 @@ class TestDynamicPreviewPublish:
         assert "src/solution.py" in readme
         assert "src/handler.py" not in readme
 
+        item = backlog_store.get_item(item_id)
+        assert item is not None
+        assert item.microprd is not None
+        joined = " ".join(item.microprd.structural_constraints + item.microprd.sandbox_instructions)
+        assert "src/solution.py" in joined
+        assert "src/queries.py" not in joined
+
+        pub = client.post(
+            f"/api/v1/triage/publish/{item_id}",
+            json={"config": _relax_config(), "reward": _reward_payload()},
+        )
+        assert pub.status_code == 200, pub.text
+
+        detail = client.get(f"/api/v1/sandbox/challenges/{item_id}").json()
+        public_joined = " ".join(
+            detail["microprd"]["structural_constraints"]
+            + detail["microprd"]["sandbox_instructions"]
+        )
+        assert "src/solution.py" in public_joined
+        assert "src/queries.py" not in public_joined
+        assert "docs/DATA.md" not in public_joined
+        starter = client.get(f"/api/v1/sandbox/challenges/{item_id}/starter").json()
+        assert "src/solution.py" in starter["files"]
+
 
 class TestStaleness:
     def test_package_stale_when_draft_changes(self):

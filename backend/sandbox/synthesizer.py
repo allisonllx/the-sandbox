@@ -28,6 +28,54 @@ ANOMALY_DESCRIPTIONS = [
 ]
 
 
+def sqlite_data_doc(*, anomalies: list[str] | None = None) -> str:
+    """Student-facing schema reference — visible in the browser file tree."""
+    anomaly_lines = "\n".join(f"- {a}" for a in (anomalies or ANOMALY_DESCRIPTIONS))
+    return f"""# Challenge dataset reference
+
+Read this file in the browser workspace before editing query code. You do **not**
+need to download the SQLite file to understand the schema.
+
+## Tables
+
+### `events`
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | INTEGER PK | Event identifier |
+| `user_id` | INTEGER | Filter/join key (indexed) |
+| `query_hash` | TEXT | Nullable — ~8% NULL rows injected |
+| `execution_time_ms` | REAL | Latency metric — **no index** (anomaly) |
+| `table_name` | TEXT | Logical table label |
+| `index_hit` | INTEGER | 0/1 cache hit flag |
+| `rows_scanned` | INTEGER | Scan volume hint |
+
+### `sessions`
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | INTEGER PK | Session row id |
+| `event_id` | INTEGER | FK to `events.id` — **no index** (anomaly) |
+| `cache_status` | TEXT | HIT / MISS / STALE / BYPASS |
+| `ttl_seconds` | INTEGER | Cache TTL |
+| `response_time_ms` | REAL | End-to-end response time |
+
+## Relationships
+
+- `sessions.event_id` → `events.id` (many sessions per event possible)
+- Typical student task: optimize `batch_session_lookup` and threshold counts in `src/queries.py`
+
+## Known anomalies (for diagnosis)
+
+{anomaly_lines}
+
+## Browser vs local
+
+- **Run Public Tests** in the platform mounts `sandbox.sqlite` for you automatically.
+- Download **Dataset (.sqlite)** from the header only if you prefer a local IDE.
+"""
+
+
 def _rng_for_challenge(challenge_id: str) -> random.Random:
     digest = hashlib.md5(challenge_id.encode()).hexdigest()
     return random.Random(int(digest[:8], 16))
