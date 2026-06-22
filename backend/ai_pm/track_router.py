@@ -42,8 +42,47 @@ _TECH_FIELD_HINTS = frozenset(
         "gateway_response_code",
         "error_code",
         "latency_ms",
+        # Archetype trigger fields (challenge_spec heuristic alignment)
+        "idempotency_key",
+        "file_size_bytes",
+        "chunk_count",
+        "memory_mb",
+        "oom",
+        "tenant_id",
+        "org_id",
+        "account_id",
+        "source_system",
+        "target_schema",
+        "connector",
+        "sync_status",
+        "timeout_ms",
+        "failure_rate",
+        "circuit_state",
+        "downstream_status",
+        "token_count",
+        "command",
+        "cli_duration_ms",
     }
 )
+
+_PRODUCT_LABEL_TOKENS = frozenset(
+    {"feature", "ux", "product", "merchant", "checkout", "discovery"}
+)
+_TECH_LABEL_TOKENS = frozenset(
+    {"log", "apm", "datadog", "error", "timeout", "db", "cdn", "cache", "parser", "webhook", "oom"}
+)
+
+
+def _contains_word(text: str, token: str) -> bool:
+    """Whole-word match — avoids 'product' matching inside 'production'."""
+    import re
+
+    return re.search(rf"\b{re.escape(token)}\b", text, re.IGNORECASE) is not None
+
+
+def _token_hits(text: str, tokens: frozenset[str]) -> int:
+    lower = text.lower()
+    return sum(1 for token in tokens if _contains_word(lower, token))
 
 
 @dataclass
@@ -69,18 +108,12 @@ def suggest_track(
 
     product_score = len(field_names & _PRODUCT_FIELD_HINTS)
     product_score += sum(1 for e in events if e in _PRODUCT_EVENT_HINTS)
-    product_score += sum(
-        1
-        for token in ("feature", "ux", "product", "merchant", "checkout", "discovery")
-        if token in label_lower or token in title_lower
-    )
+    product_score += _token_hits(label_lower, _PRODUCT_LABEL_TOKENS)
+    product_score += _token_hits(title_lower, _PRODUCT_LABEL_TOKENS)
 
     tech_score = len(field_names & _TECH_FIELD_HINTS)
-    tech_score += sum(
-        1
-        for token in ("log", "apm", "datadog", "error", "timeout", "db", "cdn", "cache")
-        if token in label_lower or token in title_lower
-    )
+    tech_score += _token_hits(label_lower, _TECH_LABEL_TOKENS)
+    tech_score += _token_hits(title_lower, _TECH_LABEL_TOKENS)
 
     if product_score > tech_score:
         return TrackSuggestion(

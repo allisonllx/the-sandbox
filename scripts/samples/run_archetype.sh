@@ -77,6 +77,7 @@ fi
 
 if [[ "$MODE" == "intake" ]]; then
   export PROBLEM="$(cat "$BRIEF_FILE")"
+  export TRACK="${TRACK:-technical}"
   exec "$ROOT_DIR/scripts/factory_intake.sh" "$BASE_URL"
 fi
 

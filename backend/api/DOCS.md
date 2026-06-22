@@ -24,7 +24,7 @@ Routers are mounted in `main.py`. OpenAPI docs at `/docs`.
 | `GET` | `/backlog/{id}/matches` | **Sponsor Match Radar** — performers for this challenge only |
 | `POST` | `/intake` | Founder brief: local `sanitize()` → `_create_backlog_item()` — raw prose never stored |
 | `POST` | `/score` | Score a `SanitizedMetadata` blob (used by `/startup/upload/loading`) |
-| `POST` | `/relax/{id}` | Relaxation preview + **dynamic factory** (`challenge_package`, `challenge_blueprint`); returns `challenge_draft` |
+| `POST` | `/relax/{id}` | Relaxation preview + **dynamic factory** (`challenge_package`, `challenge_blueprint`, `challenge_spec`); returns `challenge_draft`. Product/legacy items may have null package. |
 | `POST` | `/regenerate/{id}` | Re-run factory after draft/blueprint edits |
 | `POST` | `/publish/{id}` | Publish challenge; non-legacy items require valid non-stale `challenge_package` from Preview |
 
@@ -61,4 +61,5 @@ Translates HTTP requests into calls to `privacy_proxy/`, `ai_pm/`, and `sandbox/
 - Follow `docs/api-patterns.md` for response shapes on new endpoints
 - Errors should use structured `{ code, message, detail, hint }` — existing routes still use FastAPI defaults; migrate when touched
 - CORS allows `http://localhost:3000` only — update for production deployment
-- `POST /relax/{id}` and `POST /publish/{id}` share `RelaxRequest` body (`config`, optional `track`, optional `draft`)
+- `POST /relax/{id}` and `POST /publish/{id}` share `RelaxRequest` body (`config`, optional `track`, optional `draft`, optional `blueprint` for archetype override)
+- `RelaxResponse.challenge_spec` is the canonical technical definition when present; Micro-PRD is projected from it on the dynamic path

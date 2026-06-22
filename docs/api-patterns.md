@@ -211,10 +211,17 @@ HTTP `422` for validation, `404` for missing resources, `500` only for unexpecte
 Founders edit student-facing copy before publish via `PublishDraft`:
 
 - `POST /api/v1/triage/relax/{id}` returns `challenge_draft` in the response (preview baseline)
+- For **non-demo technical** items, the same response includes:
+  - `challenge_package` — starter tree + validation (no `reference_solution` in JSON)
+  - `challenge_blueprint` — deterministic projection from spec
+  - `challenge_spec` — optional full `TechnicalChallengeSpec` (classification, interface contract, definition of done)
+- **Product track** and **demo-*** items may return `challenge_package: null` — factory runs at publish via legacy scaffolds
 - Founder edits in `PublishDraftEditor`; publish sends optional `draft` in the same `RelaxRequest` body as `config`
 - `POST /api/v1/triage/publish/{id}` applies draft overrides before Micro-PRD generation and public sanitization
 
-Key fields: `title`, `context`, `definition_of_success`, `evaluation_focus`, `company_profile` (blind audition).
+Key `PublishDraft` fields: `title`, `context`, `definition_of_success`, `evaluation_focus`, `company_profile` (blind audition).
+
+Optional `RelaxRequest.blueprint.archetype` forces classification (e.g. `algorithm` override). Omit blueprint or set `ARCHETYPE=auto` in scripts to auto-classify from ingest signals.
 
 Public student responses never echo CTO-only fields (`brand_proxy`, `source_label`).
 

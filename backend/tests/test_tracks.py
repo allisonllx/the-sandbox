@@ -64,6 +64,25 @@ class TestTrackRouter:
         )
         assert suggestion.track == ChallengeTrack.technical
 
+    def test_production_in_title_does_not_trigger_product_track(self):
+        """Regression: 'product' substring in 'production' must not route to product."""
+        from backend.privacy_proxy.models import FieldMetadata, InputFormat, SanitizedMetadata
+
+        metadata = SanitizedMetadata(
+            format_detected=InputFormat.text,
+            fields=[
+                FieldMetadata(name="file_size_bytes", inferred_type="integer"),
+                FieldMetadata(name="oom", inferred_type="boolean"),
+            ],
+            approximate_row_scale=4,
+        )
+        suggestion = track_router.suggest_track(
+            metadata,
+            "Sample — stream_parser (intake)",
+            "Resolve production incident in core service",
+        )
+        assert suggestion.track == ChallengeTrack.technical
+
 
 class TestAbstractBrand:
     def test_replaces_known_company_tokens(self):

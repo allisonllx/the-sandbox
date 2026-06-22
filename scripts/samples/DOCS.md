@@ -42,6 +42,12 @@ PREVIEW_ONLY=1 ./scripts/samples/run_archetype.sh webhook_handler
 | [`logs/`](logs/) | Structured log lines with `key=value` fields for sanitize → score |
 | [`briefs/`](briefs/) | Founder problem statements with embedded telemetry excerpts |
 
+## Product vs technical tracks
+
+These samples exercise the **dynamic technical factory** (Python starter + `challenge_spec`).
+
+**Product track** items (merchant-discovery briefs, `demo-004`) route to the frontend scaffold — Preview returns `challenge_package: null` and files like `index.html`, `DESIGN.md`. That is expected; use `demo-004` publish flow for product smoke tests.
+
 ## Overrides
 
 | Env | Effect |
@@ -50,6 +56,7 @@ PREVIEW_ONLY=1 ./scripts/samples/run_archetype.sh webhook_handler
 | `ARCHETYPE=algorithm` | Force clamp_values scaffold (used by `algorithm` sample) |
 | `SOURCE_LABEL=...` | Backlog label |
 | `PREVIEW_ONLY=1` | Stop after relax |
+| `TRACK=technical` | Force technical factory (auto-set for `run_archetype.sh … intake`) |
 | `LOG_CONTENT=...` | Override log text in `factory_pipeline.sh` |
 | `PROBLEM=...` | Override brief in `factory_intake.sh` |
 
