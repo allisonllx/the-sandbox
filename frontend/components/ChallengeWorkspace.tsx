@@ -42,6 +42,10 @@ const SAVE_LABEL: Record<SaveStatus, string> = {
   submitting: "Submitting…",
 };
 
+const OUTPUT_HEIGHT_DEFAULT = 96;
+const OUTPUT_HEIGHT_MIN = 56;
+const OUTPUT_HEIGHT_MAX = 480;
+
 function sortedPaths(files: Record<string, string>): string[] {
   return Object.keys(files).sort();
 }
@@ -62,10 +66,13 @@ export function ChallengeWorkspace({
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [loading, setLoading] = useState(true);
   const [output, setOutput] = useState("$ sandbox ready\n");
+  const [outputHeight, setOutputHeight] = useState(OUTPUT_HEIGHT_DEFAULT);
   const [running, setRunning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  const workspaceBodyRef = useRef<HTMLDivElement>(null);
+  const outputDragRef = useRef<{ startY: number; startHeight: number } | null>(null);
   const [editorHeight, setEditorHeight] = useState(400);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof import("monaco-editor") | null>(null);
@@ -209,6 +216,37 @@ export function ChallengeWorkspace({
     return () => observer.disconnect();
   }, [loading, activeFile]);
 
+  const clampOutputHeight = useCallback((height: number) => {
+    const body = workspaceBodyRef.current;
+    const maxFromBody = body ? Math.floor(body.clientHeight * 0.65) : OUTPUT_HEIGHT_MAX;
+    const max = Math.min(OUTPUT_HEIGHT_MAX, Math.max(OUTPUT_HEIGHT_MIN, maxFromBody));
+    return Math.min(max, Math.max(OUTPUT_HEIGHT_MIN, height));
+  }, []);
+
+  const handleOutputResizeStart = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      outputDragRef.current = { startY: event.clientY, startHeight: outputHeight };
+      event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    [outputHeight]
+  );
+
+  const handleOutputResizeMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (!outputDragRef.current) return;
+      const delta = outputDragRef.current.startY - event.clientY;
+      setOutputHeight(clampOutputHeight(outputDragRef.current.startHeight + delta));
+    },
+    [clampOutputHeight]
+  );
+
+  const handleOutputResizeEnd = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (!outputDragRef.current) return;
+    outputDragRef.current = null;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+  }, []);
+
   function updateFile(path: string, content: string) {
     setFiles((prev) => {
       const next = { ...prev, [path]: content };
@@ -315,7 +353,7 @@ export function ChallengeWorkspace({
         )}
       </div>
 
-      <div className="flex flex-1 min-h-0 overflow-hidden flex-col">
+      <div ref={workspaceBodyRef} className="flex flex-1 min-h-0 overflow-hidden flex-col">
         <div className="flex flex-1 min-h-0 overflow-hidden">
           <aside className="w-48 flex-shrink-0 border-r border-surface-border overflow-y-auto bg-[#0d0d10]">
             {paths.map((path) => (
@@ -360,7 +398,26 @@ export function ChallengeWorkspace({
           </div>
         </div>
 
-        <pre className="flex-shrink-0 h-24 overflow-y-auto p-3 text-xs text-slate-500 border-t border-surface-border font-mono">
+        <div
+          role="separator"
+          aria-orientation="horizontal"
+          aria-label="Resize terminal output"
+          title="Drag to resize terminal"
+          onPointerDown={handleOutputResizeStart}
+          onPointerMove={handleOutputResizeMove}
+          onPointerUp={handleOutputResizeEnd}
+          onPointerCancel={handleOutputResizeEnd}
+          className="group flex-shrink-0 h-2 cursor-row-resize touch-none select-none
+            border-t border-surface-border bg-[#0a0a0c]
+            hover:bg-accent/10 active:bg-accent/20"
+        >
+          <div className="mx-auto mt-0.5 h-0.5 w-10 rounded-full bg-surface-border group-hover:bg-accent/50" />
+        </div>
+
+        <pre
+          style={{ height: outputHeight }}
+          className="flex-shrink-0 overflow-y-auto p-3 text-xs text-slate-500 font-mono"
+        >
           {output}
         </pre>
       </div>
