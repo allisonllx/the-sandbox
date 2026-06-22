@@ -1,0 +1,6 @@
+We sync CRM and billing records into our analytics warehouse but schema mapping is inconsistent.
+
+Sample sync errors:
+source_system=hubspot target_schema=analytics_warehouse connector=crm_sync sync_status=failed
+
+Build a data adapter that normalizes external records to our internal schema.

@@ -1,0 +1,6 @@
+Payment webhooks retry when the gateway returns 502, but we double-charge customers on duplicate deliveries.
+
+Sample production log excerpt:
+retry_count=3 idempotency_key=evt_7f3a2b gateway_response_code=502 amount_cents=499
+
+Build an idempotency store so the same idempotency_key is processed exactly once.

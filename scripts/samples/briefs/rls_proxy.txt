@@ -1,0 +1,6 @@
+Multi-tenant API queries returned rows belonging to other tenants — isolation breach.
+
+Sample audit rows:
+tenant_id=org_acme org_id=org_acme account_id=acc_001 cross_tenant_leak=true
+
+Implement row-level tenant filtering for query results.

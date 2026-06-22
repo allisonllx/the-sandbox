@@ -98,12 +98,25 @@ def _heuristic_score(metadata: SanitizedMetadata) -> TechScores:
         else "No high-sensitivity field patterns detected."
     )
 
+    db_hints = {"query_hash", "execution_time_ms", "table_name", "rows_scanned", "index_hit"}
+    retry_hints = {"retry_count", "idempotency_key", "gateway_response_code"}
+    if field_names & retry_hints or any("retry" in n for n in field_names):
+        suggested_title = "Harden idempotent payment webhook retries"
+    elif field_names & db_hints:
+        suggested_title = "Optimise SQLite session lookup latency"
+    elif any("payment" in n or "charge" in n for n in field_names):
+        suggested_title = "Fix duplicate payment retry side effects"
+    elif scale > 5000:
+        suggested_title = "Improve batch event processing throughput"
+    else:
+        suggested_title = "Resolve production incident in core service"
+
     return TechScores(
         severity=sev,
         friction=fric,
         sensitivity=raw_sens,
         sensitivity_reason=sensitivity_reason,
-        suggested_title="Optimise data pipeline performance",
+        suggested_title=suggested_title,
     )
 
 

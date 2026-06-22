@@ -1,0 +1,6 @@
+Webhook ingestion fails during gateway 502 storms — retries are unsafe and events pile up.
+
+Sample delivery failures:
+retry_count=5 gateway_response_code=502 endpoint=/hooks/billing event_type=invoice.paid
+
+Implement a fail-safe webhook engine with safe retries for transient failures.

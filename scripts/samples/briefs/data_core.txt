@@ -1,0 +1,6 @@
+Our analytics team reports session lookups are too slow under peak traffic.
+
+Sample slow-query telemetry (anonymized):
+query_hash=9a2f1c execution_time_ms=842 table_name=sessions rows_scanned=184000 index_hit=false
+
+We need a greenfield module to optimize batch session lookups against our SQLite dataset while preserving schema contracts.

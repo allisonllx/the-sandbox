@@ -128,8 +128,16 @@ class TestDynamicPreviewPublish:
         body = relax_res.json()
         assert body["challenge_package"] is not None
         assert body["challenge_blueprint"] is not None
+        assert body["challenge_spec"] is not None
         assert body["challenge_package"]["validation"]["passed"] is True
         assert "tests/test_public.py" in body["challenge_package"]["starter_files"]
+        assert "docs/SPEC.md" in body["challenge_package"]["starter_files"]
+        archetype = body["challenge_blueprint"]["archetype"]
+        assert archetype in ("idempotency_engine", "webhook_handler")
+        starter_keys = body["challenge_package"]["starter_files"]
+        assert "src/idempotency_store.py" in starter_keys or "src/webhook_engine.py" in starter_keys
+        assert "src/solution.py" not in starter_keys
+        assert "clamp_values" not in str(starter_keys)
 
         item = backlog_store.get_item(item_id)
         assert item is not None
@@ -219,13 +227,15 @@ class TestDynamicPreviewPublish:
         assert pub.status_code == 200, pub.text
 
         detail = client.get(f"/api/v1/sandbox/challenges/{item_id}").json()
+        ctx = detail["microprd"]["context"].lower()
+        assert "pure-python" in ctx or "clamp" in ctx or "buggy" in ctx
+        assert "sqlite" not in ctx
+        assert detail["uses_dataset"] is False
         public_joined = " ".join(
             detail["microprd"]["structural_constraints"]
             + detail["microprd"]["sandbox_instructions"]
         )
         assert "src/solution.py" in public_joined
-        assert "src/queries.py" not in public_joined
-        assert "docs/DATA.md" not in public_joined
         starter = client.get(f"/api/v1/sandbox/challenges/{item_id}/starter").json()
         assert "src/solution.py" in starter["files"]
 

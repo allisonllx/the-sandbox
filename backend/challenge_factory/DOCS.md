@@ -1,19 +1,31 @@
 # Challenge Factory
 
-Generates per-challenge starter files from Micro-PRD + **ChallengeBlueprint** at Preview time.
+Generates per-challenge starter files from **TechnicalChallengeSpec** (single-pass inference) at Preview time.
 
-## Flow
+## Flow (spec-driven)
 
-1. `POST /triage/relax/{id}` — relaxation + Micro-PRD + factory (non-legacy items)
-2. Founder reviews `challenge_package` in response (starter tree + validation)
-3. `POST /triage/regenerate/{id}` — re-run after draft/blueprint edits
-4. `POST /triage/publish/{id}` — activates pre-validated package (no generation)
+1. Ingest → sanitize → score
+2. `POST /triage/relax/{id}` — `generate_spec()` (one LLM call or heuristic) → `build_package(challenge_spec=…)`
+3. `spec_to_microprd()` projects student brief **before** persist (spec is source of truth)
+4. `generate_scaffold_from_spec()` interpolates stubs/tests from `interface_contract.public_api`
+5. Founder reviews `challenge_package` + optional `challenge_spec` in response
+6. `POST /triage/publish/{id}` — activates pre-validated package
+
+```mermaid
+flowchart LR
+  ingest[SanitizedMetadata] --> specGen[generate_spec]
+  specGen --> interpolate[scaffold_interpolate]
+  interpolate --> validate[pytest validate]
+  specGen --> microprd[spec_to_microprd]
+  validate --> preview[Preview response]
+  microprd --> preview
+```
 
 ## Legacy bypass
 
 | Condition | Path |
 |---|---|
-| `demo-*` item IDs | Hardcoded `starter_scaffold` + `synthesizer` |
+| `demo-*` item IDs | Hardcoded `starter_scaffold` + `synthesizer`; `legacy_spec_adapter` supplies runtime spec |
 | `product_feature` track | Hardcoded product scaffold (until Phase 3) |
 | `CHALLENGE_FACTORY_MODE=legacy\|dynamic\|auto` | Env override (`auto` = table above) |
 
@@ -21,57 +33,49 @@ Generates per-challenge starter files from Micro-PRD + **ChallengeBlueprint** at
 
 | File | Role |
 |---|---|
-| `models.py` | `ChallengeBlueprint`, `ChallengePackage`, `ValidationReport` |
+| `models.py` | `TechnicalArchetype`, `ChallengeBlueprint`, `ChallengePackage` |
+| `spec_models.py` | `TechnicalChallengeSpec`, `InterfaceContract` |
+| `challenge_spec.py` | Single-pass `generate_spec()` + heuristic fallback |
+| `archetype_catalog.py` | Per-archetype defaults, reference bodies, trigger inference |
+| `scaffold_interpolate.py` | Dynamic stubs/tests from spec signatures |
+| `spec_projection.py` | `spec_to_microprd`, `spec_to_blueprint`, `spec_to_readme` |
+| `legacy_spec_adapter.py` | `resolve_challenge_spec()` for demo-* without store mutation |
 | `legacy_router.py` | `use_legacy_factory()` |
-| `blueprint_planner.py` | Infer archetype + data plane (LLM + heuristic) |
-| `scaffold_technical.py` | Archetype templates + optional LLM scaffold |
+| `blueprint_planner.py` | Legacy LLM blueprint (fallback when no spec) |
+| `scaffold_technical.py` | Legacy archetype templates |
 | `validator.py` | Syntax, security scan, pytest on `tests/` |
 | `builder.py` | `build_package()`, staleness hash |
 
-## Technical archetypes
+## Technical archetypes (Phase 1)
 
-- `algorithm` — pure logic, no DB
-- `service_module` — single module/class focus
-- `integration` — multi-module wiring
-- `data_adjacent` — data helpers optional
-- `data_core` — query/SQLite focus (uses legacy synthesizer when `data_plane=sqlite`)
+Sweet-spot system modules (auto-selected from ingest signals):
+
+- `webhook_handler`, `idempotency_engine`, `data_adapter`, `cli_instrumentation`
+- `data_masking`, `circuit_breaker`, `stream_parser`, `rls_proxy`
+
+Explicit / legacy:
+
+- `algorithm` — founder override only (never auto from retry logs)
+- `data_core` — SQLite query path (`demo-003`)
+- `integration`, `service_module`, `data_adjacent` — legacy aliases (normalized on read)
 
 ## Founder controls (API)
 
-`RelaxRequest.blueprint`:
+`RelaxRequest.blueprint.archetype` forces classification before scaffold (e.g. `algorithm` override).
 
-- `archetype`, `primary_focus`, `data_plane`
-- `stack_guidance`, `starter_hints` (Phase 1 text hints)
-- `edit_targets` (optional override)
+Omit blueprint (or `ARCHETYPE=auto` in scripts) to let ingest signals choose the archetype.
 
-`reference_solution` is stored on `BacklogItem.challenge_package` but stripped from API JSON responses.
+`BacklogItem.challenge_spec` is optional — persisted after Preview for dynamic items.
 
-## PRD ↔ starter sync
+## Consistency rule
 
-- `finalize_starter_package()` aligns README + blueprint `edit_targets` with generated files.
-- `ai_pm.microprd.sync_with_blueprint()` updates Micro-PRD `structural_constraints` and `sandbox_instructions` to match — runs at Preview/Publish and in the student challenge API.
+**spec ↔ docs/SPEC.md ↔ interpolated tests ↔ Micro-PRD** must agree on edit targets and public API symbols. Validator + `validate_contract_alignment()` enforce this.
 
 ## Browser workspace sufficiency
 
-Students use the in-browser editor — they must not need opaque local downloads to
-understand data or run public tests.
-
 | `data_plane` | Required in starter | Run Public Tests |
 |---|---|---|
-| `none` | Self-contained tests (no sqlite skip fixtures) | Student files only |
-| `sqlite` | `docs/DATA.md` schema reference | Platform mounts `sandbox.sqlite` |
-
-Validator: `workspace_sufficiency.check_browser_workspace_sufficiency()`.
-Run jobs: `run_jobs.enqueue_run(..., dataset_path=...)` copies DB into temp workspace.
-
-## Upstream: founder ingest
-
-Backlog items reach the factory after:
-
-| Path | Endpoint / UI |
-|---|---|
-| Upload UI | `/startup/upload` → `POST /proxy/sanitize` + `POST /triage/score` |
-| Quick intake | `POST /triage/intake` or sidebar on `/startup` |
-| Scripts | `./scripts/factory_intake.sh` / `factory_pipeline.sh` |
+| `none` | `docs/SPEC.md`, self-contained tests | Student files only |
+| `sqlite` | `docs/DATA.md` + `docs/SPEC.md` | Platform mounts `sandbox.sqlite` |
 
 See [`../ai_pm/DOCS.md`](../ai_pm/DOCS.md) and [`../../scripts/DOCS.md`](../../scripts/DOCS.md).

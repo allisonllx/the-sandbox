@@ -1,0 +1,6 @@
+Compliance blocked our analytics export because PII leaked into CSV dumps.
+
+Sample export audit:
+email=redacted user_id=u_8821 pii=true export_format=csv
+
+Build a referential PII masker that redacts sensitive fields while preserving join keys.

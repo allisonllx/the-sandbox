@@ -1,0 +1,6 @@
+Downstream timeouts are cascading — every request waits 5s then fails anyway.
+
+Sample circuit telemetry:
+timeout_ms=5000 failure_rate=0.91 circuit_state=open downstream_status=503
+
+Implement a circuit breaker with open/half-open/closed states.

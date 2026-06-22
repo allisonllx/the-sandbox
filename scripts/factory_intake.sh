@@ -7,26 +7,29 @@
 # Env:
 #   PROBLEM="Your internal problem statement..."
 #   SOURCE_LABEL="Founder brief label"
-#   ARCHETYPE=integration|algorithm|service_module|...
+#   ARCHETYPE=auto|algorithm|webhook_handler|...
+#   PREVIEW_ONLY=1               — stop after relax (no publish)
+#
+# Archetype samples: ./scripts/samples/run_archetype.sh <name> intake
 #
 # Requires: curl, jq. Backend at base_url (default http://localhost:8000).
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=factory_common.sh
+source "$SCRIPT_DIR/factory_common.sh"
+
 BASE_URL="${1:-http://localhost:8000}"
-ARCHETYPE="${ARCHETYPE:-integration}"
+ARCHETYPE="${ARCHETYPE:-auto}"
 SOURCE_LABEL="${SOURCE_LABEL:-Founder brief — payment retries}"
-PROBLEM="${PROBLEM:-Our payment webhook retries duplicate charges when Stripe returns 502. We need idempotent retry handling. Internal codename: NovaPay checkout v2.}"
+PREVIEW_ONLY="${PREVIEW_ONLY:-0}"
+PROBLEM="${PROBLEM:-Our payment webhook retries duplicate charges when Stripe returns 502. We need idempotent retry handling. Sample: retry_count=3 idempotency_key=abc-123 gateway_response_code=502. Internal codename: NovaPay checkout v2.}"
 
-pretty_json() { jq .; }
+pretty_json() { factory_pretty_json; }
+stage() { factory_stage "$@"; }
 
-stage() {
-  echo ""
-  echo "============================================================"
-  echo "==> $*"
-  echo "============================================================"
-}
-
+require_cmd() { factory_require_cmd "$@"; }
 require_cmd curl
 require_cmd jq
 
@@ -54,66 +57,27 @@ stage "2/6 Scope check"
 curl -sf "$BASE_URL/api/v1/triage/backlog/$ITEM_ID/scope" | pretty_json
 
 stage "3/6 Preview (Micro-PRD + starter factory)"
+RELAX_JSON="$(factory_build_relax_body)"
 RELAX_RESP=$(
   curl -sf -X POST "$BASE_URL/api/v1/triage/relax/$ITEM_ID" \
     -H "Content-Type: application/json" \
-    -d "$(jq -n \
-      --arg archetype "$ARCHETYPE" \
-      '{
-        config: {
-          abstract_logic: true,
-          synthesize_variables: false,
-          noise_level: 0.0,
-          abstract_brand: true,
-          obfuscate_domain: false
-        },
-        blueprint: {
-          archetype: $archetype,
-          primary_focus: "Implement the core module and pass public tests",
-          data_plane: "none"
-        },
-        reward: {
-          reward_type: "cash_bounty",
-          amount_usd: 500,
-          interview_benchmark: 75,
-          locked: true
-        }
-      }')"
+    -d "$RELAX_JSON"
 )
 echo "$RELAX_RESP" | pretty_json
 
-echo ""
-echo "--- Factory summary ---"
-echo "$RELAX_RESP" | jq '{
-  validation: .challenge_package.validation,
-  starter_files: (.challenge_package.starter_files | keys),
-  edit_targets: .challenge_package.blueprint.edit_targets,
-  draft_title: .challenge_draft.title
-}'
+factory_print_summary "$RELAX_RESP"
+factory_assert_validation "$RELAX_RESP"
 
-if [[ "$(echo "$RELAX_RESP" | jq -r '.challenge_package.validation.passed // false')" != "true" ]]; then
-  echo "ERROR: validation failed" >&2
-  exit 1
+if [[ "$PREVIEW_ONLY" == "1" ]]; then
+  stage "Done (preview only)"
+  echo "ITEM_ID=$ITEM_ID"
+  exit 0
 fi
 
 stage "4/6 Publish"
 curl -sf -X POST "$BASE_URL/api/v1/triage/publish/$ITEM_ID" \
   -H "Content-Type: application/json" \
-  -d '{
-    "config": {
-      "abstract_logic": true,
-      "synthesize_variables": false,
-      "noise_level": 0.0,
-      "abstract_brand": true,
-      "obfuscate_domain": false
-    },
-    "reward": {
-      "reward_type": "cash_bounty",
-      "amount_usd": 500,
-      "interview_benchmark": 75,
-      "locked": true
-    }
-  }' | pretty_json
+  -d "$(factory_build_publish_body)" | pretty_json
 
 stage "5/6 Verify student starter"
 curl -sf "$BASE_URL/api/v1/sandbox/challenges/$ITEM_ID/starter" | jq '{

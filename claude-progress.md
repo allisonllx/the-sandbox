@@ -6,7 +6,7 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `python -m pytest backend/tests/ -v`
 - Current highest-priority unfinished feature: `factory-001` Phase 2 (optional data plane + per-challenge secret tests)
-- Latest passing: `intake-001` — founder upload UI + `/triage/intake`; **139 tests**
+- Latest passing: TechnicalChallengeSpec redesign; **160 tests**
 - Current blocker: None
 
 ## Session Log
@@ -261,3 +261,20 @@
 - Docs: documentation-sync.md naming section + full module list
 - Commits: none
 - Next best step: factory-001 Phase 2
+
+### Session 019
+
+- Date: 2026-06-21
+- Goal: TechnicalChallengeSpec redesign — single-pass inference, dynamic scaffolds, 8 archetypes
+- Completed:
+  - `TechnicalChallengeSpec` + expanded `TechnicalArchetype` enum; optional `BacklogItem.challenge_spec`
+  - Single-pass `generate_spec()` + heuristic fallback (`challenge_spec.py`, `archetype_catalog.py`)
+  - Spec-driven pipeline: `scaffold_interpolate.py`, `spec_projection.py`, `legacy_spec_adapter.py`
+  - Triage relax/publish wired: spec → package → `spec_to_microprd` before persist
+  - Scripts: `ARCHETYPE=auto` default; omit blueprint when auto
+  - Tests: `test_challenge_spec.py`, `test_scaffold_interpolate.py`, `test_legacy_spec_adapter.py`; factory payment-retry assertions updated
+- Verification run: `python -m pytest backend/tests/ -q` → **160 passed**
+- Docs: `backend/challenge_factory/DOCS.md` updated; `docs/PRODUCT.md` / `AGENTS.md` — no update required (factory DOCS covers new flow)
+- Commits: none
+- Known risk: LLM stub still returns scorer JSON — heuristic path is hot path when LLM unavailable; physical `.tpl` files deferred (Python catalog drives interpolation)
+- Next best step: factory-001 Phase 2 — per-challenge secret tests + optional fixture LLM pass

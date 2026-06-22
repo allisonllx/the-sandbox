@@ -21,6 +21,7 @@ export default function ChallengeWorkspacePage() {
   const [submitResult, setSubmitResult] = useState<SubmitResponse | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [downloadingStarter, setDownloadingStarter] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const isProduct = challenge?.track === "product_feature";
 
@@ -34,6 +35,7 @@ export default function ChallengeWorkspacePage() {
 
   async function handleDownloadDataset() {
     setDownloading(true);
+    setDownloadError(null);
     try {
       const blob = await api.downloadDataset(challengeId);
       const url = URL.createObjectURL(blob);
@@ -43,7 +45,8 @@ export default function ChallengeWorkspacePage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Download failed");
+      const message = e instanceof Error ? e.message : "Download failed";
+      setDownloadError(message);
     } finally {
       setDownloading(false);
     }
@@ -100,26 +103,40 @@ export default function ChallengeWorkspacePage() {
               {challenge.title}
             </span>
           </div>
-          <div className="flex gap-2 flex-shrink-0">
-            <button
-              type="button"
-              onClick={() => void handleDownloadStarter()}
-              disabled={downloadingStarter}
-              className="text-xs px-3 py-1.5 rounded border border-surface-border text-slate-300
-                hover:bg-surface-muted disabled:opacity-50"
-            >
-              {downloadingStarter ? "Downloading…" : "Starter ZIP"}
-            </button>
-            {!isProduct && (
+          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+            <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => void handleDownloadDataset()}
-                disabled={downloading || !challenge.dataset_ready}
+                onClick={() => void handleDownloadStarter()}
+                disabled={downloadingStarter}
                 className="text-xs px-3 py-1.5 rounded border border-surface-border text-slate-300
                   hover:bg-surface-muted disabled:opacity-50"
               >
-                {downloading ? "Downloading…" : "Dataset (.sqlite)"}
+                {downloadingStarter ? "Downloading…" : "Starter ZIP"}
               </button>
+              {!isProduct && challenge.uses_dataset && (
+                <button
+                  type="button"
+                  onClick={() => void handleDownloadDataset()}
+                  disabled={downloading || !challenge.dataset_ready}
+                  title={
+                    challenge.dataset_ready
+                      ? "Optional — for local IDE use"
+                      : "Dataset not generated yet — use Run Public Tests in the browser"
+                  }
+                  className="text-xs px-3 py-1.5 rounded border border-surface-border text-slate-300
+                    hover:bg-surface-muted disabled:opacity-50"
+                >
+                  {downloading
+                    ? "Downloading…"
+                    : challenge.dataset_ready
+                      ? "Dataset (.sqlite)"
+                      : "Dataset (pending)"}
+                </button>
+              )}
+            </div>
+            {downloadError && (
+              <p className="text-[10px] text-red-400 max-w-xs text-right">{downloadError}</p>
             )}
           </div>
         </div>

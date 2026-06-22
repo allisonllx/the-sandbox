@@ -1,0 +1,6 @@
+Batch numeric processing returns wrong bounds — values outside [low, high] slip through QA.
+
+This is a pure in-memory logic bug (no I/O, no database):
+Implement clamp_values(values, low, high) correctly.
+
+Founder explicitly requests an algorithm-style exercise (not a webhook or data pipeline task).

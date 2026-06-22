@@ -102,7 +102,7 @@ export function MicroPRDView({
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-slate-300 leading-relaxed">{content as string}</p>
+              <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">{content as string}</p>
             )}
           </section>
         );
