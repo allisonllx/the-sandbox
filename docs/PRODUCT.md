@@ -28,7 +28,7 @@ Technically capable but locked out of top roles by the absence of a pedigreed ne
 
 3. **Student: Discover & set up** — Browse the Innovation Hub with track filter tabs. Each challenge shows stage, team size range, and tech stack — never the sponsor name. Technical challenges include a synthetic SQLite dataset; Product Feature challenges include a frontend starter scaffold and required `DESIGN.md` template.
 
-4. **Student: Solve & submit** — Open `/student/challenges/{id}`: the left panel renders the **Micro-PRD brief** as formatted markdown (scenario, typed I/O examples, success criteria, sandbox steps) in the app monospace font — not raw `**` / backtick source. Technical track: Monaco workspace + public tests + multi-file submit. Product track: prototype editor + optional Figma/deploy links + `DESIGN.md` in submit manifest.
+4. **Student: Solve & submit** — Open `/student/challenges/{id}`: left panel shows the rendered Micro-PRD brief; the workspace editor supports **Add file** for optional `src/helpers/*.py` modules (keep minimal). **Run Public Tests** runs pytest only — no interactive terminal, no running `main.py`, no in-browser website preview. Technical track: Monaco + multi-file submit. Product track: prototype editor + DESIGN.md + optional external links at submit.
 
 5. **Startup: Review matches** — Track-aware assessor plugins score submissions (Technical: tests + taste; Product: structure + DESIGN.md rubric). Scorecard dimensions differ by track. After publish, sponsors open **Sponsor Match Radar** at `/startup/matches/{challengeId}` — ranked performers for **that challenge only** (live submissions or demo stubs). They do not see other companies' challenges or the student global leaderboard.
 

@@ -10,7 +10,7 @@ Public challenge layer for students (Innovation Hub). Serves track-aware publish
 |---|---|
 | `models.py` | Public API models incl. track fields, `SubmitRequest.links`, scorecard response |
 | `synthesizer.py` | Procedural SQLite generator with injected anomalies (technical track) |
-| `starter_scaffold.py` | 5-file Python starter (technical track) |
+| `starter_scaffold.py` | Python starter + `browser_workspace_readme_section()`, `platform_sandbox_instructions()` |
 | `product_starter_scaffold.py` | HTML/CSS/JS + DESIGN.md + mock JSON (product track) |
 | `workspace.py` | Anonymous `sandbox_workspace_id` cookie helpers |
 | `draft_store.py` | File-backed drafts under `data/drafts/` |
@@ -39,6 +39,8 @@ Routes in `api/sandbox_routes.py` expose list/filter by track, starter, workspac
 | `enterprise_radar.py` | `GET /sandbox/enterprise/radar` | `/enterprise/radar` |
 
 Frontend: `/student` track tabs; `/student/challenges/[id]` routes to `ChallengeWorkspace` or `ProductWorkspace`.
+
+**Browser workspace (technical):** students may **Add file** under `src/helpers/*.py` only. **Run Public Tests** runs pytest — no shell, no `main.py`, no website preview. Copy also appears in starter `README.md` and Micro-PRD sandbox instructions.
 
 ## Notes for the Next Session
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from ..ai_pm.models import ChallengeTrack, MicroPRD
 from ..privacy_proxy.models import SanitizedMetadata
-from ..sandbox.starter_scaffold import format_edit_targets, platform_sandbox_instructions
+from ..sandbox.starter_scaffold import format_edit_targets, platform_sandbox_instructions, browser_workspace_readme_section
 from .models import ChallengeBlueprint, DataPlane, TechnicalArchetype
 from .spec_models import TechnicalChallengeSpec
 
@@ -189,10 +189,11 @@ See `docs/SPEC.md` for the full interface contract.
 ## Setup
 
 1. Read `docs/SPEC.md` for the interface contract.
-2. Run public tests: `pytest tests/ -v`
+2. Click **Run Public Tests** in the browser workspace (pytest — no interactive terminal).
 3. Implement the TODO sections in the edit targets.
-4. Submit from the browser workspace or upload a ZIP.
-"""
+4. Optional helpers: `src/helpers/*.py` only — keep minimal.
+5. Submit from the browser workspace or upload a ZIP.
+{browser_workspace_readme_section(technical=True)}"""
 
 
 def spec_to_microprd(
@@ -204,7 +205,10 @@ def spec_to_microprd(
 ) -> MicroPRD:
     """Deterministic Micro-PRD projection from spec."""
     targets = list(spec.starter_layout.edit_targets) or [spec.interface_contract.primary_module]
-    constraint = f"Edit the provided starter files only (main target: {format_edit_targets(targets)})"
+    constraint = (
+        f"Focus on {format_edit_targets(targets)}. "
+        "Optional helpers under `src/helpers/*.py` only — keep minimal."
+    )
     constraints = list(spec.stack_guidance) + [constraint]
     if spec.data_plane == DataPlane.sqlite:
         constraints.append("Use the provided SQLite dataset — see docs/DATA.md for schema reference")

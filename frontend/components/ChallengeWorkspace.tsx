@@ -10,6 +10,13 @@ import {
   saveLocalDraft,
   type SaveStatus,
 } from "@/lib/draftStorage";
+import {
+  HELPER_DIR,
+  HELPER_FILE_TEMPLATE,
+  WORKSPACE_FILE_HINT,
+  WORKSPACE_LIMITS_NOTE,
+  resolveNewFilePath,
+} from "@/lib/workspaceFiles";
 import type { SubmitResponse } from "@/lib/types";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -69,6 +76,10 @@ export function ChallengeWorkspace({
   const [outputHeight, setOutputHeight] = useState(OUTPUT_HEIGHT_DEFAULT);
   const [running, setRunning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [addingFile, setAddingFile] = useState(false);
+  const [newFileName, setNewFileName] = useState("");
+  const [addFileError, setAddFileError] = useState<string | null>(null);
+  const newFileInputRef = useRef<HTMLInputElement>(null);
 
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const workspaceBodyRef = useRef<HTMLDivElement>(null);
@@ -216,6 +227,12 @@ export function ChallengeWorkspace({
     return () => observer.disconnect();
   }, [loading, activeFile]);
 
+  useEffect(() => {
+    if (addingFile) {
+      newFileInputRef.current?.focus();
+    }
+  }, [addingFile]);
+
   const clampOutputHeight = useCallback((height: number) => {
     const body = workspaceBodyRef.current;
     const maxFromBody = body ? Math.floor(body.clientHeight * 0.65) : OUTPUT_HEIGHT_MAX;
@@ -254,6 +271,35 @@ export function ChallengeWorkspace({
       scheduleValidate(path, content);
       return next;
     });
+  }
+
+  function startAddingFile() {
+    setAddingFile(true);
+    setNewFileName("");
+    setAddFileError(null);
+  }
+
+  function cancelAddingFile() {
+    setAddingFile(false);
+    setNewFileName("");
+    setAddFileError(null);
+  }
+
+  function handleAddFile() {
+    const { path, error } = resolveNewFilePath(newFileName);
+    if (error || !path) {
+      setAddFileError(error ?? "Invalid path.");
+      return;
+    }
+    if (files[path] !== undefined) {
+      setAddFileError("That file already exists.");
+      return;
+    }
+    const next = { ...files, [path]: HELPER_FILE_TEMPLATE };
+    setFiles(next);
+    setActiveFile(path);
+    scheduleSave(next);
+    cancelAddingFile();
   }
 
   async function handleRun() {
@@ -355,21 +401,95 @@ export function ChallengeWorkspace({
 
       <div ref={workspaceBodyRef} className="flex flex-1 min-h-0 overflow-hidden flex-col">
         <div className="flex flex-1 min-h-0 overflow-hidden">
-          <aside className="w-48 flex-shrink-0 border-r border-surface-border overflow-y-auto bg-[#0d0d10]">
-            {paths.map((path) => (
-              <button
-                key={path}
-                type="button"
-                onClick={() => setActiveFile(path)}
-                className={`block w-full text-left px-3 py-1.5 text-xs font-mono truncate ${
-                  activeFile === path
-                    ? "bg-accent/20 text-accent"
-                    : "text-slate-400 hover:bg-surface-muted"
-                }`}
-              >
-                {path}
-              </button>
-            ))}
+          <aside className="w-52 flex-shrink-0 border-r border-surface-border flex flex-col min-h-0 bg-[#0d0d10]">
+            <div className="flex-shrink-0 flex items-center justify-between gap-2 px-2 py-1.5 border-b border-surface-border bg-[#0c0c0f]">
+              <span className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">
+                Files
+              </span>
+              {!productMode && (
+                <button
+                  type="button"
+                  title="New file (src/helpers/)"
+                  aria-label="New file"
+                  onClick={startAddingFile}
+                  className="flex items-center justify-center w-6 h-6 rounded text-slate-400
+                    hover:text-slate-100 hover:bg-surface-muted"
+                >
+                  <span className="text-base leading-none">+</span>
+                </button>
+              )}
+            </div>
+
+            {!productMode && (
+              <p className="flex-shrink-0 px-2 py-1.5 text-[10px] text-slate-600 leading-snug border-b border-surface-border/60">
+                {WORKSPACE_FILE_HINT} {WORKSPACE_LIMITS_NOTE}
+              </p>
+            )}
+
+            <div className="flex-1 min-h-0 overflow-y-auto py-1">
+              {paths.map((path) => (
+                <button
+                  key={path}
+                  type="button"
+                  onClick={() => setActiveFile(path)}
+                  className={`block w-full text-left px-3 py-1.5 text-xs font-mono truncate ${
+                    activeFile === path
+                      ? "bg-accent/20 text-accent"
+                      : "text-slate-400 hover:bg-surface-muted"
+                  }`}
+                >
+                  {path}
+                </button>
+              ))}
+
+              {addingFile && !productMode && (
+                <div className="px-2 py-1">
+                  <div
+                    className={`flex items-center gap-0.5 px-2 py-1 rounded border bg-surface ${
+                      addFileError ? "border-red-500/50" : "border-accent/50"
+                    }`}
+                  >
+                    <span className="text-[10px] text-slate-500 font-mono flex-shrink-0">
+                      {HELPER_DIR}/
+                    </span>
+                    <input
+                      ref={newFileInputRef}
+                      type="text"
+                      value={newFileName}
+                      onChange={(e) => {
+                        setNewFileName(e.target.value);
+                        setAddFileError(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddFile();
+                        }
+                        if (e.key === "Escape") {
+                          e.preventDefault();
+                          cancelAddingFile();
+                        }
+                      }}
+                      onBlur={() => {
+                        window.setTimeout(() => {
+                          if (!newFileName.trim()) {
+                            cancelAddingFile();
+                          }
+                        }, 120);
+                      }}
+                      placeholder="name.py"
+                      className="flex-1 min-w-0 bg-transparent text-xs font-mono text-slate-100
+                        outline-none placeholder:text-slate-600"
+                    />
+                  </div>
+                  {addFileError ? (
+                    <p className="mt-1 px-1 text-[10px] text-red-400 leading-snug">{addFileError}</p>
+                  ) : (
+                    <p className="mt-1 px-1 text-[10px] text-slate-600">Enter to create · Esc to cancel</p>
+                  )}
+                </div>
+              )}
+            </div>
           </aside>
 
           <div ref={editorContainerRef} className="flex-1 min-w-0 min-h-0 overflow-hidden">
