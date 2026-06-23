@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from .starter_scaffold import browser_workspace_readme_section
+
 PRODUCT_STARTER_PATHS = (
     "README.md",
     "DESIGN.md",
@@ -39,6 +41,7 @@ def product_platform_instructions(*, equipment_mode: bool = False) -> list[str]:
         "Complete **DESIGN.md** with your personas, layout trade-offs, and stack choices — this is required.",
         f"Use {mock_file} for local {noun} data; extend the UI for discovery + cart checkout.",
         "Optional: add Figma or deployed preview links in the submit panel.",
+        "**No terminal** and **no in-browser live site preview** — edit files in the workspace; open HTML locally if you download the Starter ZIP.",
         "Click **Submit Project** when ready (includes DESIGN.md + code).",
     ]
 
@@ -57,8 +60,8 @@ Challenge: `{challenge_id}` · Brand: **{brand}**
 
 ## Local preview
 
-Open `index.html` in a browser or use any static server.
-"""
+Open `index.html` in a browser or use any static server (download Starter ZIP — not available inside the platform editor).
+{browser_workspace_readme_section(technical=False)}"""
 
 
 def _design_md(brand: str, *, equipment: bool = False) -> str:

@@ -21,6 +21,25 @@ def format_edit_targets(edit_targets: list[str]) -> str:
     return ", ".join(f"`{t}`" for t in edit_targets)
 
 
+def browser_workspace_readme_section(*, technical: bool = True) -> str:
+    """README copy for in-browser editor limits (also surfaced in Micro-PRD sandbox steps)."""
+    if not technical:
+        return """
+## Browser workspace
+
+- Edit the starter prototype files in the platform editor.
+- There is **no embedded terminal** and **no in-browser live preview** of a deployed site — use optional Figma/deploy links at submit time.
+- Complete **DESIGN.md** before you submit.
+"""
+    return """
+## Browser workspace
+
+- Work in the platform editor. **Run Public Tests** runs `pytest` on your project — there is **no interactive shell** and you **cannot run `main.py` or launch a website** from the browser.
+- Focus changes on the primary edit target in `docs/SPEC.md`. You may add **at most a few** optional helpers under `src/helpers/*.py` via **Add file** — avoid sprawling helper trees; one small module is usually enough.
+- To use a full local IDE, download **Starter ZIP** and submit a ZIP when done.
+"""
+
+
 def platform_sandbox_instructions(
     edit_targets: list[str] | None = None,
     *,
@@ -51,7 +70,10 @@ def platform_sandbox_instructions(
         )
     steps.extend(
         [
-            "Edit existing starter files only — you cannot add new files in the browser workspace.",
+            "Optional: use **Add file** to create a helper under `src/helpers/` — keep it minimal; "
+            "you do not need many helper modules.",
+            "**No terminal** in the browser — use **Run Public Tests** (pytest only). "
+            "You cannot run `main.py` or launch a website from the workspace.",
             "When ready, click **Submit Project** to send your edited files for grading.",
             "Optional: download **Starter ZIP** to work locally, then use **Submit ZIP** to upload your project.",
         ]
@@ -88,16 +110,16 @@ Challenge ID: `{challenge_id}`
 1. Read **docs/DATA.md** for schema and anomalies (visible in the file tree).
 2. Edit `src/queries.py` to improve session/event lookup performance.
 3. Click **Run Public Tests** in the platform — the dataset is mounted for you.
-4. Optional local run: download **Dataset (.sqlite)**, place at `./sandbox.sqlite`, then `pytest tests/test_public.py -v`.
+4. Optional local run: download **Dataset (.sqlite)** and **Starter ZIP**, then `pytest tests/test_public.py -v` on your machine.
 
 ## Project layout
 
 - `docs/DATA.md` — table schema and anomaly notes (read this first)
 - `src/db.py` — SQLite connection helper
 - `src/queries.py` — query layer (main edit target)
-- `src/main.py` — local smoke entrypoint
+- `src/main.py` — local smoke entrypoint (not runnable in the browser workspace)
 - `tests/test_public.py` — tests you can run before submit
-"""
+{browser_workspace_readme_section(technical=True)}"""
 
 
 def _db_py() -> str:

@@ -331,3 +331,17 @@
 - Docs: full pass per documentation-sync.md
 - Commits: none
 - Next best step: factory-001 Phase 2
+
+### Session 024
+
+- Date: 2026-06-21
+- Goal: Add-file in browser workspace + no-terminal README/instructions
+- Completed:
+  - `ChallengeWorkspace`: **Add file** for `src/helpers/*.py`, sidebar hints
+  - `frontend/lib/workspaceFiles.ts` path validation
+  - `browser_workspace_readme_section()` in starter + spec README; updated sandbox instructions
+  - Product track: no in-browser live preview note
+- Verification run: spec + sandbox pytest **22 passed**; frontend typecheck pass
+- Docs: `backend/sandbox/DOCS.md`, `frontend/DOCS.md`, `docs/PRODUCT.md`
+- Commits: none
+- Next best step: factory-001 Phase 2
