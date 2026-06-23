@@ -1,5 +1,9 @@
 # The Sandbox
 
+<p align="center">
+  <img src="frontend/assets/sandbox.svg" alt="The Sandbox logo" width="160" />
+</p>
+
 Startups turn internal bugs and backlog items into **public coding challenges**. Students solve them to prove skill: without a traditional job application and without seeing which company wrote the problem.
 
 **Zero-trust** here means: sensitive data (log lines, emails, internal product names) is cleaned up **on the startup's machine first**. Only a safe, abstract summary crosses into the rest of the platform.
