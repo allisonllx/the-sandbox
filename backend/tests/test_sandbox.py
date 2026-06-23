@@ -253,3 +253,43 @@ class TestSandboxAPI:
             json={"code": "x = 1"},
         )
         assert res.status_code == 404
+
+
+class TestCloseFlow:
+    def test_close_removes_from_student_hub(self):
+        _publish_demo_item("demo-003")
+        listed = client.get("/api/v1/sandbox/challenges").json()
+        assert "demo-003" in [c["id"] for c in listed]
+
+        res = client.post("/api/v1/triage/close/demo-003")
+        assert res.status_code == 200
+        assert res.json()["status"] == "closed"
+
+        item = backlog_store.get_item("demo-003")
+        assert item is not None
+        assert item.status == BacklogStatus.closed
+
+        listed = client.get("/api/v1/sandbox/challenges").json()
+        assert "demo-003" not in [c["id"] for c in listed]
+
+        detail = client.get("/api/v1/sandbox/challenges/demo-003")
+        assert detail.status_code == 404
+
+    def test_close_rejects_non_published(self):
+        res = client.post("/api/v1/triage/close/demo-001")
+        assert res.status_code == 422
+
+    def test_submit_rejected_after_close(self):
+        _publish_demo_item("demo-003")
+        client.post("/api/v1/triage/close/demo-003")
+        res = client.post(
+            "/api/v1/sandbox/challenges/demo-003/submit",
+            json={"code": "print('hello')", "language": "python"},
+        )
+        assert res.status_code == 404
+
+    def test_match_radar_available_after_close(self):
+        _publish_demo_item("demo-003")
+        client.post("/api/v1/triage/close/demo-003")
+        res = client.get("/api/v1/triage/backlog/demo-003/matches")
+        assert res.status_code == 200

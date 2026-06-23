@@ -6,7 +6,7 @@
 - Standard startup path: `./init.sh`
 - Standard verification path: `python -m pytest backend/tests/ -v`
 - Current highest-priority unfinished feature: `factory-001` Phase 2 (optional data plane + per-challenge secret tests)
-- Latest passing: Spec-driven briefs + frontend markdown render; **166 tests**
+- Latest passing: CTO sidebar (triage/live/closed) + `POST /triage/close/{id}`; prior baseline **166** backend tests + **4** close-flow tests
 - Current blocker: None
 
 ## Session Log
@@ -343,5 +343,33 @@
   - Product track: no in-browser live preview note
 - Verification run: spec + sandbox pytest **22 passed**; frontend typecheck pass
 - Docs: `backend/sandbox/DOCS.md`, `frontend/DOCS.md`, `docs/PRODUCT.md`
+- Commits: none
+- Next best step: factory-001 Phase 2
+
+### Session 025
+
+- Date: 2026-06-21
+- Goal: CTO dashboard sidebar — triage vs live vs closed; close submissions API
+- Completed:
+  - `BacklogStatus.closed` + `POST /triage/close/{id}` (published → closed only)
+  - `BacklogSidebar.tsx` — collapsible In triage / Live challenges / Closed sections
+  - `RelaxationPanel` — Close submissions button; read-only archived view
+  - Match Radar available for published and closed; student hub excludes closed
+  - Tests: `test_sandbox.py::TestCloseFlow` (4 tests)
+- Verification run: `pytest backend/tests/test_sandbox.py::TestCloseFlow -q` → **4 passed**
+- Docs: `backend/ai_pm/DOCS.md`, `backend/api/DOCS.md`, `backend/tests/DOCS.md`, `frontend/DOCS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `docs/api-patterns.md`, `README.md`
+- Commits: none
+- Next best step: factory-001 Phase 2
+
+### Session 026
+
+- Date: 2026-06-21
+- Goal: OpenAI as default LLM for dev (keep vLLM/Qwen optional)
+- Completed:
+  - `LLM_ALLOW_CLOUD_SENSITIVE` defaults on — sensitive tier uses OpenAI when `OPENAI_API_KEY` set
+  - Local vLLM still first when `LLM_BASE_URL` configured; opt out with `LLM_ALLOW_CLOUD_SENSITIVE=0`
+  - `.env.example`, README, ARCHITECTURE, ai_pm DOCS updated with fabricated-data note
+- Verification run: `pytest backend/tests/test_llm_routing.py -q` → **6 passed**
+- Docs: README, `.env.example`, `backend/ai_pm/DOCS.md`, `docs/ARCHITECTURE.md`, `feature_list.json`
 - Commits: none
 - Next best step: factory-001 Phase 2

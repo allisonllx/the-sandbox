@@ -1,7 +1,7 @@
 """
 LLM-powered domain obfuscation for novel industries.
 
-Runs on the local vLLM tier by default (sensitive — column names stay on-prem).
+Runs on the sensitive LLM tier (local vLLM when `LLM_BASE_URL` is set, otherwise OpenAI when configured).
 Falls back to rule-based obfuscator when LLM is unavailable or output fails validation.
 """
 

@@ -23,6 +23,7 @@ from ..ai_pm.models import (
     PublishResponse,
     RelaxRequest,
     RelaxResponse,
+    CloseResponse,
     ScopeCheckResponse,
     ScoreRequest,
     ScoreResponse,
@@ -96,7 +97,7 @@ def get_sponsor_matches_for_item(item_id: str) -> SponsorMatchesResponse:
     item = store.get_item(item_id)
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
-    if item.status != BacklogStatus.published:
+    if item.status not in (BacklogStatus.published, BacklogStatus.closed):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={
@@ -689,3 +690,26 @@ def publish_item(item_id: str, request: RelaxRequest) -> PublishResponse:
         domain_proxy=item.domain_proxy,
         reward=reward,
     )
+
+
+@router.post(
+    "/close/{item_id}",
+    response_model=CloseResponse,
+    summary="Close submissions for a published challenge",
+)
+def close_challenge(item_id: str) -> CloseResponse:
+    """Mark a live challenge closed — removes it from the student hub; Match Radar stays available."""
+    item = store.get_item(item_id)
+    if not item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
+    if item.status != BacklogStatus.published:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "code": "NOT_PUBLISHED",
+                "message": "Only published challenges can be closed.",
+            },
+        )
+    item.status = BacklogStatus.closed
+    store.upsert_item(item)
+    return CloseResponse(item_id=item_id, status=BacklogStatus.closed)

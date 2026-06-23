@@ -121,7 +121,7 @@ See [`samples/demo_solutions/DOCS.md`](samples/demo_solutions/DOCS.md) for publi
 
 **Goal:** Founder controls what students actually see before anything goes live.
 
-On `/startup`, for each backlog item:
+On `/startup`, the sidebar groups backlog items into **In triage**, **Live challenges**, and **Closed** (collapsible sections). For each item in triage:
 
 1. **Review scores** — Severity / Friction / Sensitivity and the Red / Yellow / Green shield
 2. **Preview Changes** — for **non-demo technical** items, runs the [Challenge Factory](backend/challenge_factory/DOCS.md): single-pass **TechnicalChallengeSpec** → starter files + `docs/SPEC.md` + validation. **Product track** items get a product Micro-PRD only (frontend starter at publish).
@@ -131,7 +131,8 @@ On `/startup`, for each backlog item:
    - **Domain obfuscation** — reframe an industry-specific problem as a neutral scenario (e.g. food-delivery checkout → equipment locker rental) so students can't guess the sponsor
 4. **Release preview** — edit the public title, success criteria, **challenge blueprint** (archetype, stack hints), company profile, and evaluation focus before publish
 5. **Lock reward** — required checklist step before publish (payment is stubbed in the demo — see [disclaimer](#whats-implemented-vs-whats-demo-theater))
-6. **Approve & publish** — scope guard blocks oversized challenges; non-demo items require a valid Preview package; `demo-007` is a hardcoded always-fail demo prop
+6. **Approve & publish** — scope guard blocks oversized challenges; non-demo items require a valid Preview package; `demo-007` is a hardcoded always-fail demo prop. Published items move to **Live challenges**.
+7. **Close submissions** *(optional)* — removes the challenge from the student hub and stops new submissions; archived under **Closed**. Match Radar stays available for reviewing past submissions.
 
 ### 3. Blind audition
 
@@ -195,7 +196,7 @@ Demo-only internal names students never see: **StealthCo** (`demo-005`), **NovaP
 |---|---|
 | Backend | Python 3.11+ · FastAPI · Pydantic v2 |
 | Privacy Proxy | Regex PII masking · spaCy `en_core_web_sm` (local NER, offline) |
-| AI / LLM | Local vLLM (Qwen via OpenAI-compatible API) for sensitive paths · OpenAI (`gpt-4o-mini`) fallback for `standard` tier and optional cloud sensitive · heuristic fallback when no LLM |
+| AI / LLM | OpenAI (`gpt-4o-mini`) **default for dev/demo** · optional local vLLM (Qwen) for privacy-first sensitive tier · heuristic fallback when no LLM |
 | Assessor | Dual-layer: Docker secret tests (platform) + LLM sponsor fit |
 | Frontend | Next.js 14 · TypeScript · Tailwind CSS · Monaco editor |
 | Testing | pytest · 126 tests |
@@ -240,8 +241,8 @@ Topic docs: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/PRODUCT.md`
 - Python 3.11+
 - Node.js 20+
 - Docker *(optional — required for full platform secret-test grading on submit)*
-- vLLM + Qwen *(optional — recommended for sensitive triage/obfuscation; keeps column names on-prem)*
-- LLM / OpenAI keys *(optional — heuristics work without any LLM; see [Environment Variables](#environment-variables))*
+- OpenAI API key *(recommended for dev — triage, Micro-PRD, sponsor fit; see note below)*
+- vLLM + Qwen *(optional — privacy-first on-prem sensitive tier; keeps column names local)*
 
 ### Backend
 
@@ -254,7 +255,7 @@ pip install "spacy==3.7.0"
 pip install "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl"
 
 cp .env.example .env
-# Edit .env — uncomment OPENAI_API_KEY and/or adjust LLM_BASE_URL
+# Edit .env — set OPENAI_API_KEY for dev (default path); optionally enable LLM_BASE_URL for vLLM
 set -a && source .env && set +a
 
 python -m uvicorn backend.main:app --reload --port 8000
@@ -307,15 +308,24 @@ set -a && source .env && set +a
 
 The backend does not auto-load `.env` — export vars manually or use the `source` pattern above. Never commit `.env` (listed in `.gitignore`).
 
-### Local LLM (sensitive tier — privacy-first)
+> **LLM default for this repo:** OpenAI is the default dev setup (`OPENAI_API_KEY` only). All demo backlog items, synthetic datasets, and sample logs are **fabricated** — LLM calls receive anonymized structural metadata (field names, severity hints), not real customer data, so cloud LLM is acceptable for hackathon development. For production with real startup signals, run **vLLM locally** (`LLM_BASE_URL`) and set `LLM_ALLOW_CLOUD_SENSITIVE=0` so sensitive tier never leaves your network.
+
+### OpenAI cloud (default for dev / demo)
 
 | Variable | Default | Description |
 |---|---|---|
-| `LLM_BASE_URL` | *(unset)* | OpenAI-compatible local endpoint, e.g. `http://localhost:8000/v1` when running vLLM. **Preferred for triage, domain obfuscation, Micro-PRD, sponsor fit.** |
+| `OPENAI_API_KEY` | *(unset)* | **Default LLM backend** for triage, Micro-PRD, domain obfuscation, sponsor fit. Heuristic/template fallbacks if absent. |
+| `OPENAI_MODEL` | `gpt-4o-mini` | Model id for OpenAI requests. |
+| `LLM_ALLOW_CLOUD_SENSITIVE` | on | Set `0` to block OpenAI for **sensitive** tier (local vLLM only). Default: allowed — fine for fabricated demo data. |
+| `LLM_DOMAIN_OBFUSCATE` | on | Set `0` to disable LLM domain masking for novel industries. |
+
+### Local vLLM + Qwen (optional — privacy-first)
+
+| Variable | Default | Description |
+|---|---|---|
+| `LLM_BASE_URL` | *(unset)* | OpenAI-compatible local endpoint, e.g. `http://localhost:8000/v1` when running vLLM. When set, sensitive tier tries local **first**, then OpenAI unless `LLM_ALLOW_CLOUD_SENSITIVE=0`. |
 | `LLM_MODEL` | `Qwen/Qwen2.5-7B-Instruct` | Model id on the local server. |
 | `LLM_API_KEY` | `local` | API key sent to the local server (vLLM often accepts any value). |
-| `LLM_ALLOW_CLOUD_SENSITIVE` | off | Set `1` to allow OpenAI when local vLLM is down for **sensitive** tier. Default: blocked (privacy-first). |
-| `LLM_DOMAIN_OBFUSCATE` | on | Set `0` to disable LLM domain masking for novel industries. |
 
 Start vLLM in a separate terminal (not a pip dependency of this repo):
 
@@ -323,21 +333,14 @@ Start vLLM in a separate terminal (not a pip dependency of this repo):
 vllm serve Qwen/Qwen2.5-7B-Instruct --port 8000
 ```
 
-### OpenAI cloud (optional)
-
-| Variable | Default | Description |
-|---|---|---|
-| `OPENAI_API_KEY` | *(unset)* | Cloud fallback for **standard** tier; optional sensitive fallback when `LLM_ALLOW_CLOUD_SENSITIVE=1`. Heuristic/template paths if absent. |
-| `OPENAI_MODEL` | `gpt-4o-mini` | Model id for OpenAI requests. |
-
 ### Minimal setups
 
 | Goal | Config |
 |---|---|
 | Offline demo (no LLM) | Leave all vars unset — heuristics + templates |
-| Privacy-first production | `LLM_BASE_URL` only; keep `LLM_ALLOW_CLOUD_SENSITIVE` unset |
-| Local + cloud fallback | `LLM_BASE_URL` + `OPENAI_API_KEY` + `LLM_ALLOW_CLOUD_SENSITIVE=1` |
-| Cloud only (dev) | `OPENAI_API_KEY` only *(sensitive tier hits OpenAI unless local is also set)* |
+| **Dev / hackathon (default)** | `OPENAI_API_KEY` only |
+| Privacy-first production | `LLM_BASE_URL` + `LLM_ALLOW_CLOUD_SENSITIVE=0` |
+| Local + cloud fallback | `LLM_BASE_URL` + `OPENAI_API_KEY` (local first, OpenAI if local down) |
 
 ---
 
@@ -378,7 +381,7 @@ The dashboard opens on **7 pre-seeded backlog items** (`demo-001` … `demo-007`
 | **Match Radar empty state** | If nobody submitted yet, shows **hardcoded fake candidates** for that challenge ID. After a real submit, rankings use live scorecards (`source: live`). |
 | **Student leaderboard / enterprise radar** | Always **hardcoded seed rows** (e.g. Candidate A7F2). Not computed from live submissions yet. |
 | **`/student/trust`, verified badges** | Marketing copy + UI badges only; no sponsor KYC backend. |
-| **LLM / Docker** | Optional. **Sensitive** calls prefer local vLLM (`LLM_BASE_URL`); OpenAI remains fallback / **standard** tier. Without any LLM or Docker, assessor and triage use heuristics — still runs, less “smart.” |
+| **LLM / Docker** | Optional. **Default dev:** `OPENAI_API_KEY` only (demo data is fabricated; LLM sees metadata, not raw logs). **Production path:** local vLLM (`LLM_BASE_URL`) + `LLM_ALLOW_CLOUD_SENSITIVE=0`. Without any LLM or Docker, assessor and triage use heuristics — still runs, less “smart.” |
 
 ### Not built
 
@@ -445,6 +448,7 @@ Key entry points only. Full contract: **http://localhost:8000/docs** · module d
 | `POST` | `/api/v1/triage/relax/{id}` | Preview: Micro-PRD + challenge factory package (+ optional `challenge_spec`) |
 | `POST` | `/api/v1/triage/regenerate/{id}` | Re-run factory after draft/blueprint edits |
 | `POST` | `/api/v1/triage/publish/{id}` | Publish challenge |
+| `POST` | `/api/v1/triage/close/{id}` | Close submissions (`published` → `closed`; hidden from student hub) |
 | `GET` | `/api/v1/sandbox/challenges` | Student: list public challenges |
 | `POST` | `/api/v1/sandbox/challenges/{id}/submit` | Student: submit → scorecard |
 | `GET` | `/api/v1/triage/backlog/{id}/matches` | Sponsor: Match Radar |

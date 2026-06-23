@@ -341,14 +341,14 @@
       "priority": 12,
       "area": "ai-pm",
       "title": "Local vLLM routing + LLM domain obfuscation",
-      "user_visible_behavior": "Sensitive LLM calls (triage scoring, domain masking, Micro-PRD, sponsor fit) prefer a local OpenAI-compatible vLLM endpoint so column names never leave infra. OpenAI remains available for standard-tier / optional cloud fallback. Novel industries get LLM-proposed field_map + public narrative when rule-based masks don't apply.",
+      "user_visible_behavior": "Sensitive LLM calls (triage scoring, domain masking, Micro-PRD, sponsor fit) use OpenAI by default for dev/demo (fabricated data). Optional local vLLM (Qwen) via LLM_BASE_URL for privacy-first on-prem routing. Novel industries get LLM-proposed field_map + public narrative when rule-based masks don't apply.",
       "status": "passing",
       "verification": [
-        "RoutingLLMClient serves sensitive tier from local only when LLM_BASE_URL set",
-        "OpenAI used for standard tier or sensitive only when LLM_ALLOW_CLOUD_SENSITIVE=1",
+        "RoutingLLMClient prefers local when LLM_BASE_URL set; OpenAI when only OPENAI_API_KEY set",
+        "LLM_ALLOW_CLOUD_SENSITIVE=0 blocks OpenAI for sensitive tier (local-only production mode)",
         "LLM domain obfuscator validates public_text_is_safe before accepting transform",
         "Generic yellow/red items invoke LLM path; known domains still use rules",
-        "Full test suite passes with new routing tests"
+        "Full test suite passes with routing tests"
       ],
       "evidence": [
         "python -m pytest backend/tests/test_llm_routing.py -v → 5 passed (2026-06-20)",

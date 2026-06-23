@@ -1,5 +1,5 @@
 export type SensitivityTag = "red" | "yellow" | "green";
-export type BacklogStatus = "pending" | "reviewing" | "approved" | "published";
+export type BacklogStatus = "pending" | "reviewing" | "approved" | "published" | "closed";
 export type InputFormat = "auto" | "json" | "csv" | "log" | "text";
 
 export type ChallengeTrack =

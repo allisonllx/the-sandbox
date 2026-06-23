@@ -19,6 +19,7 @@ import type { PublishDraft } from "@/lib/types";
 interface RelaxationPanelProps {
   item: BacklogItem;
   onPublished: (itemId: string) => void;
+  onClosed: (itemId: string) => void;
 }
 
 function Toggle({
@@ -137,7 +138,7 @@ function DomainPreviewPanel({ preview }: { preview: DomainObfuscationPreview }) 
   );
 }
 
-export function RelaxationPanel({ item, onPublished }: RelaxationPanelProps) {
+export function RelaxationPanel({ item, onPublished, onClosed }: RelaxationPanelProps) {
   const [config, setConfig] = useState<RelaxationConfig>({
     abstract_logic: false,
     synthesize_variables: false,
@@ -162,8 +163,10 @@ export function RelaxationPanel({ item, onPublished }: RelaxationPanelProps) {
   );
   const [scopeCheck, setScopeCheck] = useState<ScopeCheckResponse | null>(null);
   const [publishing, setPublishing] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [previewing, setPreviewing] = useState(false);
-  const [published, setPublished] = useState(item.status === "published");
+  const [published, setPublished] = useState(item.status === "published" || item.status === "closed");
+  const [closed, setClosed] = useState(item.status === "closed");
   const [microprd, setMicroprd] = useState(item.microprd);
   const [error, setError] = useState<string | null>(null);
 
@@ -236,6 +239,20 @@ export function RelaxationPanel({ item, onPublished }: RelaxationPanelProps) {
     }
   }
 
+  async function handleClose() {
+    setClosing(true);
+    setError(null);
+    try {
+      await api.closeChallenge(item.id);
+      setClosed(true);
+      onClosed(item.id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Close failed");
+    } finally {
+      setClosing(false);
+    }
+  }
+
   const hasValidDraft =
     challengeDraft != null &&
     challengeDraft.title.trim().length > 0 &&
@@ -244,6 +261,38 @@ export function RelaxationPanel({ item, onPublished }: RelaxationPanelProps) {
 
   const canPublish = scopeCheck?.allowed !== false && reward.locked && hasValidDraft;
   const track = item.track ?? item.suggested_track ?? "technical";
+
+  if (closed) {
+    return (
+      <div className="h-full flex flex-col gap-6 overflow-y-auto pr-1">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            {item.tag && <SensitivityBadge tag={item.tag} />}
+            <span className="text-[10px] text-slate-500 uppercase tracking-widest border border-surface-border px-2 py-0.5 rounded">
+              Submissions closed
+            </span>
+          </div>
+          <h2 className="text-lg font-semibold text-slate-100">
+            {microprd?.title ?? item.scores?.suggested_title ?? "Untitled Challenge"}
+          </h2>
+          <p className="text-xs text-slate-500">{item.source_label}</p>
+        </div>
+
+        <div className="rounded-lg border border-surface-border bg-surface-raised/50 p-4 space-y-3 text-sm">
+          <p className="text-slate-400">
+            This challenge is archived. It no longer appears in the student hub and new submissions
+            are not accepted.
+          </p>
+          <Link
+            href={`/startup/matches/${item.id}`}
+            className="text-xs text-amber-400/90 hover:underline block"
+          >
+            Sponsor Match Radar →
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col gap-6 overflow-y-auto pr-1">
@@ -440,7 +489,7 @@ export function RelaxationPanel({ item, onPublished }: RelaxationPanelProps) {
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-green-400 text-sm font-semibold">
             <span>✓</span>
-            <span>Challenge published</span>
+            <span>Challenge live — accepting submissions</span>
           </div>
           <Link href={`/student/challenges/${item.id}`} className="text-xs text-accent hover:underline">
             Open student view →
@@ -451,9 +500,16 @@ export function RelaxationPanel({ item, onPublished }: RelaxationPanelProps) {
           >
             Sponsor Match Radar (your challenge only) →
           </Link>
-          {microprd && (
-            <p className="text-xs text-slate-400">{microprd.title}</p>
-          )}
+          {microprd && <p className="text-xs text-slate-400">{microprd.title}</p>}
+          <button
+            type="button"
+            onClick={() => void handleClose()}
+            disabled={closing}
+            className="w-full py-2 rounded-lg border border-surface-border text-sm text-slate-400
+              hover:bg-surface-muted hover:text-slate-200 disabled:opacity-50"
+          >
+            {closing ? "Closing submissions…" : "Close submissions"}
+          </button>
         </div>
       )}
     </div>

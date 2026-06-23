@@ -2,8 +2,9 @@
 Injectable LLM clients with local (vLLM) + cloud (OpenAI) routing.
 
 Routing policy:
-  - sensitive (default): local vLLM when LLM_BASE_URL is set; optional cloud if
-    LLM_ALLOW_CLOUD_SENSITIVE=1; otherwise callers use heuristics.
+  - sensitive (default): local vLLM when LLM_BASE_URL is set, then OpenAI when
+    OPENAI_API_KEY is set (default on for dev/demo). Set LLM_ALLOW_CLOUD_SENSITIVE=0
+    for local-only sensitive tier. Heuristics when no backend is configured.
   - standard: local vLLM → OpenAI → error (for non-sensitive future use).
 
 vLLM serves an OpenAI-compatible API — set LLM_BASE_URL=http://localhost:8000/v1
@@ -127,7 +128,7 @@ class RoutingLLMClient:
         *,
         local: LLMClient | None = None,
         cloud: LLMClient | None = None,
-        allow_cloud_sensitive: bool = False,
+        allow_cloud_sensitive: bool = True,
     ) -> None:
         self._local = local
         self._cloud = cloud
@@ -154,10 +155,10 @@ class RoutingLLMClient:
                     temperature=temperature,
                     tier=tier,
                 )
-                if name == "openai" and tier == LLMTier.sensitive:
+                if name == "openai" and tier == LLMTier.sensitive and self._local:
                     logger.warning(
-                        "Sensitive LLM request served by OpenAI cloud fallback "
-                        "(set LLM_BASE_URL for local-only privacy)."
+                        "Sensitive LLM request fell back to OpenAI cloud "
+                        "(set LLM_ALLOW_CLOUD_SENSITIVE=0 and use LLM_BASE_URL for local-only)."
                     )
                 return result
             except (LLMUnavailableError, ValueError) as exc:
@@ -188,10 +189,10 @@ def build_routing_client() -> RoutingLLMClient:
     if os.getenv("OPENAI_API_KEY"):
         cloud = LLMClient(label="openai")
 
-    allow_cloud_sensitive = os.getenv("LLM_ALLOW_CLOUD_SENSITIVE", "").lower() in (
-        "1",
-        "true",
-        "yes",
+    allow_cloud_sensitive = os.getenv("LLM_ALLOW_CLOUD_SENSITIVE", "1").lower() not in (
+        "0",
+        "false",
+        "no",
     )
     return RoutingLLMClient(
         local=local,
