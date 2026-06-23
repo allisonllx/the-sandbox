@@ -218,8 +218,21 @@ Founders edit student-facing copy before publish via `PublishDraft`:
 - **Product track** and **demo-*** items may return `challenge_package: null` — factory runs at publish via legacy scaffolds
 - Founder edits in `PublishDraftEditor`; publish sends optional `draft` in the same `RelaxRequest` body as `config`
 - `POST /api/v1/triage/publish/{id}` applies draft overrides on top of spec-projected Micro-PRD before public sanitization
+- `POST /api/v1/triage/close/{id}` transitions `published` → `closed`; challenge hidden from `GET /sandbox/challenges` but retained in `GET /triage/backlog`
 
 Key `PublishDraft` fields: `title`, `context` (markdown brief body), `definition_of_success`, `evaluation_focus`, `company_profile` (blind audition).
+
+### Backlog item status (`BacklogStatus`)
+
+Returned on backlog items and publish/close responses:
+
+| Value | CTO sidebar section | Student hub |
+|---|---|---|
+| `pending`, `reviewing`, `approved` | In triage | Hidden |
+| `published` | Live challenges | Listed; submissions open |
+| `closed` | Closed | Hidden; submissions rejected (404) |
+
+Close is one-way in the MVP — no reopen endpoint.
 
 **Student Micro-PRD:** `GET /api/v1/sandbox/challenges/{id}` returns `microprd.context` as markdown (headings via `**Label:**`, lists, inline `` `code` ``). The frontend renders this subset — founders still edit raw markdown in `PublishDraftEditor`.
 
@@ -236,7 +249,7 @@ Three intentionally separate rank surfaces:
 | Endpoint | Audience | Scope |
 |---|---|---|
 | `GET /api/v1/sandbox/leaderboard` | Students | Global platform rank |
-| `GET /api/v1/triage/backlog/{id}/matches` | Startup sponsors | Single challenge only |
+| `GET /api/v1/triage/backlog/{id}/matches` | Startup sponsors | Single challenge only (published or closed) |
 | `GET /api/v1/sandbox/enterprise/radar` | Enterprise recruiters | Platform-wide top tier |
 
 Responses use anonymized display names (e.g. `Candidate A7F2`) — no sponsor or company names.

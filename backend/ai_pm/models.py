@@ -178,7 +178,8 @@ class BacklogStatus(str, Enum):
     pending = "pending"       # Scored, not yet reviewed by founder
     reviewing = "reviewing"   # Founder is applying relaxation controls
     approved = "approved"     # Founder approved, ready to publish
-    published = "published"   # Live in the public sandbox
+    published = "published"   # Live in the public sandbox (submissions open)
+    closed = "closed"         # Was live; submissions closed, hidden from student hub
 
 
 class BacklogItem(BaseModel):
@@ -344,3 +345,8 @@ class PublishResponse(BaseModel):
     brand_proxy: str | None = None
     domain_proxy: str | None = None
     reward: ChallengeReward | None = None
+
+
+class CloseResponse(BaseModel):
+    item_id: str
+    status: BacklogStatus

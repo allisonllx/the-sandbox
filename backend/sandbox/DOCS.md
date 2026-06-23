@@ -46,6 +46,6 @@ Frontend: `/student` track tabs; `/student/challenges/[id]` routes to `Challenge
 
 - Product track: no dataset download; submit requires DESIGN.md for strong assessor scores
 - Dynamic factory starters include `docs/SPEC.md` — students should read it before editing `src/*`
-- `GET /sandbox/challenges?track=product_feature` filters published challenges
+- `GET /sandbox/challenges?track=product_feature` filters published challenges only (`BacklogStatus.published` — closed items return 404 on all sandbox routes)
 - Sponsor matches scope to **one challenge** — startups never see cross-company performers
 - After code changes, check `docs/documentation-sync.md`

@@ -33,14 +33,14 @@ Dynamic starter generation: see [`../challenge_factory/DOCS.md`](../challenge_fa
 
 | Tier | Default chain | Use |
 |---|---|---|
-| `sensitive` | local vLLM only | Triage scoring, domain obfuscation, challenge spec, sponsor fit |
+| `sensitive` | local vLLM (if `LLM_BASE_URL`) → OpenAI (if key set; **on by default**) | Triage scoring, domain obfuscation, challenge spec, sponsor fit |
 | `standard` | local vLLM → OpenAI | Non-sensitive future paths (e.g. Keep on Bay copy) |
 
 Env:
 
-- `LLM_BASE_URL` — OpenAI-compatible local server (vLLM)
-- `OPENAI_API_KEY` — cloud fallback / standard tier
-- `LLM_ALLOW_CLOUD_SENSITIVE=1` — allow OpenAI for sensitive when local is unavailable (off by default)
+- `OPENAI_API_KEY` — default dev LLM backend (fabricated demo data; metadata-only payloads)
+- `LLM_BASE_URL` — optional OpenAI-compatible local server (vLLM + Qwen)
+- `LLM_ALLOW_CLOUD_SENSITIVE=0` — block OpenAI for sensitive tier (production / real data)
 
 ## How It Fits In
 
@@ -51,6 +51,15 @@ Consumes `SanitizedMetadata` from the privacy proxy. Exposed via `api/triage_rou
 - **Student brief:** spec-projected `MicroPRD.context` is markdown (scenario + typed examples); frontend `BriefMarkdown` renders it — legacy `microprd_enrich` is **not** applied when `challenge_spec` exists
 - **Preview (product / demo-*):** `/relax` → track-aware Micro-PRD only; `challenge_package` is null; legacy scaffolds at publish
 - **Publish:** dynamic items require valid non-stale `challenge_package` from Preview; product/demo use hardcoded scaffolds
+- **Close:** `POST /triage/close/{id}` transitions `published` → `closed`; item drops off student hub (`list_published`) but remains in CTO backlog and Match Radar
+
+### Backlog status lifecycle
+
+| Status | Meaning | Student hub |
+|---|---|---|
+| `pending` / `reviewing` / `approved` | In triage — not yet live | Hidden |
+| `published` | Live — submissions open | Listed |
+| `closed` | Archived — submissions closed | Hidden |
 
 ## Notes for the Next Session
 

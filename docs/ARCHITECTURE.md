@@ -11,7 +11,7 @@ The Sandbox is a two-sided, zero-trust R&D and proof-of-work talent platform org
 - **Frontend:** Next.js 14 · TypeScript · Tailwind CSS · Monaco editor
 - **Persistence (MVP):** In-memory backlog · file-backed drafts/submissions/jobs under `data/`
 - **Datasets:** SQLite per challenge (technical track only)
-- **AI / LLM:** Local vLLM (OpenAI-compatible) for **sensitive** tier by default; OpenAI cloud for **standard** tier and optional sensitive fallback (`LLM_ALLOW_CLOUD_SENSITIVE`). Receives anonymized structural metadata only for triage/Micro-PRD; never raw PII.
+- **AI / LLM:** OpenAI cloud **default for dev/demo** (`OPENAI_API_KEY`); optional local vLLM (Qwen) for privacy-first sensitive tier (`LLM_BASE_URL` + `LLM_ALLOW_CLOUD_SENSITIVE=0`). Receives anonymized structural metadata only for triage/Micro-PRD; never raw PII.
 - **Code Runner:** Public tests in-process (student Run button); assessor secret tests in Docker (`assessor-001 Phase A`)
 
 ## Directory Structure
@@ -37,7 +37,7 @@ the_sandbox/
 │   ├── api/                  # REST route definitions
 │   └── tests/
 ├── frontend/
-│   ├── app/startup/          # CTO dashboard, /startup/upload, /startup/matches/[id]
+│   ├── app/startup/          # CTO dashboard (triage/live/closed sidebar), upload, matches/[id]
 │   ├── app/student/          # Innovation Hub, workspace, leaderboard, trust
 │   ├── components/           # BriefMarkdown, BriefSectionBody (student brief rendering)
 │   └── app/enterprise/radar/ # Enterprise subscription view (demo)
@@ -109,12 +109,20 @@ POST /triage/publish/{id}  (requires locked reward + scope guard pass)
   ├─ Legacy demo-* / product track: hardcoded starter_scaffold / synthesizer at publish
   ├─ Generates track-aware Micro-PRD
   ├─ company_profile.py → CompanyTechProfile on BacklogItem
+  ├─ status → published; item appears in student hub + CTO **Live challenges** sidebar
   └─ Branch: technical → Python starter (+ SQLite if data_plane) | product → frontend starter
   │
   ▼
 GET /sandbox/challenges/{id}  →  public_sanitize.build_public_challenge()
+  └─ Only items with status=published (closed items return 404)
   └─ sandbox_routes._student_microprd(): spec-driven items skip legacy microprd_enrich
   └─ frontend MicroPRDView + BriefMarkdown render microprd.context as HTML (subset markdown)
+  │
+  ▼ (optional — founder closes hiring window)
+POST /triage/close/{id}  (published → closed only)
+  ├─ Removes challenge from student hub (list_published filter)
+  ├─ Rejects new submissions (404 on sandbox routes)
+  └─ Match Radar still available via GET /triage/backlog/{id}/matches
 ```
 
 ### 2. Student Submission → Scorecard
@@ -133,7 +141,7 @@ Dual-layer scorecard in browser (+ interview pass when both layers ≥ benchmark
 | Audience | Route | API | Scope |
 |---|---|---|---|
 | **Students** | `/student/leaderboard` | `GET /sandbox/leaderboard` | Global platform Execution Points |
-| **Startup sponsors** | `/startup/matches/{id}` | `GET /triage/backlog/{id}/matches` | **Sponsor Fit** for this challenge only |
+| **Startup sponsors** | `/startup/matches/{id}` | `GET /triage/backlog/{id}/matches` | **Sponsor Fit** for this challenge only (published or closed) |
 | **Enterprises** | `/enterprise/radar` | `GET /sandbox/enterprise/radar` | Platform-wide top tier (platform signal) |
 
 Startups do **not** see the student global leaderboard or other sponsors' challenge performers.
@@ -142,8 +150,8 @@ Startups do **not** see the student global leaderboard or other sponsors' challe
 
 | Service | Purpose | Data sent |
 |---|---|---|
-| Local vLLM (Qwen) | Triage, domain obfuscation, sponsor fit (**sensitive** tier) | Anonymized structural metadata + sanitized challenge context — stays on-prem when `LLM_BASE_URL` set |
-| OpenAI API | **Standard** tier; optional cloud fallback for sensitive | Anonymized structural metadata only (sensitive cloud blocked unless `LLM_ALLOW_CLOUD_SENSITIVE=1`) |
+| Local vLLM (Qwen) | Triage, domain obfuscation, sponsor fit (**sensitive** tier, when `LLM_BASE_URL` set) | Anonymized structural metadata — on-prem when configured |
+| OpenAI API | **Default dev LLM**; sensitive + standard tier when key set | Anonymized structural metadata only; block sensitive cloud with `LLM_ALLOW_CLOUD_SENSITIVE=0` |
 | Docker | Ephemeral assessor containers (network disabled) | Student submission code only |
 
 ## Known Constraints

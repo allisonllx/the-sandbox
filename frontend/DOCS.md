@@ -8,7 +8,7 @@ Next.js 14 student, startup, and enterprise UIs for The Sandbox. Proxies `/api/*
 
 | Path | Role |
 |---|---|
-| `app/startup/` | CTO dashboard — triage backlog, quick intake (`FounderIntakePanel`), link to upload |
+| `app/startup/` | CTO dashboard — triage backlog (collapsible In triage / Live / Closed sections), quick intake, publish & close submissions |
 | `app/startup/upload/` | Founder upload — task description or log file → sanitize → score |
 | `app/startup/upload/loading/` | Processing UI (`/proxy/sanitize` then `/triage/score`) |
 | `app/startup/matches/[challengeId]/` | Sponsor Match Radar (per-challenge performers) |
@@ -26,8 +26,11 @@ Next.js 14 student, startup, and enterprise UIs for The Sandbox. Proxies `/api/*
 | `components/BriefSectionBody.tsx` | Prose vs bullet sections; `BriefAsideSection` for anomalies / evaluation focus |
 | `components/CompanyProfilePanel.tsx` | Blind-audition Company Tech Profile preview |
 | `components/FounderIntakePanel.tsx` | Sidebar quick intake → `POST /triage/intake` |
+| `components/BacklogSidebar.tsx` | CTO sidebar — collapsible **In triage** / **Live challenges** / **Closed** sections |
+| `components/BacklogCard.tsx` | Backlog list card (full in triage; compact in live/closed) |
+| `components/RelaxationPanel.tsx` | Preview, publish, **Close submissions**; read-only summary when closed |
 | `components/ScorecardView.tsx` | Dual-layer platform + sponsor scorecard |
-| `lib/api.ts` | Typed API client — `sanitize`, `scoreMetadata`, `intake`, draft, validate, run, submit |
+| `lib/api.ts` | Typed API client — `sanitize`, `scoreMetadata`, `intake`, `publish`, `closeChallenge`, draft, validate, run, submit |
 | `lib/uploadSession.ts` | sessionStorage between `/startup/upload` and loading page |
 | `lib/draftStorage.ts` | IndexedDB draft cache |
 | `lib/types.ts` | TypeScript interfaces mirroring backend models |
@@ -51,6 +54,7 @@ Backend brief source: `spec_to_microprd()` → `format_spec_context()` + `format
 `next.config.mjs` rewrites `/api/*` → `http://localhost:8000/api/*`.
 
 - Startup founders ingest at `/startup/upload` or sidebar intake; publish at `/startup`
+- CTO sidebar partitions backlog: triage items stay in **In triage**; after publish items move to **Live challenges**; **Close submissions** archives to **Closed** (hidden from student hub, Match Radar still available)
 - Students work at `/student/challenges/[id]`; global rank at `/student/leaderboard`
 - Enterprise demo at `/enterprise/radar`
 
@@ -58,6 +62,6 @@ Backend brief source: `spec_to_microprd()` → `format_spec_context()` + `format
 
 - Run `npm install` once (includes `@monaco-editor/react`), then `npm run dev`
 - Workspace bootstrap: `GET /sandbox/challenges/{id}/workspace` sets cookie; drafts sync to server + IndexedDB
-- RelaxationPanel: **Preview Changes** loads `challenge_draft`; **Approve & Publish** sends edited `draft` in publish body
+- RelaxationPanel: **Preview Changes** loads `challenge_draft`; **Approve & Publish** sends edited `draft` in publish body; published items show **Close submissions** → `POST /triage/close/{id}`
 - Assessor scorecard: dual-layer Platform Signal + Sponsor Fit in ScorecardView
 - After code changes, check `docs/documentation-sync.md`

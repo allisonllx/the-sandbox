@@ -1,5 +1,6 @@
 import type {
   BacklogItem,
+  BacklogStatus,
   ChallengeReward,
   ChallengeTrack,
   Diagnostic,
@@ -96,6 +97,9 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ config, reward, track, draft }),
     }),
+
+  closeChallenge: (itemId: string): Promise<{ item_id: string; status: BacklogStatus }> =>
+    request(`/triage/close/${itemId}`, { method: "POST" }),
 
   listChallenges: (track?: ChallengeTrack): Promise<PublishedChallenge[]> =>
     request(track ? `/sandbox/challenges?track=${track}` : "/sandbox/challenges"),

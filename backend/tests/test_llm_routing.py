@@ -25,7 +25,7 @@ class _RecordingClient:
         return self._payload
 
 
-def test_sensitive_uses_local_only_by_default():
+def test_sensitive_prefers_local_when_cloud_blocked():
     local = _RecordingClient("local")
     cloud = _RecordingClient("cloud")
     router = RoutingLLMClient(local=local, cloud=cloud, allow_cloud_sensitive=False)
@@ -35,6 +35,16 @@ def test_sensitive_uses_local_only_by_default():
     assert result == {"ok": True}
     assert len(local.calls) == 1
     assert cloud.calls == []
+
+
+def test_sensitive_uses_cloud_when_only_cloud_configured():
+    cloud = _RecordingClient("cloud")
+    router = RoutingLLMClient(local=None, cloud=cloud)
+
+    result = router.chat(system="s", user="u", tier=LLMTier.sensitive)
+
+    assert result == {"ok": True}
+    assert len(cloud.calls) == 1
 
 
 def test_sensitive_falls_back_to_cloud_when_allowed():

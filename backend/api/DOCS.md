@@ -9,7 +9,7 @@ HTTP layer for the backend. Thin route handlers that delegate to domain modules 
 | File | Prefix | Endpoints |
 |---|---|---|
 | `routes.py` | `/api/v1/proxy` | `POST /sanitize`, `GET /health` |
-| `triage_routes.py` | `/api/v1/triage` | Backlog, scope, matches, score, **intake**, relax, regenerate, publish |
+| `triage_routes.py` | `/api/v1/triage` | Backlog, scope, matches, score, **intake**, relax, regenerate, publish, **close** |
 | `sandbox_routes.py` | `/api/v1/sandbox` | Challenges, starter, workspace/draft, validate, run jobs, submit, scorecard, leaderboard, enterprise radar |
 
 Routers are mounted in `main.py`. OpenAPI docs at `/docs`.
@@ -27,6 +27,7 @@ Routers are mounted in `main.py`. OpenAPI docs at `/docs`.
 | `POST` | `/relax/{id}` | Relaxation preview + **dynamic factory** (`challenge_package`, `challenge_blueprint`, `challenge_spec`); returns `challenge_draft`. Product/legacy items may have null package. |
 | `POST` | `/regenerate/{id}` | Re-run factory after draft/blueprint edits |
 | `POST` | `/publish/{id}` | Publish challenge; non-legacy items require valid non-stale `challenge_package` from Preview |
+| `POST` | `/close/{id}` | Close submissions on a published challenge (`published` → `closed`; hidden from student hub) |
 
 ### Sandbox (`sandbox_routes.py`)
 
