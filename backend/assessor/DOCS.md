@@ -33,7 +33,9 @@ Falls back to deterministic heuristics when `OPENAI_API_KEY` is absent.
 
 ## Docker runner
 
-Build once:
+When Docker is running, the API **auto-builds** `the-sandbox-runner:latest` on startup (`backend/main.py` lifespan) and via `ensure_runner_image()` before secret tests on submit. `./init.sh` builds the same image if missing.
+
+Manual rebuild only if auto-build fails:
 
 ```bash
 docker build -t the-sandbox-runner docker/sandbox-runner

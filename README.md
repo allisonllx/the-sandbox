@@ -287,7 +287,11 @@ App: **http://localhost:3000** → redirects to **/startup**
 python -m pytest backend/tests/ -v    # expect 126 passed
 ```
 
-### Assessor Docker image (optional)
+### Assessor Docker image (optional — auto-built when Docker is running)
+
+If Docker is up, the backend **builds `the-sandbox-runner:latest` automatically** on startup (background thread) and again before the first graded submit if needed. `./init.sh` also builds the image when the daemon is available.
+
+Manual build is only needed if auto-build fails:
 
 ```bash
 docker build -t the-sandbox-runner docker/sandbox-runner

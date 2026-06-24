@@ -38,6 +38,17 @@ else
   echo "==> Skipping frontend — frontend/package.json not found yet"
 fi
 
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+  if docker image inspect the-sandbox-runner:latest >/dev/null 2>&1; then
+    echo "==> Assessor Docker image the-sandbox-runner:latest already present"
+  elif [ -f docker/sandbox-runner/Dockerfile ]; then
+    echo "==> Building assessor Docker image the-sandbox-runner:latest"
+    docker build -t the-sandbox-runner:latest docker/sandbox-runner
+  fi
+else
+  echo "==> Skipping assessor Docker image — Docker daemon not available (submit grading uses degraded mode)"
+fi
+
 echo "==> Startup command"
 printf '    %q' "${START_CMD[@]}"
 printf '\n'

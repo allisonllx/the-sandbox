@@ -7,12 +7,15 @@ with no network, memory/CPU limits, and dropped capabilities.
 
 from __future__ import annotations
 
+import logging
 import re
 import shutil
 import subprocess
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 _IMAGE = "the-sandbox-runner:latest"
 _DOCKERFILE = Path(__file__).resolve().parents[2] / "docker" / "sandbox-runner" / "Dockerfile"
@@ -64,15 +67,35 @@ def image_exists() -> bool:
 def build_runner_image() -> bool:
     """Build the sandbox runner image if Dockerfile is present."""
     if not _DOCKERFILE.exists():
+        logger.warning("Sandbox runner Dockerfile not found: %s", _DOCKERFILE)
         return False
     context = _DOCKERFILE.parent
+    logger.info("Building assessor image %s (may take ~1 min on first run)...", _IMAGE)
     proc = subprocess.run(
         ["docker", "build", "-t", _IMAGE, str(context)],
         capture_output=True,
         text=True,
         timeout=300,
     )
-    return proc.returncode == 0
+    if proc.returncode != 0:
+        err = (proc.stderr or proc.stdout or "")[-2000:]
+        logger.error("Docker build failed for %s: %s", _IMAGE, err)
+        return False
+    logger.info("Assessor image %s ready", _IMAGE)
+    return True
+
+
+def ensure_runner_image() -> bool:
+    """
+    Ensure the-sandbox-runner image exists when Docker is up.
+
+    Called on API startup and again before the first secret-test run.
+    """
+    if not docker_available():
+        return False
+    if image_exists():
+        return True
+    return build_runner_image()
 
 
 def _parse_pytest_summary(stdout: str) -> tuple[int, int, int]:
@@ -125,12 +148,14 @@ def run_platform_assessment(
             notes=["Challenge dataset not found — secret tests skipped."],
         )
 
-    if not image_exists():
-        if not build_runner_image():
-            return PlatformRunResult(
-                runner="unavailable",
-                notes=[f"Runner image {_IMAGE} not built. Run: docker build -t {_IMAGE} docker/sandbox-runner"],
-            )
+    if not ensure_runner_image():
+        return PlatformRunResult(
+            runner="unavailable",
+            notes=[
+                f"Runner image {_IMAGE} not available "
+                f"(auto-build failed — ensure Docker is running and retry submit)."
+            ],
+        )
 
     if not _SECRET_TEST.exists():
         return PlatformRunResult(

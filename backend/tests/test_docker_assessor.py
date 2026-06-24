@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.ai_pm.models import ChallengeTrack, RelaxationConfig
-from backend.assessor.docker_runner import PlatformRunResult, docker_available
+from backend.assessor.docker_runner import PlatformRunResult, docker_available, ensure_runner_image
 from backend.assessor.platform_technical import assess_platform_technical
 from backend.assessor.security_scan import scan_submission
 from backend.main import app
@@ -129,3 +129,27 @@ class TestPlatformTechnicalDocker:
         result = run_platform_assessment(files, item.dataset_path)
         assert result.runner == "docker"
         assert result.tests_total >= 1
+
+
+class TestEnsureRunnerImage:
+    def test_skips_when_docker_unavailable(self):
+        with patch("backend.assessor.docker_runner.docker_available", return_value=False):
+            assert ensure_runner_image() is False
+
+    def test_returns_true_when_image_exists(self):
+        with (
+            patch("backend.assessor.docker_runner.docker_available", return_value=True),
+            patch("backend.assessor.docker_runner.image_exists", return_value=True),
+            patch("backend.assessor.docker_runner.build_runner_image") as mock_build,
+        ):
+            assert ensure_runner_image() is True
+            mock_build.assert_not_called()
+
+    def test_builds_when_image_missing(self):
+        with (
+            patch("backend.assessor.docker_runner.docker_available", return_value=True),
+            patch("backend.assessor.docker_runner.image_exists", return_value=False),
+            patch("backend.assessor.docker_runner.build_runner_image", return_value=True) as mock_build,
+        ):
+            assert ensure_runner_image() is True
+            mock_build.assert_called_once()

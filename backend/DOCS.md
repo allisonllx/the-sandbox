@@ -25,6 +25,7 @@ The frontend proxies `/api/*` to this server on port 8000. The privacy proxy is 
 ## Notes for the Next Session
 
 - Start with: `python -m uvicorn backend.main:app --reload --port 8000`
+- With Docker running, assessor image `the-sandbox-runner:latest` auto-builds on API startup
 - Run tests from repo root: `python -m pytest backend/tests/ -v`
 - `OPENAI_API_KEY` is optional — scorer and Micro-PRD generator fall back to heuristics/templates
 - Read `docs/api-patterns.md` before adding endpoints
