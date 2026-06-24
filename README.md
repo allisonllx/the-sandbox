@@ -1,7 +1,7 @@
-# The Sandbox
+<h1 align="center">The Sandbox</h1>
 
 <p align="center">
-  <img src="frontend/assets/sandbox.svg" alt="The Sandbox logo" width="160" />
+  <img src="frontend/assets/sandbox.svg" alt="The Sandbox logo" width="200" />
 </p>
 
 Startups turn internal bugs and backlog items into **public coding challenges**. Students solve them to prove skill: without a traditional job application and without seeing which company wrote the problem.
@@ -25,6 +25,7 @@ Three things to know up front:
 - Students **never** see the real company name on a challenge (see [Blind audition](#3-blind-audition)).
 - Startups **only** see submitters for **their own** challenge, not other companies' candidates.
 - "How good are they in general?" and "How well did they solve *my* problem?" are **two different scores** (see [Grading & rankings](#5-grading--rankings)).
+- **No app database in this hackathon build** — student drafts, submissions, and test-run jobs persist on disk under `data/`; the CTO backlog lives in memory and resets when you restart the backend. A production deployment would use a persistent database (Postgres or similar) for backlog, users, and tenancy.
 
 ---
 
@@ -203,6 +204,7 @@ Demo-only internal names students never see: **StealthCo** (`demo-005`), **NovaP
 | AI / LLM | OpenAI (`gpt-4o-mini`) **default for dev/demo** · optional local vLLM (Qwen) for privacy-first sensitive tier · heuristic fallback when no LLM |
 | Assessor | Dual-layer: Docker secret tests (platform) + LLM sponsor fit |
 | Frontend | Next.js 14 · TypeScript · Tailwind CSS · Monaco editor |
+| Persistence (MVP) | Local `data/` dir (drafts, submissions, jobs) · in-memory backlog · SQLite files are **challenge datasets**, not the app DB |
 | Testing | pytest · 126 tests |
 | Code Runner | Docker assessor (`the-sandbox-runner`) for secret tests; in-process for student **Run** |
 
@@ -389,7 +391,7 @@ The dashboard opens on **7 pre-seeded backlog items** (`demo-001` … `demo-007`
 
 ### Not built
 
-Auth, multi-tenant startups, persistent database (backlog is in-memory), real escrow/KYC.
+Auth, multi-tenant startups, real escrow/KYC, and a **persistent application database** — the hackathon MVP keeps durable state in `data/` on the server filesystem and keeps the backlog in memory until a DB-backed store replaces `backend/ai_pm/store.py`.
 
 **Practical demo tip:** show **implemented** flows on `demo-003` or `demo-005` (publish + student submit + live Match Radar). Show **demo shortcuts** explicitly: try publishing `demo-007` (422 scope rejection), open leaderboard (seed data), mention reward lock is a gate not a payment.
 

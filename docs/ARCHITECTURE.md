@@ -9,8 +9,8 @@ The Sandbox is a two-sided, zero-trust R&D and proof-of-work talent platform org
 - **Backend:** Python 3.11+ · FastAPI · Pydantic v2
 - **Privacy Proxy:** Python · spaCy (local NER) · regex · runs fully offline
 - **Frontend:** Next.js 14 · TypeScript · Tailwind CSS · Monaco editor
-- **Persistence (MVP):** In-memory backlog · file-backed drafts/submissions/jobs under `data/`
-- **Datasets:** SQLite per challenge (technical track only)
+- **Persistence (MVP):** Local filesystem under `data/` · in-memory backlog — **no application database** (see [Persistence](#persistence-hackathon-mvp))
+- **Datasets:** SQLite per challenge (technical track only) — synthetic fixtures in `backend/generated_datasets/`, not the app DB
 - **AI / LLM:** OpenAI cloud **default for dev/demo** (`OPENAI_API_KEY`); optional local vLLM (Qwen) for privacy-first sensitive tier (`LLM_BASE_URL` + `LLM_ALLOW_CLOUD_SENSITIVE=0`). Receives anonymized structural metadata only for triage/Micro-PRD; never raw PII.
 - **Code Runner:** Public tests in-process (student Run button); assessor secret tests in Docker (`assessor-001 Phase A`)
 
@@ -42,6 +42,10 @@ the_sandbox/
 │   ├── components/           # BriefMarkdown, BriefSectionBody (student brief rendering)
 │   └── app/enterprise/radar/ # Enterprise subscription view (demo)
 ├── scripts/                  # factory_*.sh + samples/run_archetype.sh (per-archetype smokes)
+├── data/                     # Server-side durable state (drafts, submissions, jobs) — gitignored
+│   ├── drafts/
+│   ├── submissions/
+│   └── jobs/
 ├── docs/
 ├── feature_list.json
 ├── claude-progress.md
@@ -62,6 +66,21 @@ the_sandbox/
 - Returns `CompanyTechProfile` (blind audition)
 - Micro-PRD and evaluation focus passed through `public_sanitize.py`
 - Red-sensitivity items omit `industry_broad` on company profile
+
+## Persistence (hackathon MVP)
+
+There is **no application database** (PostgreSQL, etc.) in this build. Storage is deliberately local and lightweight for the hackathon; a production deployment would introduce a persistent DB for backlog, users, auth, and multi-tenant isolation.
+
+| Layer | What | Where | Survives backend restart? |
+|---|---|---|---|
+| **Server — backlog** | CTO triage items, publish/close state, relaxed previews, Micro-PRDs on items | In-memory (`backend/ai_pm/store.py`) | **No** — resets to pre-seeded `demo-*` items |
+| **Server — durable** | Workspace drafts, submissions, public test run jobs | `data/drafts/`, `data/submissions/`, `data/jobs/` | **Yes** (on-disk under repo root) |
+| **Server — datasets** | Synthetic SQLite challenge databases | `backend/generated_datasets/*.sqlite` | **Yes** |
+| **Browser** | Draft cache, upload flow handoff, anonymous workspace session | IndexedDB (`draftStorage.ts`), `sessionStorage`, HTTP cookie | **Yes** (per browser; drafts also sync to server) |
+
+**Important distinction:** SQLite files in `generated_datasets/` are **challenge fixtures** for students to query in technical workspaces — they are not the platform metadata store.
+
+**Post-hackathon direction:** replace `store.py` with a DB-backed repository (e.g. Postgres) for backlog and tenancy; optionally move submission blobs to object storage; add auth and user profiles. Rank leaderboard / enterprise radar demo seeds may remain stubbed until live aggregation exists.
 
 ## Key Data Flows
 
@@ -158,4 +177,4 @@ Startups do **not** see the student global leaderboard or other sponsors' challe
 
 - Privacy proxy is the critical security boundary — see `AGENTS.md`
 - Public **Run** uses in-process pytest (student feedback loop); **submit grading** uses Docker secret tests for platform signal
-- Backlog and rank data are in-memory / demo seed — no PostgreSQL or auth yet
+- Persistence is filesystem + in-memory only — see [Persistence (hackathon MVP)](#persistence-hackathon-mvp); no auth or multi-tenant DB yet
