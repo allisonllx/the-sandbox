@@ -76,4 +76,5 @@ data/
 *.bak
 codedb.snapshot
 .agents
-.cursor*.pdf
+.cursor
+*.pdf

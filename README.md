@@ -140,7 +140,7 @@ On `/startup`, the sidebar groups backlog items into **In triage**, **Live chall
    - **Domain obfuscation** — reframe an industry-specific problem as a neutral scenario (e.g. food-delivery checkout → equipment locker rental) so students can't guess the sponsor
 4. **Release preview** — edit the public title, success criteria, **challenge blueprint** (archetype, stack hints), company profile, and evaluation focus before publish
 5. **Lock reward** — required checklist step before publish (payment is stubbed in the demo — see [disclaimer](#whats-implemented-vs-whats-demo-theater))
-6. **Approve & publish** — scope guard blocks oversized challenges; non-demo items require a valid Preview package; `demo-007` is a hardcoded always-fail demo prop. Published items move to **Live challenges**.
+6. **Approve & publish** — scope guard blocks oversized challenges (see `demo-007`); non-demo items require a valid Preview package. Published items move to **Live challenges**.
 7. **Close submissions** *(optional)* — removes the challenge from the student hub and stops new submissions; archived under **Closed**. Match Radar stays available for reviewing past submissions.
 
 ### 3. Blind audition
@@ -386,7 +386,7 @@ The dashboard opens on **7 pre-seeded backlog items** (`demo-001` … `demo-007`
 | What | What actually happens |
 |---|---|
 | **Pre-seeded backlog** | `demo-*` items ship in `store.py` with crafted titles/metadata for the judge script. New items via API work the same way once scored. |
-| **`demo-007` publish fails** | A **deliberate demo prop**. `demo-007` is hardcoded in `scope_guard.py` to always fail publish with HTTP **422** (`SCOPE_EXCEEDED`) so you can show “AI PM blocks oversized scope.” Other items use the generic ~8h estimate; `demo-007` always fails regardless. |
+| **`demo-007` scope cap** | Hardcoded in `scope_guard.py` as over scope (~24h). **Dashboard:** red scope banner + **Approve & Publish disabled** (no 422 on click). **API:** `POST /triage/publish/demo-007` still returns **422** `SCOPE_EXCEEDED` if called directly. |
 | **Reward “lock”** | **Rule is enforced** — publish returns 422 if you don't click Lock reward. **Payment is not** — no Stripe, no escrow account; `locked: true` is a boolean in the request body. Think: real checklist gate, fake money. |
 | **Match Radar empty state** | If nobody submitted yet, shows **hardcoded fake candidates** for that challenge ID. After a real submit, rankings use live scorecards (`source: live`). |
 | **Student leaderboard / enterprise radar** | Always **hardcoded seed rows** (e.g. Candidate A7F2). Not computed from live submissions yet. |
@@ -397,43 +397,39 @@ The dashboard opens on **7 pre-seeded backlog items** (`demo-001` … `demo-007`
 
 Auth, multi-tenant startups, real escrow/KYC, and a **persistent application database** — the hackathon MVP keeps durable state in `data/` on the server filesystem and keeps the backlog in memory until a DB-backed store replaces `backend/ai_pm/store.py`.
 
-**Practical demo tip:** show **implemented** flows on `demo-003` or `demo-005` (publish + student submit + live Match Radar). Show **demo shortcuts** explicitly: try publishing `demo-007` (422 scope rejection), open leaderboard (seed data), mention reward lock is a gate not a payment.
+**Practical demo tip:** one full loop on **`demo-003`** (publish → student submit → Match Radar). Add **`demo-005`** for blind audition / domain obfuscation. Glance at **`demo-007`** for scope blocking (UI only). Mention reward lock and seed leaderboards when relevant — no need to run every demo item.
 
 ---
 
-## Judge demo script
+## Judge demo script (~5 min)
 
-Terms above in plain English: this is the click-by-click path for judges.
+Two demo items cover most of the story. Pre-seeded backlog is in **In triage** on `/startup`; published items move to **Live challenges**.
 
-1. **Blind audition** — `/startup` → `demo-005` → toggle *Obfuscate Industry Domain* → Preview → Lock reward → Publish → open `/student/challenges/demo-005` — students see stage/team/stack only, not StealthCo or food/merchant tokens
-2. **Editable release preview** — Preview Changes → edit title, success criteria, company profile → Publish with draft
-3. **Scope cap demo** — select `demo-007` → Publish → HTTP 422 `SCOPE_EXCEEDED` (hardcoded reject for judges)
-4. **Reward lock** — must Lock reward before publish (422 if not); no real payment rails
-5. **Verified sponsor + bounty** — `demo-003` → Lock $500 → Publish → student card shows Verified Sponsor + escrow label (UI only)
-6. **Dual-layer scorecard** — submit as student → Platform Signal + Sponsor Fit sections on the scorecard
-7. **Three ranking pages** — `/student/leaderboard` (seed) · `/startup/matches/demo-003` (live after submit) · `/enterprise/radar` (seed)
-8. **Trust narrative** — `/student/trust`
+### 1. End-to-end loop — `demo-003` (startup → student → matches)
 
----
+| Step | Where | What to show |
+|---|---|---|
+| Publish | `/startup` → **demo-003** | **Preview Changes** → edit release copy → **Lock reward** (required gate; no real payment) → **Approve & Publish** → item moves to **Live challenges** |
+| Student | `/student/challenges/demo-003` | Rendered brief, Monaco workspace, **Run Public Tests**, submit |
+| Scorecard | After submit | **Platform Signal** + **Sponsor Fit** (two layers — global EP ≠ sponsor rank) |
+| Sponsor | `/startup/matches/demo-003` | Match Radar for this challenge only (live rankings after submit; seed rows if empty) |
 
-## Demo walkthrough (5 min)
+### 2. Blind audition — `demo-005` (optional, ~1 min)
 
-**Startup path**
+`/startup` → **demo-005** → enable *Obfuscate Industry Domain* → **Preview** → Lock reward → Publish → `/student/challenges/demo-005`. Students see anonymous company profile + sanitized narrative — not StealthCo or food-delivery tokens.
 
-1. Open `/startup` — pick `demo-003` or `demo-005`
-2. Try relaxation toggles → **Preview Changes** → edit the public brief
-3. Lock reward → **Approve & Publish**
-4. Open the match list → `/startup/matches/{id}`
+*(Release preview editing is the same panel as step 1 — no separate walkthrough needed.)*
 
-**Student path**
+### 3. Scope cap — `demo-007` (~30 sec)
 
-1. Open `/student` — pick a challenge
-2. Read the brief in the left panel (rendered markdown + typed examples) and anonymous company profile
-2. Note: no company name, only anonymous company profile
-3. Technical track: code in Monaco, run tests, submit → scorecard with two score sections
-4. Product track (`demo-004`): submit prototype + DESIGN.md
+`/startup` → **demo-007** → red **Scope: ~24h** banner and suggested breakdown. **Approve & Publish stays disabled** — the guard runs before publish, not as an error toast. (API-only: `POST /triage/publish/demo-007` → 422 `SCOPE_EXCEEDED`.)
 
-**Ingest (API)**
+### 4. Seed surfaces (mention, don’t dwell)
+
+- `/student/leaderboard` and `/enterprise/radar` — hardcoded demo rows, not live aggregation
+- `/student/trust` — trust narrative copy only (no KYC backend)
+
+### Ingest (optional, 30 sec)
 
 ```bash
 curl -s -X POST http://localhost:8000/api/v1/proxy/sanitize \
@@ -442,7 +438,7 @@ curl -s -X POST http://localhost:8000/api/v1/proxy/sanitize \
   | python -m json.tool
 ```
 
-Response contains structural metadata only — no email, token, or IP.
+Response is structural metadata only — no email, token, or IP.
 
 ---
 
