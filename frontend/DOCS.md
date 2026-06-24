@@ -11,7 +11,8 @@ Next.js 14 student, startup, and enterprise UIs for The Sandbox. Proxies `/api/*
 | `app/startup/` | CTO dashboard — triage backlog (collapsible In triage / Live / Closed sections), quick intake, publish & close submissions |
 | `app/startup/upload/` | Founder upload — task description or log file → sanitize → score |
 | `app/startup/upload/loading/` | Processing UI (`/proxy/sanitize` then `/triage/score`) |
-| `app/startup/matches/[challengeId]/` | Sponsor Match Radar (per-challenge performers) |
+| `app/startup/matches/[challengeId]/` | Sponsor Match Radar — clickable live rows → submission review |
+| `app/startup/matches/[challengeId]/submissions/[submissionId]/` | Read-only submission snapshot (files + scorecard) |
 | `app/student/` | Innovation Hub challenge browser + track tabs |
 | `app/student/challenges/[id]/` | Micro-PRD left panel + workspace (technical or product track) |
 | `app/student/leaderboard/` | Global Execution Points (student motivation) |
@@ -29,8 +30,9 @@ Next.js 14 student, startup, and enterprise UIs for The Sandbox. Proxies `/api/*
 | `components/BacklogSidebar.tsx` | CTO sidebar — collapsible **In triage** / **Live challenges** / **Closed** sections |
 | `components/BacklogCard.tsx` | Backlog list card (full in triage; compact in live/closed) |
 | `components/RelaxationPanel.tsx` | Preview, publish, **Close submissions**; read-only summary when closed |
+| `components/SubmissionReviewPanel.tsx` | Read-only file tree + Monaco for sponsor submission review |
 | `components/ScorecardView.tsx` | Dual-layer platform + sponsor scorecard |
-| `lib/api.ts` | Typed API client — `sanitize`, `scoreMetadata`, `intake`, `publish`, `closeChallenge`, draft, validate, run, submit |
+| `lib/api.ts` | Typed API client — `sanitize`, `scoreMetadata`, `intake`, `publish`, `closeChallenge`, `getSponsorSubmission`, draft, validate, run, submit |
 | `lib/uploadSession.ts` | sessionStorage between `/startup/upload` and loading page |
 | `lib/draftStorage.ts` | IndexedDB draft cache |
 | `lib/types.ts` | TypeScript interfaces mirroring backend models |

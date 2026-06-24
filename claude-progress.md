@@ -373,3 +373,18 @@
 - Docs: README, `.env.example`, `backend/ai_pm/DOCS.md`, `docs/ARCHITECTURE.md`, `feature_list.json`
 - Commits: none
 - Next best step: factory-001 Phase 2
+
+### Session 027
+
+- Date: 2026-06-24
+- Goal: CTO submission browse via Match Radar (read-only review)
+- Completed:
+  - `submission_id` on live Match Radar entries; demo stubs unchanged
+  - `GET /triage/backlog/{id}/submissions/{submission_id}` — files + scorecard
+  - Clickable Match Radar rows; `/startup/matches/.../submissions/...` review page
+  - `SubmissionReviewPanel` — read-only Monaco file browser
+  - Tests: `test_sponsor_submission_review.py` (5 tests)
+- Verification run: pytest sponsor submission review **5 passed**; frontend typecheck pass
+- Docs: README, PRODUCT, frontend/api/tests DOCS, sandbox DOCS
+- Commits: none
+- Next best step: factory-001 Phase 2

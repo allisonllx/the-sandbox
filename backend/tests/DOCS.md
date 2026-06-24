@@ -10,7 +10,8 @@ pytest suite verifying the privacy proxy, AI PM triage layer, challenge factory,
 |---|---|
 | `test_sanitizer.py` | PII masking, NER status fields, structural extraction, zero-network guard |
 | `test_triage.py` | Scoring, sensitivity tags, relaxation controls, demo store |
-| `test_sandbox.py` | Publish flow, **close submissions**, starter scaffold, workspace/draft, validate, submit, ZIP guard |
+| `test_sandbox.py` | Publish flow, close submissions, starter scaffold, workspace/draft, validate, submit, ZIP guard |
+| `test_sponsor_submission_review.py` | Match Radar submission_id + CTO submission detail endpoint |
 | `test_challenge_factory.py` | Dynamic Preview/Publish, archetype override, package staleness |
 | `test_challenge_spec.py` | Heuristic archetype inference + spec shape |
 | `test_spec_projection.py` | Spec → Micro-PRD brief formatting, typed examples, non-generic student copy |

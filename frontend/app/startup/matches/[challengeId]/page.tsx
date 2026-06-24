@@ -68,31 +68,61 @@ export default function StartupMatchesPage() {
           </p>
         )}
 
+        {!loading && !error && source === "demo" && entries.length > 0 && (
+          <p className="text-xs text-slate-600 border border-surface-border rounded-lg px-3 py-2">
+            Demo candidates — submit a solution as a student to review live code snapshots.
+          </p>
+        )}
+
         <div className="space-y-2">
-          {entries.map((e) => (
-            <div
-              key={e.candidate_id}
-              className="flex items-start gap-4 p-4 rounded-lg border border-amber-500/20 bg-amber-500/5"
-            >
-              <span className="text-xl font-bold text-slate-600 w-8">#{e.rank}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-100">{e.candidate_id}</p>
-                <p className="text-xs text-slate-500 mt-1">{e.summary}</p>
-                <p className="text-[10px] text-slate-600 uppercase tracking-widest mt-1">
-                  {e.track.replace("_", " ")}
-                </p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className="text-lg font-mono text-amber-400">{e.sponsor_fit_score}</p>
-                <p className="text-[10px] text-slate-600 uppercase">sponsor fit</p>
-                {e.platform_score != null && (
-                  <p className="text-[10px] text-slate-600 font-mono mt-1">
-                    platform {e.platform_score} · EP {e.execution_points}
+          {entries.map((e) => {
+            const inner = (
+              <>
+                <span className="text-xl font-bold text-slate-600 w-8">#{e.rank}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-100">{e.candidate_id}</p>
+                  <p className="text-xs text-slate-500 mt-1">{e.summary}</p>
+                  <p className="text-[10px] text-slate-600 uppercase tracking-widest mt-1">
+                    {e.track.replace("_", " ")}
                   </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-lg font-mono text-amber-400">{e.sponsor_fit_score}</p>
+                  <p className="text-[10px] text-slate-600 uppercase">sponsor fit</p>
+                  {e.platform_score != null && (
+                    <p className="text-[10px] text-slate-600 font-mono mt-1">
+                      platform {e.platform_score} · EP {e.execution_points}
+                    </p>
+                  )}
+                </div>
+                {e.submission_id && (
+                  <span className="text-slate-500 text-lg shrink-0 self-center">›</span>
                 )}
+              </>
+            );
+
+            if (e.submission_id) {
+              return (
+                <Link
+                  key={e.submission_id ?? e.candidate_id}
+                  href={`/startup/matches/${challengeId}/submissions/${e.submission_id}`}
+                  className="flex items-start gap-4 p-4 rounded-lg border border-amber-500/20 bg-amber-500/5
+                    hover:border-amber-500/40 hover:bg-amber-500/10 transition-colors cursor-pointer"
+                >
+                  {inner}
+                </Link>
+              );
+            }
+
+            return (
+              <div
+                key={e.candidate_id}
+                className="flex items-start gap-4 p-4 rounded-lg border border-amber-500/20 bg-amber-500/5"
+              >
+                {inner}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <p className="text-xs text-slate-600 border-t border-surface-border pt-4">

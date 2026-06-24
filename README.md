@@ -412,7 +412,7 @@ Two demo items cover most of the story. Pre-seeded backlog is in **In triage** o
 | Publish | `/startup` → **demo-003** | **Preview Changes** → edit release copy → **Lock reward** (required gate; no real payment) → **Approve & Publish** → item moves to **Live challenges** |
 | Student | `/student/challenges/demo-003` | Rendered brief, Monaco workspace, **Run Public Tests**, submit |
 | Scorecard | After submit | **Platform Signal** + **Sponsor Fit** (two layers — global EP ≠ sponsor rank) |
-| Sponsor | `/startup/matches/demo-003` | Match Radar for this challenge only (live rankings after submit; seed rows if empty) |
+| Sponsor | `/startup/matches/demo-003` | Match Radar — click a live row to **review submitted code** (read-only); seed rows if empty |
 
 ### 2. Blind audition — `demo-005` (optional, ~1 min)
 
@@ -458,6 +458,7 @@ Key entry points only. Full contract: **http://localhost:8000/docs** · module d
 | `GET` | `/api/v1/sandbox/challenges` | Student: list public challenges |
 | `POST` | `/api/v1/sandbox/challenges/{id}/submit` | Student: submit → scorecard |
 | `GET` | `/api/v1/triage/backlog/{id}/matches` | Sponsor: Match Radar |
+| `GET` | `/api/v1/triage/backlog/{id}/submissions/{submission_id}` | Sponsor: read-only submission files + scorecard |
 
 ---
 

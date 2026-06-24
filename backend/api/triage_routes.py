@@ -38,7 +38,9 @@ from ..challenge_factory.spec_projection import spec_to_microprd
 from ..privacy_proxy.models import InputFormat
 from ..privacy_proxy.sanitizer import sanitize
 from ..sandbox.product_starter_scaffold import generate_product_starter_files
-from ..sandbox.sponsor_matches import SponsorMatchesResponse, get_sponsor_matches
+from ..sandbox.sponsor_matches import SponsorMatchesResponse, anon_candidate_id, get_sponsor_matches
+from ..sandbox import submission_store
+from ..sandbox.models import SponsorSubmissionDetail
 from ..sandbox.starter_scaffold import generate_starter_files
 from ..sandbox.synthesizer import generate_dataset
 
@@ -94,6 +96,12 @@ def get_scope_check(item_id: str) -> ScopeCheckResponse:
     summary="Sponsor match radar — candidates for this challenge only (CTO)",
 )
 def get_sponsor_matches_for_item(item_id: str) -> SponsorMatchesResponse:
+    item = _require_match_radar_item(item_id)
+    title = item.microprd.title if item.microprd else None
+    return get_sponsor_matches(item_id, challenge_title=title)
+
+
+def _require_match_radar_item(item_id: str) -> BacklogItem:
     item = store.get_item(item_id)
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
@@ -105,8 +113,29 @@ def get_sponsor_matches_for_item(item_id: str) -> SponsorMatchesResponse:
                 "message": "Match radar is available after this challenge is published.",
             },
         )
-    title = item.microprd.title if item.microprd else None
-    return get_sponsor_matches(item_id, challenge_title=title)
+    return item
+
+
+@router.get(
+    "/backlog/{item_id}/submissions/{submission_id}",
+    response_model=SponsorSubmissionDetail,
+    summary="Sponsor submission review — read-only files + scorecard (CTO)",
+)
+def get_sponsor_submission(item_id: str, submission_id: str) -> SponsorSubmissionDetail:
+    _require_match_radar_item(item_id)
+    record = submission_store.get_submission(submission_id)
+    if not record or record.challenge_id != item_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+    return SponsorSubmissionDetail(
+        submission_id=record.id,
+        challenge_id=record.challenge_id,
+        candidate_id=anon_candidate_id(record.workspace_id, record.id),
+        track=record.track,
+        submitted_at=record.submitted_at,
+        files=record.files,
+        links=record.links,
+        scorecard=record.scorecard,
+    )
 
 
 def _ensure_track_suggestion(item: BacklogItem) -> None:

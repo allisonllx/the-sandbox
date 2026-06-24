@@ -174,3 +174,17 @@ class ScorecardResponse(BaseModel):
     execution_points: int | None = None
     sponsor_fit_score: int | None = None
     platform_score: int | None = None
+
+
+class SponsorSubmissionDetail(BaseModel):
+    """CTO-only submission snapshot for Match Radar drill-down."""
+
+    ok: bool = True
+    submission_id: str
+    challenge_id: str
+    candidate_id: str
+    track: ChallengeTrack
+    submitted_at: datetime
+    files: dict[str, str]
+    links: dict[str, str] = Field(default_factory=dict)
+    scorecard: dict | None = None

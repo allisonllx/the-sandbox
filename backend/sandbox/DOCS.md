@@ -36,6 +36,7 @@ Routes in `api/sandbox_routes.py` expose list/filter by track, starter, workspac
 |---|---|---|
 | `leaderboard.py` | `GET /sandbox/leaderboard` | `/student/leaderboard` |
 | `sponsor_matches.py` | `GET /triage/backlog/{id}/matches` | `/startup/matches/[challengeId]` |
+| `submission_store.py` | `GET /triage/backlog/{id}/submissions/{submission_id}` | `/startup/matches/.../submissions/[submissionId]` |
 | `enterprise_radar.py` | `GET /sandbox/enterprise/radar` | `/enterprise/radar` |
 
 Frontend: `/student` track tabs; `/student/challenges/[id]` routes to `ChallengeWorkspace` or `ProductWorkspace`.

@@ -330,6 +330,19 @@ export interface SponsorMatchEntry {
   execution_points: number;
   summary: string;
   submitted_at?: string | null;
+  submission_id?: string | null;
+}
+
+export interface SponsorSubmissionDetail {
+  ok: boolean;
+  submission_id: string;
+  challenge_id: string;
+  candidate_id: string;
+  track: ChallengeTrack;
+  submitted_at: string;
+  files: Record<string, string>;
+  links: Record<string, string>;
+  scorecard?: Scorecard | null;
 }
 
 export interface SponsorMatchesResponse {

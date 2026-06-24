@@ -21,6 +21,10 @@ class SponsorMatchEntry(BaseModel):
     )
     summary: str
     submitted_at: datetime | None = None
+    submission_id: str | None = Field(
+        default=None,
+        description="Live submission id — absent for demo stub rows",
+    )
 
 
 class SponsorMatchesResponse(BaseModel):
@@ -89,9 +93,13 @@ _DEMO_BY_CHALLENGE: dict[str, list[SponsorMatchEntry]] = {
 }
 
 
-def _anon_candidate_id(workspace_id: str | None, submission_id: str) -> str:
+def anon_candidate_id(workspace_id: str | None, submission_id: str) -> str:
     seed = workspace_id or submission_id
     return f"CAND-{seed.replace('-', '')[:4].upper()}"
+
+
+def _anon_candidate_id(workspace_id: str | None, submission_id: str) -> str:
+    return anon_candidate_id(workspace_id, submission_id)
 
 
 def _scorecard_sponsor_fit(scorecard: dict) -> int:
@@ -140,6 +148,7 @@ def get_sponsor_matches(challenge_id: str, *, challenge_title: str | None = None
                     or r.scorecard.get("summary", "Submission assessed.")
                 ),
                 submitted_at=r.submitted_at,
+                submission_id=r.id,
             )
             for i, r in enumerate(scored)
         ]

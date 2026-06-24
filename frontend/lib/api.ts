@@ -8,6 +8,7 @@ import type {
   LeaderboardEntry,
   EnterpriseRadarResponse,
   SponsorMatchesResponse,
+  SponsorSubmissionDetail,
   PublishedChallenge,
   IntakeResponse,
   InputFormat,
@@ -184,6 +185,12 @@ export const api = {
 
   getSponsorMatches: (itemId: string): Promise<SponsorMatchesResponse> =>
     request(`/triage/backlog/${itemId}/matches`),
+
+  getSponsorSubmission: (
+    challengeId: string,
+    submissionId: string
+  ): Promise<SponsorSubmissionDetail> =>
+    request(`/triage/backlog/${challengeId}/submissions/${submissionId}`),
 
   submitZip: (challengeId: string, zipBytes: ArrayBuffer): Promise<SubmitResponse> =>
     fetch(`${BASE}/sandbox/challenges/${challengeId}/submit/zip`, {
